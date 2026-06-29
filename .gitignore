@@ -1,0 +1,24 @@
+# Compilación
+bin/
+obj/
+
+# Configuración local
+.vs/
+.vscode/
+
+# Archivos de usuario
+*.user
+*.suo
+*.userosscache
+
+# Logs
+*.log
+
+# EF Core (solo snapshots temporales si existieran)
+*.db
+
+# Secretos locales
+secrets.json
+appsettings.Development.json
+
+.env

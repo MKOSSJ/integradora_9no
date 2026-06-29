@@ -1,0 +1,6 @@
+@secuenciasAPI_HostAddress = http://localhost:5216
+
+GET {{secuenciasAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
