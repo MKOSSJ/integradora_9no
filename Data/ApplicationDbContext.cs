@@ -27,7 +27,9 @@ namespace secuenciasAPI.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
+            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+            modelBuilder.Entity<Programa>().Property(p => p.Contenido).HasColumnType("json");
+            modelBuilder.Entity<Secuencia>().Property(p => p.Contenido).HasColumnType("json");
             modelBuilder.Entity<CarreraDocente>().HasKey(cd => new { cd.CarreraId, cd.DocenteId });
             modelBuilder.Entity<CarreraMateria>().HasKey(cm => new { cm.CarreraId, cm.MateriaId });
             modelBuilder.Entity<SecuenciaDocente>().HasKey(sd => new { sd.SecuenciaId, sd.DocenteId });

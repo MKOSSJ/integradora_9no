@@ -7,6 +7,7 @@ namespace secuenciasAPI.Models
         public long Id { get; set; }
         public string Clave { get; set; } = null!;
         public string Nombre { get; set; } = null!;
+        public string? Descripcion { get; set; } 
         public byte Cuatrimestre { get; set; }
 
         public ICollection<CarreraMateria> CarreraMaterias { get; set; } = new List<CarreraMateria>();
