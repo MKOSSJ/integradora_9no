@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
-export type UserRole = 'DOCENTE' | 'REVISOR' | 'ADMIN';
+export type UserRole = 'DOCENTE' | 'REVISOR' | 'ADMIN' | 'DIRECTIVO';
 
 export interface AppUser {
   id: number;
@@ -12,7 +12,7 @@ export interface AppUser {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private readonly userKey = 'userState';
@@ -33,7 +33,7 @@ export class AuthService {
         name: 'Admin User',
         email: '',
         role: 'ADMIN',
-        initials: 'AU'
+        initials: 'AU',
       };
     } else if (emailLower.includes('revisor')) {
       user = {
@@ -41,7 +41,7 @@ export class AuthService {
         name: 'Revisor Juan',
         email,
         role: 'REVISOR',
-        initials: 'RJ'
+        initials: 'RJ',
       };
     } else {
       user = {
@@ -49,8 +49,17 @@ export class AuthService {
         name: 'Carlos Pérez',
         email,
         role: 'DOCENTE',
-        initials: 'CP'
+        initials: 'CP',
       };
+      if (email === 'directivo@email.com') {
+        user = {
+          id: 4,
+          name: 'Directivo',
+          initials: 'DR',
+          email,
+          role: 'DIRECTIVO',
+        };
+      }
     }
 
     localStorage.setItem(this.authKey, 'true');

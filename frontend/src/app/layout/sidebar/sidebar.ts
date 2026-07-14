@@ -19,7 +19,8 @@ import {
   LucideShieldCheck,
   LucideDatabase,
   LucidePanelLeftClose,
-  LucidePanelLeftOpen
+  LucidePanelLeftOpen,
+  LucideCalendarDays
 } from '@lucide/angular';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -64,6 +65,7 @@ export class Sidebar {
 
     if (role === 'ADMIN') return 'Administrador';
     if (role === 'REVISOR') return 'Revisor';
+    if (role === 'DIRECTIVO') return 'Directivo';
     return 'Docente';
   });
 
@@ -79,11 +81,31 @@ export class Sidebar {
         {
           title: 'Administración',
           icon: LucideShieldCheck,
-          items: [
+          items: [{
+              label: 'Dashboard',
+              route: '/dashboard',
+              icon: LucideHouse
+            },
             {
+              
               label: 'Usuarios',
               route: '/usuarios',
               icon: LucideUsers
+            },
+            {
+              label: 'Carreras',
+              route: '/carreras',
+              icon: LucideSchool
+            },
+            {
+              label: 'Asignaturas',
+              route: '/asignaturas',
+              icon: LucideBookOpen
+            },
+            {
+              label: 'Ciclos y Periodos',
+              route: '/periodos',
+              icon: LucideCalendarDays
             },
             {
               label: 'Importación de Academias',
@@ -124,7 +146,7 @@ export class Sidebar {
     if (currentUser.role === 'REVISOR') {
       return [
         {
-          title: 'Docente',
+          title: 'Planeaciones',
           icon: LucideBookOpen,
           items: [
             {
@@ -157,6 +179,32 @@ export class Sidebar {
               label: 'Reporte de Validaciones',
               route: '/validacion/reporte',
               icon: LucideChartColumn
+            }
+          ]
+        }
+      ];
+    }
+
+    if (currentUser.role === 'DIRECTIVO') {
+      return [
+        {
+          title: 'Directivo',
+          icon: LucideShieldCheck,
+          items: [
+            {
+              label: 'Dashboard',
+              route: '/dashboard',
+              icon: LucideHouse
+            },
+            {
+              label: 'Reportes',
+              route: '/reportes',
+              icon: LucideChartColumn
+            },
+            {
+              label: 'Autorizaciones',
+              route: '/validacion',
+              icon: LucideSquareCheckBig
             }
           ]
         }

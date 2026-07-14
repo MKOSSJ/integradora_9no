@@ -108,6 +108,57 @@ export const routes: Routes = [
             (m) => m.ImportarProfesores,
           ),
       },
+      // Coloca estas rutas dentro de children del MainLayout.
+      {
+        path: 'usuarios',
+        loadComponent: () =>
+          import('./features/admin/pages/usuarios/usuarios').then((m) => m.Usuarios),
+      },
+      {
+        path: 'carreras',
+        loadComponent: () =>
+          import('./features/admin/pages/carreras/carreras').then((m) => m.Carreras),
+      },
+      {
+        path: 'asignaturas',
+        loadComponent: () =>
+          import('./features/admin/pages/asignaturas/asignaturas').then((m) => m.Asignaturas),
+      },
+      {
+        path: 'periodos',
+        loadComponent: () =>
+          import('./features/admin/pages/periodos/periodos').then((m) => m.Periodos),
+      },
+      {
+        path: 'importacion-academica',
+        loadComponent: () =>
+          import('./features/admin/pages/importacion-academias/importacion-academias').then(
+            (m) => m.ImportacionAcademias,
+          ),
+      },
+      {
+        path: 'academias',
+        loadComponent: () =>
+          import('./features/admin/pages/academias/academias').then((m) => m.Academias),
+      },
+      {
+        path: 'grupos',
+        loadComponent: () => import('./features/admin/pages/grupos/grupos').then((m) => m.Grupos),
+      },
+      {
+        path: 'asignacion-academica',
+        loadComponent: () =>
+          import('./features/admin/pages/asignacion-academica/asignacion-academica').then(
+            (m) => m.AsignacionAcademica,
+          ),
+      },
+      {
+        path: 'importar-profesores',
+        loadComponent: () =>
+          import('./features/admin/pages/importar-profesores/importar-profesores').then(
+            (m) => m.ImportarProfesores,
+          ),
+      },
     ],
   },
   {
