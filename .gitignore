@@ -1,0 +1,19 @@
+# Visual Studio
+.vs/
+**/.vs/
+
+# Compilación .NET
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Archivos de usuario
+*.user
+*.suo
+
+# Publicación local
+*.pubxml.user
+
+# Logs
+*.log
