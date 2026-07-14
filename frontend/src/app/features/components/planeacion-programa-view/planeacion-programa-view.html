@@ -1,0 +1,71 @@
+<div class="h-full min-h-[620px] overflow-auto bg-slate-100 p-8">
+  <article
+    class="mx-auto max-w-4xl overflow-hidden rounded-[28px] bg-white shadow-xl shadow-slate-300/60"
+  >
+    <header class="bg-gradient-to-r from-teal-500 to-cyan-500 p-10 text-center text-white">
+      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15">
+        <svg [lucideIcon]="bookIcon" class="h-7 w-7"></svg>
+      </div>
+
+      <p class="text-xs font-black uppercase tracking-[0.25em] text-white/80">
+        Programa de asignatura
+      </p>
+
+      <h2 class="mt-3 text-3xl font-black">
+        {{ planeacion.programa.nombre }}
+      </h2>
+
+      <p class="mt-2 text-sm font-medium text-white/85">
+        {{ planeacion.programa.programaEducativo }}
+      </p>
+    </header>
+
+    <section class="space-y-8 p-10">
+      <div>
+        <h3 class="border-b border-teal-100 pb-3 text-lg font-black text-teal-600">
+          Identificación de la asignatura
+        </h3>
+
+        <div class="mt-5 divide-y divide-slate-100">
+          <div class="grid grid-cols-[220px_1fr] gap-4 py-4">
+            <span class="font-bold text-slate-500">Nombre</span>
+            <strong class="text-slate-900">{{ planeacion.programa.nombre }}</strong>
+          </div>
+
+          <div class="grid grid-cols-[220px_1fr] gap-4 py-4">
+            <span class="font-bold text-slate-500">Clave</span>
+            <strong class="text-slate-900">{{ planeacion.programa.clave }}</strong>
+          </div>
+
+          <div class="grid grid-cols-[220px_1fr] gap-4 py-4">
+            <span class="font-bold text-slate-500">Programa educativo</span>
+            <strong class="text-slate-900">{{ planeacion.programa.programaEducativo }}</strong>
+          </div>
+
+          <div class="grid grid-cols-[220px_1fr] gap-4 py-4">
+            <span class="font-bold text-slate-500">Cuatrimestre</span>
+            <strong class="text-slate-900">{{ planeacion.programa.cuatrimestre }}</strong>
+          </div>
+
+          <div class="grid grid-cols-[220px_1fr] gap-4 py-4">
+            <span class="font-bold text-slate-500">Créditos</span>
+            <strong class="text-slate-900">{{ planeacion.programa.creditos }}</strong>
+          </div>
+
+          <div class="grid grid-cols-[220px_1fr] gap-4 py-4">
+            <span class="font-bold text-slate-500">Horas totales</span>
+            <strong class="text-slate-900">{{ planeacion.programa.horasTotales }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="border-b border-teal-100 pb-3 text-lg font-black text-teal-600">Propósito</h3>
+
+        <p class="mt-5 leading-relaxed text-slate-600">
+          {{ planeacion.programa.proposito }}
+        </p>
+      </div>
+    </section>
+  </article>
+</div>

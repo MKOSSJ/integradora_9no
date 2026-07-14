@@ -1,0 +1,203 @@
+<div
+  class="animate-dashboard-enter min-h-full bg-slate-50 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.08),transparent_28%)] p-7"
+>
+  <section
+    class="flex min-h-[230px] items-end justify-between gap-6 overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,rgba(15,118,110,0.96),rgba(20,184,166,0.86)),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.22),transparent_36%)] p-8 text-white shadow-[0_24px_70px_rgba(15,118,110,0.22)] max-lg:flex-col max-lg:items-start"
+  >
+    <div>
+      <div
+        class="mb-[18px] inline-flex w-fit items-center gap-2 rounded-full bg-white/15 px-3.5 py-2 text-[13px] font-black"
+      >
+        <svg [lucideIcon]="dashboardIcon" class="h-4 w-4"></svg>
+        Dashboard
+      </div>
+
+      <h1
+        class="m-0 max-w-[700px] text-[clamp(32px,4vw,48px)] font-black leading-[1.05] tracking-[-0.055em]"
+      >
+        {{ welcomeTitle() }}
+      </h1>
+
+      <p class="mt-4 max-w-[620px] text-base leading-relaxed text-white/85">
+        {{ welcomeDescription() }}
+      </p>
+    </div>
+
+    @if (user(); as currentUser) {
+      <div
+        class="flex min-w-[260px] items-center gap-3.5 rounded-3xl border border-white/20 bg-white/15 p-4 backdrop-blur-xl max-lg:w-full"
+      >
+        <div
+          class="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[18px] bg-white font-black text-teal-600"
+        >
+          {{ currentUser.initials }}
+        </div>
+
+        <div>
+          <span class="block text-xs font-black text-white/75">
+            Sesión activa
+          </span>
+
+          <h2 class="mt-1 text-[15px] font-black">
+            {{ currentUser.name }}
+          </h2>
+
+          <p class="mt-0.5 text-[13px] text-white/85">
+            {{ roleLabel() }}
+          </p>
+        </div>
+      </div>
+    }
+  </section>
+
+  <section class="mt-6 grid grid-cols-4 gap-[18px] max-xl:grid-cols-2 max-md:grid-cols-1">
+    @for (card of statCards(); track card.title) {
+      <article
+        class="group min-h-[150px] rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_18px_46px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.11)]"
+      >
+        <div
+          class="mb-[18px] flex h-12 w-12 items-center justify-center rounded-2xl"
+          [ngClass]="{
+            'bg-teal-100 text-teal-600': card.tone === 'teal',
+            'bg-blue-100 text-blue-600': card.tone === 'blue',
+            'bg-amber-100 text-amber-600': card.tone === 'amber',
+            'bg-green-100 text-green-600': card.tone === 'green',
+            'bg-rose-100 text-rose-600': card.tone === 'rose'
+          }"
+        >
+          <svg [lucideIcon]="card.icon" class="h-6 w-6"></svg>
+        </div>
+
+        <p class="m-0 text-[13px] font-extrabold text-slate-500">
+          {{ card.title }}
+        </p>
+
+        <h2 class="my-1 text-[32px] font-black tracking-[-0.04em] text-slate-900">
+          {{ card.value }}
+        </h2>
+
+        <span class="text-[13px] font-semibold text-slate-500">
+          {{ card.description }}
+        </span>
+      </article>
+    }
+  </section>
+
+  <section class="mt-6 grid grid-cols-[minmax(0,1fr)_380px] gap-6 max-xl:grid-cols-1">
+    <div
+      class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_46px_rgba(15,23,42,0.07)]"
+    >
+      <div class="mb-5">
+        <h2 class="m-0 text-[22px] font-black tracking-[-0.035em] text-slate-900">
+          Acciones rápidas
+        </h2>
+
+        <p class="mt-1.5 text-sm text-slate-500">
+          Atajos principales según tu rol dentro del sistema.
+        </p>
+      </div>
+
+      <div class="grid gap-3.5">
+        @for (action of quickActions(); track action.title) {
+          <a
+            [routerLink]="action.route"
+            class="grid min-h-24 grid-cols-[54px_1fr_36px] items-center gap-3.5 rounded-[22px] border border-slate-100 bg-slate-50 p-[18px] text-inherit no-underline transition duration-200 hover:translate-x-1 hover:border-teal-200 hover:bg-teal-50"
+          >
+            <div
+              class="flex h-[54px] w-[54px] items-center justify-center rounded-[18px] bg-white text-teal-600"
+            >
+              <svg [lucideIcon]="action.icon" class="h-6 w-6"></svg>
+            </div>
+
+            <div>
+              <h3 class="m-0 text-base font-black text-slate-900">
+                {{ action.title }}
+              </h3>
+
+              <p class="mt-1 text-sm leading-snug text-slate-500">
+                {{ action.description }}
+              </p>
+            </div>
+
+            <div class="flex justify-end text-slate-400 transition group-hover:text-teal-600">
+              <svg [lucideIcon]="arrowIcon" class="h-5 w-5"></svg>
+            </div>
+          </a>
+        }
+      </div>
+    </div>
+
+    <aside class="grid gap-6">
+      <div
+        class="rounded-[28px] border border-slate-200 bg-white p-[22px] shadow-[0_18px_46px_rgba(15,23,42,0.07)]"
+      >
+        <div class="mb-[18px]">
+          <h2 class="m-0 text-[22px] font-black tracking-[-0.035em] text-slate-900">
+            Actividad reciente
+          </h2>
+
+          <p class="mt-1.5 text-sm text-slate-500">
+            Últimos movimientos del sistema.
+          </p>
+        </div>
+
+        <div class="grid gap-[18px]">
+          @for (item of recentActivity(); track item.title) {
+            <div class="flex gap-3">
+              <span
+                class="mt-1.5 h-[11px] w-[11px] shrink-0 rounded-full"
+                [ngClass]="{
+                  'bg-green-500 shadow-[0_0_0_6px_rgba(34,197,94,0.12)]': item.status === 'success',
+                  'bg-amber-500 shadow-[0_0_0_6px_rgba(245,158,11,0.12)]': item.status === 'warning',
+                  'bg-cyan-500 shadow-[0_0_0_6px_rgba(6,182,212,0.12)]': item.status === 'info'
+                }"
+              ></span>
+
+              <div>
+                <h3 class="m-0 text-sm font-black text-slate-900">
+                  {{ item.title }}
+                </h3>
+
+                <p class="mt-1 text-[13px] leading-snug text-slate-500">
+                  {{ item.description }}
+                </p>
+
+                <small class="mt-1.5 inline-flex text-xs font-bold text-slate-400">
+                  {{ item.time }}
+                </small>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div
+        class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_46px_rgba(15,23,42,0.07)]"
+      >
+        <div
+          class="flex h-[52px] w-[52px] items-center justify-center rounded-[18px] bg-teal-100 text-teal-600"
+        >
+          <svg [lucideIcon]="trendingIcon" class="h-6 w-6"></svg>
+        </div>
+
+        <h2 class="mt-[18px] text-[21px] font-black text-slate-900">
+          Avance general
+        </h2>
+
+        <p class="mt-2 text-sm leading-relaxed text-slate-500">
+          El sistema registra actividad constante y documentos en seguimiento.
+        </p>
+
+        <div class="mt-5 h-2.5 overflow-hidden rounded-full bg-slate-200">
+          <span
+            class="animate-progress-fill block h-full w-[72%] rounded-full bg-gradient-to-r from-teal-500 to-cyan-500"
+          ></span>
+        </div>
+
+        <strong class="mt-3 block text-sm font-black text-teal-600">
+          72% de avance
+        </strong>
+      </div>
+    </aside>
+  </section>
+</div>

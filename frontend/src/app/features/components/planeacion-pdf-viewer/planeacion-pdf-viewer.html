@@ -1,0 +1,114 @@
+<div class="grid h-full min-h-[620px] grid-cols-[150px_minmax(0,1fr)] overflow-hidden bg-slate-100">
+  <aside class="border-r border-slate-200 bg-white p-4">
+    <p class="mb-3 text-xs font-black uppercase tracking-wide text-slate-400">
+      Páginas
+    </p>
+
+    <div class="space-y-3">
+      @for (page of pages(); track page) {
+        <button
+          type="button"
+          class="w-full rounded-2xl border p-2 transition"
+          [ngClass]="currentPage() === page
+            ? 'border-teal-400 bg-teal-50'
+            : 'border-slate-200 bg-white hover:bg-slate-50'"
+          (click)="currentPage.set(page)"
+        >
+          <div class="flex h-32 items-center justify-center rounded-xl bg-slate-50 text-xs font-black text-slate-400">
+            {{ page }}
+          </div>
+
+          <span class="mt-2 block text-xs font-bold text-slate-500">
+            Pág. {{ page }}
+          </span>
+        </button>
+      }
+    </div>
+  </aside>
+
+  <section class="flex min-w-0 flex-col overflow-hidden">
+    <div class="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5">
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+          (click)="previousPage()"
+        >
+          <svg [lucideIcon]="prevIcon" class="h-5 w-5"></svg>
+        </button>
+
+        <span class="text-sm font-bold text-slate-500">
+          {{ currentPage() }} / {{ pages().length }}
+        </span>
+
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+          (click)="nextPage()"
+        >
+          <svg [lucideIcon]="nextIcon" class="h-5 w-5"></svg>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+        >
+          <svg [lucideIcon]="printIcon" class="h-4 w-4"></svg>
+          Imprimir
+        </button>
+
+        <button
+          type="button"
+          class="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+        >
+          <svg [lucideIcon]="downloadIcon" class="h-4 w-4"></svg>
+          Descargar
+        </button>
+
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+          (click)="zoomOut()"
+        >
+          <svg [lucideIcon]="zoomOutIcon" class="h-4 w-4"></svg>
+        </button>
+
+        <span class="w-12 text-center text-sm font-bold text-slate-500">
+          {{ zoom() }}%
+        </span>
+
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+          (click)="zoomIn()"
+        >
+          <svg [lucideIcon]="zoomInIcon" class="h-4 w-4"></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="min-h-0 flex-1 overflow-auto p-8">
+      <div
+        class="mx-auto min-h-[720px] rounded-2xl bg-white p-12 shadow-xl shadow-slate-300/60 transition"
+        [style.width.px]="680 * (zoom() / 100)"
+      >
+        <p class="text-center text-sm font-bold text-slate-500">
+          Página {{ currentPage() }} — Secuencia Didáctica
+        </p>
+
+        <div class="mt-12 text-center">
+          <h2 class="text-3xl font-black text-slate-900">
+            {{ planeacion.titulo }}
+          </h2>
+
+          <p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-slate-500">
+            Esta es una vista previa del documento generado. Cuando el backend esté listo,
+            aquí se mostrará el PDF real mediante URL o Blob.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

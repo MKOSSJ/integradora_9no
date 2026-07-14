@@ -1,3 +1,117 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth-guard';
 
-export const routes: Routes = [];
+export const routes: Routes = [
+  {
+    path: 'auth/login',
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
+  },
+  {
+    path: 'auth/recuperar-password',
+    loadComponent: () =>
+      import('./features/auth/recover-password/recover-password').then((m) => m.RecoverPassword),
+  },
+  {
+    path: 'login',
+    redirectTo: 'auth/login',
+    pathMatch: 'full',
+  },
+  {
+    path: '',
+    loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full',
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+      },
+      {
+        path: 'planeaciones',
+        loadComponent: () =>
+          import('./features/pages/planeaciones-list/planeaciones-list').then(
+            (m) => m.PlaneacionesList,
+          ),
+      },
+      {
+        path: 'planeaciones/:id',
+        loadComponent: () =>
+          import('./features/pages/planeacion-detail/planeacion-detail').then(
+            (m) => m.PlaneacionDetailPage,
+          ),
+      },
+      {
+        path: 'reportes',
+        loadComponent: () => import('./features/reportes/reportes').then((m) => m.Reportes),
+      },
+      {
+        path: 'validacion',
+        loadComponent: () =>
+          import('./features/validacion/pages/validacion-list/validacion-list').then(
+            (m) => m.ValidacionList,
+          ),
+      },
+
+      // Esta ruta debe ir ANTES de validacion/:id
+      {
+        path: 'validacion/reporte',
+        loadComponent: () =>
+          import('./features/validacion/pages/reporte-validaciones/reporte-validaciones').then(
+            (m) => m.ReporteValidaciones,
+          ),
+      },
+
+      {
+        path: 'validacion/:id',
+        loadComponent: () =>
+          import('./features/validacion/pages/validacion-detail/validacion-detail').then(
+            (m) => m.ValidacionDetail,
+          ),
+      },
+
+      {
+        path: 'usuarios',
+        loadComponent: () =>
+          import('./features/admin/pages/usuarios/usuarios').then((m) => m.Usuarios),
+      },
+      {
+        path: 'importacion-academica',
+        loadComponent: () =>
+          import('./features/admin/pages/importacion-academias/importacion-academias').then(
+            (m) => m.ImportacionAcademias,
+          ),
+      },
+      {
+        path: 'academias',
+        loadComponent: () =>
+          import('./features/admin/pages/academias/academias').then((m) => m.Academias),
+      },
+      {
+        path: 'grupos',
+        loadComponent: () => import('./features/admin/pages/grupos/grupos').then((m) => m.Grupos),
+      },
+      {
+        path: 'asignacion-academica',
+        loadComponent: () =>
+          import('./features/admin/pages/asignacion-academica/asignacion-academica').then(
+            (m) => m.AsignacionAcademica,
+          ),
+      },
+      {
+        path: 'importar-profesores',
+        loadComponent: () =>
+          import('./features/admin/pages/importar-profesores/importar-profesores').then(
+            (m) => m.ImportarProfesores,
+          ),
+      },
+    ],
+  },
+  {
+    path: '**',
+    redirectTo: 'auth/login',
+  },
+];
