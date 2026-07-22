@@ -14,7 +14,13 @@ public interface IPlaneacionDidacticaService
     /// </summary>
     Task<List<PlaneacionDidacticaRevisorDto>> GetAllForRevisorAsync();
 
-    
+    /// <summary>
+    /// Obtiene las planeaciones agrupadas por carrera para un directivo.
+    /// Las academias se filtran por AcademiaUsuario del directivo,
+    /// las carreras se vinculan vía CarreraAcademia (pivot),
+    /// y las planeaciones se obtienen por PlaneacionDidactica.AcademiaId.
+    /// </summary>
+    Task<List<CarreraPlaneacionDto>> GetPlaneacionesByDirectivoAsync(int directivoId);
     
     /// <summary>
     /// Obtiene todas las planeaciones para el revisor por su id .
