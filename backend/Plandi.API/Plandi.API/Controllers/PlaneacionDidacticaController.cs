@@ -1,0 +1,91 @@
+using Microsoft.AspNetCore.Mvc;
+using Plandi.Dto;
+using Plandi.Services.Interfaces;
+
+namespace Plandi.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class PlaneacionDidacticaController : ControllerBase
+{
+    private readonly ILogger<PlaneacionDidacticaController> _logger;
+    private readonly IPlaneacionDidacticaService _planeacionDidacticaService;
+
+    public PlaneacionDidacticaController(
+        IPlaneacionDidacticaService planeacionDidacticaService,
+        ILogger<PlaneacionDidacticaController> logger)
+    {
+        _planeacionDidacticaService = planeacionDidacticaService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Obtiene todas las planeaciones para un revisor específico.
+    /// </summary>
+    [HttpGet("revisor/{id}")]
+    public async Task<IActionResult> GetByRevisor(int id)
+    {
+        try
+        {
+            var planeaciones = await _planeacionDidacticaService
+                .GetAllPlaneacionesForIdRevisor(id);
+
+            // ✅ Respuesta consistente: siempre devuelve { success, data, message }
+            return Ok(new ApiResponse<List<PlaneacionDidacticaRevisorDto>>
+            {
+                Success = true,
+                Data = planeaciones,
+                Message = planeaciones.Count == 0
+                    ? "No se encontraron planeaciones para este revisor"
+                    : $"Se encontraron {planeaciones.Count} planeaciones"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener planeaciones para revisor {RevisorId}", id);
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Error interno al obtener las planeaciones"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene una planeación por ID.
+    /// </summary>
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(long id)
+    {
+        try
+        {
+            var planeacion = await _planeacionDidacticaService
+                .GetByIdForRevisorAsync(id);
+
+            if (planeacion is null)
+            {
+                return NotFound(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = $"Planeación {id} no encontrada"
+                });
+            }
+
+            return Ok(new ApiResponse<PlaneacionDidacticaRevisorDto>
+            {
+                Success = true,
+                Data = planeacion
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener planeación {PlaneacionId}", id);
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Error interno al obtener la planeación"
+            });
+        }
+    }
+
+}

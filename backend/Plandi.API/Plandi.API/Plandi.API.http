@@ -1,6 +1,15 @@
-@Plandi.API_HostAddress = http://localhost:5198
+@Plandi.API_HostAddress = "localhost:5198/api/"
 
-GET {{Plandi.API_HostAddress}}/weatherforecast/
+GET http://localhost:5198/api//weatherforecast/
 Accept: application/json
 
+###
+
+GET http://localhost:5198/api/usuario/getall
+Accept: application/json
+###
+
+
+GET  http://localhost:5198/api/planeaciondidactica/revisor/4
+Accept: application/json
 ###
