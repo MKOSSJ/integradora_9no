@@ -372,6 +372,27 @@ namespace Plandi.Library.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Plandi.Library.Models.CarreraAcademia", b =>
+                {
+                    b.Property<long>("CarreraId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("AcademiaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("CarreraId", "AcademiaId");
+
+                    b.HasIndex("AcademiaId");
+
+                    b.ToTable("carrera_academias", (string)null);
+                });
+
             modelBuilder.Entity("Plandi.Library.Models.Chat", b =>
                 {
                     b.Property<long>("Id")
@@ -1710,6 +1731,25 @@ namespace Plandi.Library.Migrations
                     b.Navigation("Revisor");
                 });
 
+            modelBuilder.Entity("Plandi.Library.Models.CarreraAcademia", b =>
+                {
+                    b.HasOne("Plandi.Library.Models.Academia", "Academia")
+                        .WithMany("CarreraAcademias")
+                        .HasForeignKey("AcademiaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Plandi.Library.Models.Carrera", "Carrera")
+                        .WithMany("CarreraAcademias")
+                        .HasForeignKey("CarreraId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Academia");
+
+                    b.Navigation("Carrera");
+                });
+
             modelBuilder.Entity("Plandi.Library.Models.Chat", b =>
                 {
                     b.HasOne("Plandi.Library.Models.PlaneacionDidactica", "PlaneacionDidactica")
@@ -1996,6 +2036,8 @@ namespace Plandi.Library.Migrations
                     b.Navigation("AcademiaUsuarios");
 
                     b.Navigation("Asignaturas");
+
+                    b.Navigation("CarreraAcademias");
                 });
 
             modelBuilder.Entity("Plandi.Library.Models.Asignatura", b =>
@@ -2009,6 +2051,8 @@ namespace Plandi.Library.Migrations
 
             modelBuilder.Entity("Plandi.Library.Models.Carrera", b =>
                 {
+                    b.Navigation("CarreraAcademias");
+
                     b.Navigation("Grupos");
                 });
 

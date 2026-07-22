@@ -13,5 +13,7 @@ namespace Plandi.Library.Models
         public ICollection<Asignatura> Asignaturas { get; set; } = new List<Asignatura>();
 
         public ICollection<AcademiaUsuario> AcademiaUsuarios { get; set; } = new List<AcademiaUsuario>();
+
+        public ICollection<CarreraAcademia> CarreraAcademias { get; set; } = new List<CarreraAcademia>();
     }
 }

@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<AcademiaUsuario> AcademiaUsuarios => Set<AcademiaUsuario>();
 
     public DbSet<Carrera> Carreras => Set<Carrera>();
+    public DbSet<CarreraAcademia> CarreraAcademias => Set<CarreraAcademia>();
     public DbSet<CicloEscolar> CiclosEscolares => Set<CicloEscolar>();
     public DbSet<Periodo> Periodos => Set<Periodo>();
     public DbSet<Grupo> Grupos => Set<Grupo>();
@@ -198,6 +199,23 @@ public class AppDbContext : DbContext
 
             entity.HasOne(x => x.Academia)
                 .WithMany(x => x.Asignaturas)
+                .HasForeignKey(x => x.AcademiaId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CarreraAcademia>(entity =>
+        {
+            entity.ToTable("carrera_academias");
+
+            entity.HasKey(x => new { x.CarreraId, x.AcademiaId });
+
+            entity.HasOne(x => x.Carrera)
+                .WithMany(x => x.CarreraAcademias)
+                .HasForeignKey(x => x.CarreraId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.Academia)
+                .WithMany(x => x.CarreraAcademias)
                 .HasForeignKey(x => x.AcademiaId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
