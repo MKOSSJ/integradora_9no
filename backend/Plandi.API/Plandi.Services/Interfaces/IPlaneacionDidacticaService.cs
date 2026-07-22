@@ -15,6 +15,13 @@ public interface IPlaneacionDidacticaService
     Task<List<PlaneacionDidacticaRevisorDto>> GetAllForRevisorAsync();
 
     /// <summary>
+    /// Busca planeaciones con filtros opcionales: carrera, periodo, asignatura,
+    /// docente, fecha (última modificación) y/o estado.
+    /// Los filtros se aplican en SQL — no en memoria.
+    /// </summary>
+    Task<List<PlaneacionDirectivoDto>> GetAllAsync(PlaneacionFilterDto filtro);
+
+    /// <summary>
     /// Obtiene las planeaciones agrupadas por carrera para un directivo.
     /// Las academias se filtran por AcademiaUsuario del directivo,
     /// las carreras se vinculan vía CarreraAcademia (pivot),

@@ -86,6 +86,40 @@ public class PlaneacionDidacticaController : ControllerBase
     }
 
     /// <summary>
+    /// Busca planeaciones con filtros opcionales.
+    /// Ej: GET /api/PlaneacionDidactica?carreraId=1&periodoId=1&docenteId=3&estado=1
+    /// Filtros: carreraId, periodoId, asignaturaId, docenteId, fechaDesde, fechaHasta, estado.
+    /// Todos son opcionales — se aplican solo los presentes.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] PlaneacionFilterDto filtro)
+    {
+        try
+        {
+            var planeaciones = await _planeacionDidacticaService
+                .GetAllAsync(filtro);
+
+            return Ok(new ApiResponse<List<PlaneacionDirectivoDto>>
+            {
+                Success = true,
+                Data = planeaciones,
+                Message = planeaciones.Count == 0
+                    ? "No se encontraron planeaciones con los filtros especificados"
+                    : $"Se encontraron {planeaciones.Count} planeaciones"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar planeaciones con filtros");
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Error interno al buscar planeaciones"
+            });
+        }
+    }
+
+    /// <summary>
     /// Obtiene una planeación por ID.
     /// </summary>
     [HttpGet("{id}")]
