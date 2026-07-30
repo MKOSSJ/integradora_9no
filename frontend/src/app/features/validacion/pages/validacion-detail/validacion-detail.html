@@ -58,6 +58,17 @@
           Programa
         </button>
       </nav>
+
+      @if (statusNotice(); as notice) {
+        <div class="px-7 pb-4">
+          <div
+            class="rounded-2xl border px-4 py-3 text-sm font-black"
+            [ngClass]="getStatusNoticeClasses(notice.type)"
+          >
+            {{ notice.message }}
+          </div>
+        </div>
+      }
     </header>
 
     <main
@@ -75,22 +86,25 @@
         }
       </section>
 
-<app-revision-side-panel
-  class="min-h-[760px]"
-  [revision]="item"
-  (startRevision)="startRevision()"
-  (approve)="approveRevision()"
-  (requestCorrections)="requestCorrections()"
-  (addComment)="addComment($event)"
-/>
+      <app-revision-side-panel
+        class="min-h-[760px]"
+        [revision]="item"
+        (approve)="approveRevision()"
+        (requestCorrections)="requestCorrections()"
+        (addComment)="addComment($event)"
+      />
     </main>
   </div>
 } @else {
   <div class="flex h-full items-center justify-center bg-slate-50">
     <div class="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-      <h2 class="text-xl font-black text-slate-900">Cargando revisión...</h2>
+      <h2 class="text-xl font-black text-slate-900">
+        Cargando revisión...
+      </h2>
 
-      <p class="mt-2 text-sm text-slate-500">Espera un momento.</p>
+      <p class="mt-2 text-sm text-slate-500">
+        Espera un momento.
+      </p>
     </div>
   </div>
 }

@@ -11,7 +11,7 @@ import {
   LucideDownload
 } from '@lucide/angular';
 
-import { PlaneacionDetail } from '../../../core/models/planeacion.model';
+import { PlaneacionDetail } from '../../../../core/models/planeacion.model';
 
 @Component({
   selector: 'app-planeacion-pdf-viewer',

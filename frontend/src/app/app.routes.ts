@@ -3,13 +3,21 @@ import { authGuard } from './core/guards/auth-guard';
 
 export const routes: Routes = [
   {
+    path: '',
+    redirectTo: 'auth/login',
+    pathMatch: 'full',
+  },
+  {
     path: 'auth/login',
-    loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
+    loadComponent: () =>
+      import('./features/auth/login/login').then((m) => m.Login),
   },
   {
     path: 'auth/recuperar-password',
     loadComponent: () =>
-      import('./features/auth/recover-password/recover-password').then((m) => m.RecoverPassword),
+      import('./features/auth/recover-password/recover-password').then(
+        (m) => m.RecoverPassword,
+      ),
   },
   {
     path: 'login',
@@ -18,7 +26,8 @@ export const routes: Routes = [
   },
   {
     path: '',
-    loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
+    loadComponent: () =>
+      import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     canActivate: [authGuard],
     children: [
       {
@@ -28,26 +37,30 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
-        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+        loadComponent: () =>
+          import('./features/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
         path: 'planeaciones',
         loadComponent: () =>
-          import('./features/pages/planeaciones-list/planeaciones-list').then(
+          import('./features/planeaciones/pages/planeaciones-list/planeaciones-list').then(
             (m) => m.PlaneacionesList,
           ),
       },
       {
         path: 'planeaciones/:id',
         loadComponent: () =>
-          import('./features/pages/planeacion-detail/planeacion-detail').then(
+          import('./features/planeaciones/pages/planeacion-detail/planeacion-detail').then(
             (m) => m.PlaneacionDetailPage,
           ),
       },
       {
         path: 'reportes',
-        loadComponent: () => import('./features/reportes/reportes').then((m) => m.Reportes),
+        loadComponent: () =>
+          import('./features/reportes/reportes').then((m) => m.Reportes),
       },
+
+      /* Validación */
       {
         path: 'validacion',
         loadComponent: () =>
@@ -55,8 +68,6 @@ export const routes: Routes = [
             (m) => m.ValidacionList,
           ),
       },
-
-      // Esta ruta debe ir ANTES de validacion/:id
       {
         path: 'validacion/reporte',
         loadComponent: () =>
@@ -64,7 +75,6 @@ export const routes: Routes = [
             (m) => m.ReporteValidaciones,
           ),
       },
-
       {
         path: 'validacion/:id',
         loadComponent: () =>
@@ -73,61 +83,34 @@ export const routes: Routes = [
           ),
       },
 
+      /* Administración */
       {
         path: 'usuarios',
         loadComponent: () =>
-          import('./features/admin/pages/usuarios/usuarios').then((m) => m.Usuarios),
-      },
-      {
-        path: 'importacion-academica',
-        loadComponent: () =>
-          import('./features/admin/pages/importacion-academias/importacion-academias').then(
-            (m) => m.ImportacionAcademias,
+          import('./features/admin/pages/usuarios/usuarios').then(
+            (m) => m.Usuarios,
           ),
-      },
-      {
-        path: 'academias',
-        loadComponent: () =>
-          import('./features/admin/pages/academias/academias').then((m) => m.Academias),
-      },
-      {
-        path: 'grupos',
-        loadComponent: () => import('./features/admin/pages/grupos/grupos').then((m) => m.Grupos),
-      },
-      {
-        path: 'asignacion-academica',
-        loadComponent: () =>
-          import('./features/admin/pages/asignacion-academica/asignacion-academica').then(
-            (m) => m.AsignacionAcademica,
-          ),
-      },
-      {
-        path: 'importar-profesores',
-        loadComponent: () =>
-          import('./features/admin/pages/importar-profesores/importar-profesores').then(
-            (m) => m.ImportarProfesores,
-          ),
-      },
-      // Coloca estas rutas dentro de children del MainLayout.
-      {
-        path: 'usuarios',
-        loadComponent: () =>
-          import('./features/admin/pages/usuarios/usuarios').then((m) => m.Usuarios),
       },
       {
         path: 'carreras',
         loadComponent: () =>
-          import('./features/admin/pages/carreras/carreras').then((m) => m.Carreras),
+          import('./features/admin/pages/carreras/carreras').then(
+            (m) => m.Carreras,
+          ),
       },
       {
         path: 'asignaturas',
         loadComponent: () =>
-          import('./features/admin/pages/asignaturas/asignaturas').then((m) => m.Asignaturas),
+          import('./features/admin/pages/asignaturas/asignaturas').then(
+            (m) => m.Asignaturas,
+          ),
       },
       {
         path: 'periodos',
         loadComponent: () =>
-          import('./features/admin/pages/periodos/periodos').then((m) => m.Periodos),
+          import('./features/admin/pages/periodos/periodos').then(
+            (m) => m.Periodos,
+          ),
       },
       {
         path: 'importacion-academica',
@@ -136,14 +119,21 @@ export const routes: Routes = [
             (m) => m.ImportacionAcademias,
           ),
       },
+
+      /* Carga Académica */
       {
         path: 'academias',
         loadComponent: () =>
-          import('./features/admin/pages/academias/academias').then((m) => m.Academias),
+          import('./features/admin/pages/academias/academias').then(
+            (m) => m.Academias,
+          ),
       },
       {
         path: 'grupos',
-        loadComponent: () => import('./features/admin/pages/grupos/grupos').then((m) => m.Grupos),
+        loadComponent: () =>
+          import('./features/admin/pages/grupos/grupos').then(
+            (m) => m.Grupos,
+          ),
       },
       {
         path: 'asignacion-academica',
@@ -157,6 +147,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/pages/importar-profesores/importar-profesores').then(
             (m) => m.ImportarProfesores,
+          ),
+      },
+
+      /* Administración / Directivo */
+      {
+        path: 'seguimiento-planeaciones',
+        loadComponent: () =>
+          import('./features/admin/pages/seguimiento-planeaciones/seguimiento-planeaciones').then(
+            (m) => m.SeguimientoPlaneaciones,
           ),
       },
     ],

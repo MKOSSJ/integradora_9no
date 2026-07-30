@@ -1,13 +1,14 @@
-import { Component, inject } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import {
   LucideDynamicIcon,
+  LucideGraduationCap,
   LucideMail,
   LucideLockKeyhole,
-  LucideGraduationCap,
-  LucideArrowRight
+  LucideLoaderCircle
 } from '@lucide/angular';
 
 import { AuthService } from '../../../core/services/auth.service';
@@ -16,6 +17,7 @@ import { AuthService } from '../../../core/services/auth.service';
   selector: 'app-login',
   standalone: true,
   imports: [
+    NgClass,
     FormsModule,
     RouterLink,
     LucideDynamicIcon
@@ -23,33 +25,68 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
-export class Login {
-  private authService = inject(AuthService);
-  private router = inject(Router);
+export class Login implements OnInit {
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
-  email = '';
-  password = '';
-  loading = false;
-  errorMessage = '';
+  appIcon = LucideGraduationCap;
+  emailIcon = LucideMail;
+  passwordIcon = LucideLockKeyhole;
+  loaderIcon = LucideLoaderCircle;
 
-  mailIcon = LucideMail;
-  lockIcon = LucideLockKeyhole;
-  logoIcon = LucideGraduationCap;
-  arrowIcon = LucideArrowRight;
+  email = 'admin@email.com';
+  password = '1234';
 
-  submit(): void {
-    this.errorMessage = '';
+  loading = signal(false);
+  errorMessage = signal('');
 
-    if (!this.email.trim() || !this.password.trim()) {
-      this.errorMessage = 'Ingresa tu correo y contraseña.';
+  ngOnInit(): void {
+    if (this.authService.isLoggedIn()) {
+      this.router.navigateByUrl('/dashboard', {
+        replaceUrl: true
+      });
+    }
+  }
+
+  login(): void {
+    if (this.loading()) return;
+
+    this.errorMessage.set('');
+
+    const email = this.email.trim();
+    const password = this.password.trim();
+
+    if (!email || !password) {
+      this.errorMessage.set('Ingresa correo y contraseña.');
       return;
     }
 
-    this.loading = true;
+    this.loading.set(true);
 
     setTimeout(() => {
-      this.authService.login(this.email, this.password);
-      this.loading = false;
+      const success = this.authService.login(email, password);
+
+      if (!success) {
+        this.loading.set(false);
+        this.errorMessage.set('Correo o contraseña incorrectos.');
+        return;
+      }
+
+      this.loading.set(false);
+
+      this.router.navigateByUrl('/dashboard', {
+        replaceUrl: true
+      });
     }, 600);
+  }
+
+  onSubmit(): void {
+    this.login();
+  }
+
+  setDemoUser(email: string): void {
+    this.email = email;
+    this.password = '1234';
+    this.errorMessage.set('');
   }
 }

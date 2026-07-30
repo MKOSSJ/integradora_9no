@@ -1,4 +1,4 @@
-export type SystemRole = 'ADMIN' | 'DOCENTE' | 'REVISOR' | 'DIRECTIVO';
+export type SystemRole = 'ADMIN' | 'DOCENTE' | 'REVISOR' ;
 export type RolAcademia = 'Docente' | 'Revisor';
 export type EntityStatus = 'activo' | 'inactivo';
 

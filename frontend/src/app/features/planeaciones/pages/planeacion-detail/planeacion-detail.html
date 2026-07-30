@@ -78,47 +78,49 @@
       </nav>
     </header>
 
-    <main class="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] gap-4 overflow-y-auto bg-slate-50 p-4 max-xl:grid-cols-1">
-      <section class="min-h-[760px] overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm">
-        @if (activeTab() === 'vista-previa') {
-          <app-planeacion-pdf-viewer [planeacion]="item" mode="preview" />
-        }
+   <main class="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_320px] gap-4 overflow-y-auto bg-slate-50 p-4 max-xl:grid-cols-1">
+  <section class="min-h-[760px] overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm">
+    @if (activeTab() === 'vista-previa') {
+      <app-planeacion-pdf-viewer [planeacion]="item" mode="preview" />
+    }
 
-        @if (activeTab() === 'programa') {
-          <app-planeacion-programa-view [planeacion]="item" />
-        }
+    @if (activeTab() === 'programa') {
+      <app-planeacion-programa-view [planeacion]="item" />
+    }
 
-        @if (activeTab() === 'formulario' && isEditable()) {
-          <app-planeacion-form
-            [planeacion]="item"
-            (tutorialChange)="updateFormTutorial($event)"
-          />
-        }
-
-        @if (activeTab() === 'formulario' && !isEditable()) {
-          <div class="flex min-h-[760px] items-center justify-center bg-slate-50 p-8">
-            <div class="max-w-md rounded-[28px] border border-amber-200 bg-amber-50 p-8 text-center">
-              <h2 class="text-xl font-black text-amber-800">
-                Formulario bloqueado
-              </h2>
-
-              <p class="mt-3 text-sm font-semibold leading-relaxed text-amber-700">
-                Esta planeación no se puede editar porque no está en estado borrador o correcciones.
-              </p>
-            </div>
-          </div>
-        }
-      </section>
-
-      <app-planeacion-info-panel
-        class="min-h-[760px]"
+    @if (activeTab() === 'formulario' && isEditable()) {
+      <app-planeacion-form
         [planeacion]="item"
-        [canEdit]="isEditable()"
-        [formTutorial]="activeTab() === 'formulario' ? formTutorial() : null"
-        (saveDraft)="saveDraft()"
-        (submitForApproval)="submitForApproval()"
+        (tutorialChange)="updateFormTutorial($event)"
       />
-    </main>
+    }
+
+    @if (activeTab() === 'formulario' && !isEditable()) {
+      <div class="flex min-h-[760px] items-center justify-center bg-slate-50 p-8">
+        <div class="max-w-md rounded-[28px] border border-amber-200 bg-amber-50 p-8 text-center">
+          <h2 class="text-xl font-black text-amber-800">
+            Formulario bloqueado
+          </h2>
+
+          <p class="mt-3 text-sm font-semibold leading-relaxed text-amber-700">
+            Esta planeación no se puede editar porque no está en estado borrador o correcciones.
+          </p>
+        </div>
+      </div>
+    }
+  </section>
+
+  <aside class="sticky top-4 block h-[calc(100vh-130px)] self-start max-xl:static max-xl:h-auto">
+    <app-planeacion-info-panel
+      class="block h-full"
+      [planeacion]="item"
+      [canEdit]="isEditable()"
+      [formTutorial]="activeTab() === 'formulario' ? formTutorial() : null"
+      (saveDraft)="saveDraft()"
+      (submitForApproval)="submitForApproval()"
+    />
+  </aside>
+</main>
   </div>
 } @else {
   <div class="flex h-full items-center justify-center bg-slate-50">

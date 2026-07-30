@@ -1,0 +1,211 @@
+<div class="min-h-full bg-slate-50 px-6 py-6">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <!-- BANNER -->
+    <section class="relative overflow-hidden rounded-[36px] bg-gradient-to-br from-slate-950 via-teal-800 to-cyan-500 px-8 py-8 text-white shadow-2xl shadow-cyan-100">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.10),transparent_24%)]"></div>
+
+      <div class="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl"></div>
+      <div class="absolute -bottom-20 left-1/3 h-52 w-52 rounded-full bg-cyan-300/10 blur-3xl"></div>
+
+      <div class="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_330px] xl:items-center">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-extrabold text-white/95 backdrop-blur">
+            <svg [lucideIcon]="editIcon" class="h-4 w-4"></svg>
+            Planeaciones didácticas
+          </div>
+
+          <h1 class="mt-6 text-4xl font-black tracking-tight sm:text-5xl">
+            Mis planeaciones
+          </h1>
+
+          <p class="mt-4 max-w-2xl text-base leading-8 text-white/85">
+            Consulta tus secuencias, revisa el avance de llenado y continúa editando las que estén disponibles.
+          </p>
+
+          <div class="mt-6 flex flex-wrap gap-3">
+            <span class="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white/90 backdrop-blur">
+              {{ counters().total }} planeaciones
+            </span>
+
+            <span class="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white/90 backdrop-blur">
+              {{ counters().borradores }} borradores
+            </span>
+
+            <span class="rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-white/90 backdrop-blur">
+              {{ counters().revision }} en revisión
+            </span>
+          </div>
+        </div>
+
+        <div class="rounded-[28px] border border-white/10 bg-white/10 p-5 backdrop-blur-md">
+          <p class="text-sm font-bold uppercase tracking-wide text-white/70">
+            Resumen rápido
+          </p>
+
+          <div class="mt-4 grid grid-cols-3 gap-3">
+            <div class="rounded-2xl bg-white/10 p-3 text-center">
+              <p class="text-xs font-bold text-white/70">
+                Total
+              </p>
+
+              <p class="mt-1 text-2xl font-black">
+                {{ counters().total }}
+              </p>
+            </div>
+
+            <div class="rounded-2xl bg-white/10 p-3 text-center">
+              <p class="text-xs font-bold text-white/70">
+                Borr.
+              </p>
+
+              <p class="mt-1 text-2xl font-black text-teal-100">
+                {{ counters().borradores }}
+              </p>
+            </div>
+
+            <div class="rounded-2xl bg-white/10 p-3 text-center">
+              <p class="text-xs font-bold text-white/70">
+                Rev.
+              </p>
+
+              <p class="mt-1 text-2xl font-black text-amber-100">
+                {{ counters().revision }}
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <div class="mb-2 flex items-center justify-between text-xs font-bold text-white/75">
+              <span>Aprobadas</span>
+              <span>{{ counters().aprobadas }}</span>
+            </div>
+
+            <div class="h-2.5 overflow-hidden rounded-full bg-white/15">
+              <div
+                class="h-full rounded-full bg-gradient-to-r from-white via-cyan-100 to-teal-200"
+                [style.width.%]="counters().total === 0 ? 0 : (counters().aprobadas / counters().total) * 100"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BUSCADOR -->
+    <section class="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div class="relative w-full xl:max-w-2xl">
+          <svg
+            [lucideIcon]="searchIcon"
+            class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+          ></svg>
+
+          <input
+            type="text"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+            placeholder="Buscar por asignatura, tema o descripción..."
+            class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100"
+          />
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <div class="relative">
+            <svg
+              [lucideIcon]="sortIcon"
+              class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            ></svg>
+
+            <select
+              [ngModel]="sortBy()"
+              (ngModelChange)="sortBy.set($event)"
+              class="h-12 rounded-2xl border border-slate-200 bg-white pl-10 pr-10 text-sm font-black text-slate-700 outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+            >
+              <option value="recent">Más recientes</option>
+              <option value="title">Orden alfabético</option>
+              <option value="progress">Mayor avance</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            class="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-black text-slate-700 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
+          >
+            <svg [lucideIcon]="filterIcon" class="h-4 w-4"></svg>
+            Filtros
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TARJETAS -->
+    <section class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      @for (item of filteredPlaneaciones(); track item.id) {
+        <article
+          class="plane-card"
+          [ngClass]="'plane-card--' + item.status"
+        >
+          <div class="plane-card__glow"></div>
+
+          <div class="plane-card__header">
+            <div class="plane-card__icon">
+              <svg [lucideIcon]="editIcon" class="h-5 w-5"></svg>
+            </div>
+
+            <span class="plane-card__status">
+              {{ getStatusLabel(item.status) }}
+            </span>
+          </div>
+
+          <div class="plane-card__body">
+            <h2 class="plane-card__title">
+              {{ item.titulo }}
+            </h2>
+
+            <p class="plane-card__description">
+              {{ item.descripcion }}
+            </p>
+          </div>
+
+          <div class="plane-card__progress">
+            <div class="plane-card__progress-info">
+              <span>Avance de llenado</span>
+              <strong>{{ item.progreso }}%</strong>
+            </div>
+
+            <div class="plane-card__track">
+              <div
+                class="plane-card__bar"
+                [style.width.%]="item.progreso"
+              ></div>
+            </div>
+          </div>
+
+          <div class="plane-card__footer">
+            <p class="plane-card__date">
+              Actualizada: {{ item.actualizacion | date:'dd/MM/yyyy' }}
+            </p>
+
+            @if (item.status === 'aprobado') {
+              <a
+                [routerLink]="['/planeaciones', item.id]"
+                class="plane-card__action plane-card__action--view"
+              >
+                <svg [lucideIcon]="eyeIcon" class="h-4 w-4"></svg>
+                Ver
+              </a>
+            } @else {
+              <a
+                [routerLink]="['/planeaciones', item.id]"
+                class="plane-card__action plane-card__action--edit"
+              >
+                <svg [lucideIcon]="editIcon" class="h-4 w-4"></svg>
+                Editar
+              </a>
+            }
+          </div>
+        </article>
+      }
+    </section>
+  </div>
+</div>

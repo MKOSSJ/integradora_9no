@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { LucideDynamicIcon, LucideBookOpen } from '@lucide/angular';
 
-import { PlaneacionDetail } from '../../../core/models/planeacion.model';
+import { PlaneacionDetail } from '../../../../core/models/planeacion.model';
 
 @Component({
   selector: 'app-planeacion-programa-view',

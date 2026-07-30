@@ -1,47 +1,49 @@
-import { NgClass } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router,RouterLink, RouterLinkActive } from '@angular/router';
 
 import {
   LucideDynamicIcon,
-  LucideHouse,
+  LucideLayoutDashboard,
   LucideFileText,
-  LucideChartColumn,
-  LucideSquareCheckBig,
+  LucideChartBar,
+  LucideShieldCheck,
   LucideUsers,
   LucideUpload,
-  LucideSchool,
-  LucideGrid2x2,
-  LucideImage,
+  LucideGraduationCap,
+  LucideLayers3,
+  LucideClipboardList,
   LucideUserPlus,
-  LucideLogOut,
+  LucideSchool,
   LucideBookOpen,
-  LucideShieldCheck,
-  LucideDatabase,
+  LucideCalendarDays,
   LucidePanelLeftClose,
   LucidePanelLeftOpen,
-  LucideCalendarDays
+  LucideLogOut,
+  LucideSettings
 } from '@lucide/angular';
 
-import { AuthService } from '../../core/services/auth.service';
+import {
+  AuthService,
+  UserRole
+} from '../../core/services/auth.service';
 
-interface MenuItem {
+interface SidebarItem {
   label: string;
   route: string;
   icon: any;
 }
 
-interface MenuSection {
+interface SidebarSection {
   title: string;
   icon: any;
-  items: MenuItem[];
+  roles: UserRole[];
+  items: SidebarItem[];
 }
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   imports: [
-    NgClass,
     RouterLink,
     RouterLinkActive,
     LucideDynamicIcon
@@ -50,9 +52,8 @@ interface MenuSection {
   styleUrl: './sidebar.css'
 })
 export class Sidebar {
-  private authService = inject(AuthService);
-
-  user = this.authService.currentUser;
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   collapsed = signal(false);
 
@@ -60,187 +61,144 @@ export class Sidebar {
   openIcon = LucidePanelLeftOpen;
   logoutIcon = LucideLogOut;
 
-  roleLabel = computed(() => {
-    const role = this.user()?.role;
+  user = computed(() => this.authService.currentUser());
 
-    if (role === 'ADMIN') return 'Administrador';
-    if (role === 'REVISOR') return 'Revisor';
-    if (role === 'DIRECTIVO') return 'Directivo';
+  role = computed<UserRole>(() => {
+    return this.user()?.role ?? 'DOCENTE';
+  });
+
+  roleLabel = computed(() => {
+    const currentRole = this.role();
+
+    if (currentRole === 'ADMIN') return 'Administrador / Directivo';
+    if (currentRole === 'REVISOR') return 'Revisor';
+
     return 'Docente';
   });
 
-  sections = computed<MenuSection[]>(() => {
-    const currentUser = this.user();
-
-    if (!currentUser) {
-      return [];
-    }
-
-    if (currentUser.role === 'ADMIN') {
-      return [
+  private readonly allSections: SidebarSection[] = [
+    {
+      title: 'Planeaciones',
+      icon: LucideFileText,
+      roles: ['DOCENTE', 'REVISOR'],
+      items: [
         {
-          title: 'Administración',
-          icon: LucideShieldCheck,
-          items: [{
-              label: 'Dashboard',
-              route: '/dashboard',
-              icon: LucideHouse
-            },
-            {
-              
-              label: 'Usuarios',
-              route: '/usuarios',
-              icon: LucideUsers
-            },
-            {
-              label: 'Carreras',
-              route: '/carreras',
-              icon: LucideSchool
-            },
-            {
-              label: 'Asignaturas',
-              route: '/asignaturas',
-              icon: LucideBookOpen
-            },
-            {
-              label: 'Ciclos y Periodos',
-              route: '/periodos',
-              icon: LucideCalendarDays
-            },
-            {
-              label: 'Importación de Academias',
-              route: '/importacion-academica',
-              icon: LucideUpload
-            }
-          ]
+          label: 'Dashboard',
+          route: '/dashboard',
+          icon: LucideLayoutDashboard
         },
         {
-          title: 'Carga Académica',
-          icon: LucideDatabase,
-          items: [
-            {
-              label: 'Academias',
-              route: '/academias',
-              icon: LucideSchool
-            },
-            {
-              label: 'Grupos',
-              route: '/grupos',
-              icon: LucideGrid2x2
-            },
-            {
-              label: 'Asignación Académica',
-              route: '/asignacion-academica',
-              icon: LucideImage
-            },
-            {
-              label: 'Importar Profesores',
-              route: '/importar-profesores',
-              icon: LucideUserPlus
-            }
-          ]
-        }
-      ];
-    }
-
-    if (currentUser.role === 'REVISOR') {
-      return [
-        {
-          title: 'Planeaciones',
-          icon: LucideBookOpen,
-          items: [
-            {
-              label: 'Dashboard',
-              route: '/dashboard',
-              icon: LucideHouse
-            },
-            {
-              label: 'Planeaciones',
-              route: '/planeaciones',
-              icon: LucideFileText
-            },
-            {
-              label: 'Reportes',
-              route: '/reportes',
-              icon: LucideChartColumn
-            }
-          ]
+          label: 'Planeaciones',
+          route: '/planeaciones',
+          icon: LucideFileText
         },
         {
-          title: 'Validaciones',
-          icon: LucideSquareCheckBig,
-          items: [
-            {
-              label: 'Validación',
-              route: '/validacion',
-              icon: LucideSquareCheckBig
-            },
-            {
-              label: 'Reporte de Validaciones',
-              route: '/validacion/reporte',
-              icon: LucideChartColumn
-            }
-          ]
+          label: 'Reportes',
+          route: '/reportes',
+          icon: LucideChartBar
         }
-      ];
-    }
-
-    if (currentUser.role === 'DIRECTIVO') {
-      return [
+      ]
+    },
+    {
+      title: 'Validaciones',
+      icon: LucideShieldCheck,
+      roles: ['REVISOR'],
+      items: [
         {
-          title: 'Directivo',
-          icon: LucideShieldCheck,
-          items: [
-            {
-              label: 'Dashboard',
-              route: '/dashboard',
-              icon: LucideHouse
-            },
-            {
-              label: 'Reportes',
-              route: '/reportes',
-              icon: LucideChartColumn
-            },
-            {
-              label: 'Autorizaciones',
-              route: '/validacion',
-              icon: LucideSquareCheckBig
-            }
-          ]
+          label: 'Validación',
+          route: '/validacion',
+          icon: LucideShieldCheck
+        },
+        {
+          label: 'Reporte de Validaciones',
+          route: '/validacion/reporte',
+          icon: LucideChartBar
         }
-      ];
-    }
+      ]
+    },
+    {
+      title: 'Administración',
+      icon: LucideSettings,
+      roles: ['ADMIN'],
+      items: [
+        {
+          label: 'Usuarios',
+          route: '/usuarios',
+          icon: LucideUsers
+        },
+        {
+          label: 'Carreras',
+          route: '/carreras',
+          icon: LucideSchool
+        },
+        {
+          label: 'Asignaturas',
+          route: '/asignaturas',
+          icon: LucideBookOpen
+        },
+        {
+          label: 'Ciclos y Periodos',
+          route: '/periodos',
+          icon: LucideCalendarDays
+        },
+        {
+          label: 'Importación de Academias',
+          route: '/importacion-academica',
+          icon: LucideUpload
+        },
+        {
+          label: 'Seguimiento de Planeaciones',
+          route: '/seguimiento-planeaciones',
+          icon: LucideCalendarDays
+        },
+      ]
+    },
+    {
+      title: 'Carga Académica',
+      icon: LucideGraduationCap,
+      roles: ['ADMIN'],
+      items: [
+        {
+          label: 'Academias',
+          route: '/academias',
+          icon: LucideGraduationCap
+        },
+        {
+          label: 'Grupos',
+          route: '/grupos',
+          icon: LucideLayers3
+        },
+        {
+          label: 'Asignación Académica',
+          route: '/asignacion-academica',
+          icon: LucideClipboardList
+        },
+        {
+          label: 'Importar Profesores',
+          route: '/importar-profesores',
+          icon: LucideUserPlus
+        }
+      ]
+    },
+  ];
 
-    return [
-      {
-        title: 'Docente',
-        icon: LucideBookOpen,
-        items: [
-          {
-            label: 'Dashboard',
-            route: '/dashboard',
-            icon: LucideHouse
-          },
-          {
-            label: 'Planeaciones',
-            route: '/planeaciones',
-            icon: LucideFileText
-          },
-          {
-            label: 'Reportes',
-            route: '/reportes',
-            icon: LucideChartColumn
-          }
-        ]
-      }
-    ];
+  sections = computed(() => {
+    const currentRole = this.role();
+
+    return this.allSections.filter(section =>
+      section.roles.includes(currentRole)
+    );
   });
 
   toggleSidebar(): void {
     this.collapsed.update(value => !value);
   }
 
-  logout(): void {
-    this.authService.logout();
-  }
+logout(): void {
+  this.authService.logout();
+
+  this.router.navigateByUrl('/auth/login', {
+    replaceUrl: true
+  });
+}
 }

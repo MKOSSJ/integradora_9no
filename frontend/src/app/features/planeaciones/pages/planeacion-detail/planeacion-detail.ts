@@ -10,14 +10,14 @@ import {
   LucidePenLine
 } from '@lucide/angular';
 
-import { PlaneacionesService } from '../../../core/services/planeaciones.service';
+import { PlaneacionesService } from '../../../../core/services/planeaciones.service';
 
 import {
   PlaneacionDetail,
   PlaneacionStatus,
   PlaneacionTab,
   PlaneacionTutorial
-} from '../../../core/models/planeacion.model';
+} from '../../../../core/models/planeacion.model';
 
 import { PlaneacionInfoPanel } from '../../components/planeacion-info-panel/planeacion-info-panel';
 import { PlaneacionPdfViewer } from '../../components/planeacion-pdf-viewer/planeacion-pdf-viewer';

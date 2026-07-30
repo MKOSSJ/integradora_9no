@@ -13,11 +13,11 @@ import {
   LucidePenSquare,
 } from '@lucide/angular';
 
-import { PlaneacionesService } from '../../../core/services/planeaciones.service';
+import { PlaneacionesService } from '../../../../core/services/planeaciones.service';
 import {
   PlaneacionListItem,
   PlaneacionStatus
-} from '../../../core/models/planeacion.model';
+} from '../../../../core/models/planeacion.model';
 
 @Component({
   selector: 'app-planeaciones-list',
@@ -92,21 +92,17 @@ export class PlaneacionesList {
   });
 
   counters = computed(() => {
-    const items = this.planeaciones();
+  const items = this.planeaciones();
 
-    return {
-      total: items.length,
-      aprobadas: items.filter((item) => item.status === 'aprobado').length,
-      pendientes: items.filter((item) => item.status === 'pendiente').length,
-      revision: items.filter((item) => item.status === 'revision').length,
-      correcciones: items.filter((item) => item.status === 'correcciones').length,
-      borradores: items.filter((item) => item.status === 'borrador').length,
-
-      // Alias por si tu HTML todavía usa los nombres anteriores.
-      validadas: items.filter((item) => item.status === 'aprobado').length,
-      enviadas: items.filter((item) => item.status === 'pendiente').length,
-    };
-  });
+  return {
+    total: items.length,
+    aprobadas: items.filter((item) => item.status === 'aprobado').length,
+    pendientes: items.filter((item) => item.status === 'pendiente').length,
+    revision: items.filter((item) => item.status === 'revision').length,
+    correcciones: items.filter((item) => item.status === 'correcciones').length,
+    borradores: items.filter((item) => item.status === 'borrador').length,
+  };
+});
 
   canEdit(item: PlaneacionListItem): boolean {
     return item.status === 'borrador' || item.status === 'correcciones';
@@ -139,4 +135,80 @@ export class PlaneacionesList {
 
     return 'bg-orange-100 text-orange-700 ring-orange-200';
   }
+  getBoardItems(group: 'edicion' | 'revision' | 'finalizadas'): PlaneacionListItem[] {
+  const items = this.filteredPlaneaciones();
+
+  if (group === 'edicion') {
+    return items.filter(
+      item => item.status === 'borrador' || item.status === 'correcciones'
+    );
+  }
+
+  if (group === 'revision') {
+    return items.filter(
+      item => item.status === 'pendiente' || item.status === 'revision'
+    );
+  }
+
+  return items.filter(item => item.status === 'aprobado');
+}
+getStatusStripeClasses(status: PlaneacionStatus): string {
+  if (status === 'aprobado') {
+    return 'bg-green-500';
+  }
+
+  if (status === 'revision') {
+    return 'bg-cyan-500';
+  }
+
+  if (status === 'pendiente') {
+    return 'bg-amber-500';
+  }
+
+  if (status === 'correcciones') {
+    return 'bg-orange-500';
+  }
+
+  return 'bg-teal-500';
+}
+
+getStatusDotClasses(status: PlaneacionStatus): string {
+  if (status === 'aprobado') {
+    return 'bg-green-500';
+  }
+
+  if (status === 'revision') {
+    return 'bg-cyan-500';
+  }
+
+  if (status === 'pendiente') {
+    return 'bg-amber-500';
+  }
+
+  if (status === 'correcciones') {
+    return 'bg-orange-500';
+  }
+
+  return 'bg-teal-500';
+}
+
+getProgressBarClasses(status: PlaneacionStatus): string {
+  if (status === 'aprobado') {
+    return 'bg-green-500';
+  }
+
+  if (status === 'revision') {
+    return 'bg-cyan-500';
+  }
+
+  if (status === 'pendiente') {
+    return 'bg-amber-500';
+  }
+
+  if (status === 'correcciones') {
+    return 'bg-orange-500';
+  }
+
+  return 'bg-teal-500';
+}
 }

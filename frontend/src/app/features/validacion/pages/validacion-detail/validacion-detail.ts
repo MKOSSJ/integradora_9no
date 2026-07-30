@@ -18,8 +18,8 @@ import {
 import { ValidacionService } from '../../../../core/services/validacion.service';
 import { RevisionSidePanel } from '../../components/revision-side-panel/revision-side-panel';
 
-import { PlaneacionPdfViewer } from '../../../components/planeacion-pdf-viewer/planeacion-pdf-viewer';
-import { PlaneacionProgramaView } from '../../../components/planeacion-programa-view/planeacion-programa-view';
+import { PlaneacionPdfViewer } from '../../../planeaciones/components/planeacion-pdf-viewer/planeacion-pdf-viewer';
+import { PlaneacionProgramaView } from '../../../planeaciones/components/planeacion-programa-view/planeacion-programa-view';
 
 @Component({
   selector: 'app-validacion-detail',
@@ -37,11 +37,16 @@ import { PlaneacionProgramaView } from '../../../components/planeacion-programa-
   styleUrl: './validacion-detail.css'
 })
 export class ValidacionDetail implements OnInit {
-  private route = inject(ActivatedRoute);
-  private validacionService = inject(ValidacionService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly validacionService = inject(ValidacionService);
 
   revision = signal<RevisionDetail | null>(null);
   activeTab = signal<ReviewTab>('vista-previa');
+
+  statusNotice = signal<{
+    message: string;
+    type: 'info' | 'success' | 'warning';
+  } | null>(null);
 
   backIcon = LucideArrowLeft;
   previewIcon = LucideFileText;
@@ -50,10 +55,27 @@ export class ValidacionDetail implements OnInit {
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
 
-    this.validacionService.getRevisionById(id).subscribe(data => {
-      if (data) {
-        this.revision.set(data);
+    this.validacionService.getRevisionById(id).subscribe(revision => {
+      if (!revision) return;
+
+      if (revision.reviewStatus === 'pendiente') {
+        this.validacionService.startRevision(revision.id).subscribe(() => {
+          this.validacionService.getRevisionById(revision.id).subscribe(updated => {
+            if (!updated) return;
+
+            this.revision.set(updated);
+
+            this.showStatusNotice(
+              'La planeación cambió automáticamente a estado: En revisión.',
+              'info'
+            );
+          });
+        });
+
+        return;
       }
+
+      this.revision.set(revision);
     });
   }
 
@@ -61,58 +83,60 @@ export class ValidacionDetail implements OnInit {
     this.activeTab.set(tab);
   }
 
-  startRevision(): void {
-    const current = this.revision();
-
-    if (!current || current.reviewStatus !== 'pendiente') return;
-
-    this.validacionService.startRevision(current.id).subscribe(() => {
-      this.revision.set({
-        ...current,
-        reviewStatus: 'revision',
-        status: 'revision'
-      });
-    });
-  }
-
   approveRevision(): void {
-    const current = this.revision();
+    const currentRevision = this.revision();
 
-    if (!current || !this.canReviewerEdit(current.reviewStatus)) return;
+    if (!currentRevision) return;
 
-    this.validacionService.approveRevision(current.id).subscribe(() => {
-      this.revision.set({
-        ...current,
-        reviewStatus: 'aprobado',
-        status: 'aprobado'
+    this.validacionService.approveRevision(currentRevision.id).subscribe(() => {
+      this.validacionService.getRevisionById(currentRevision.id).subscribe(updated => {
+        if (!updated) return;
+
+        this.revision.set(updated);
+
+        this.showStatusNotice(
+          'La planeación fue aprobada correctamente.',
+          'success'
+        );
       });
     });
   }
 
   requestCorrections(): void {
-    const current = this.revision();
+    const currentRevision = this.revision();
 
-    if (!current || !this.canReviewerEdit(current.reviewStatus)) return;
+    if (!currentRevision) return;
 
-    this.validacionService.requestCorrections(current.id).subscribe(() => {
-      this.revision.set({
-        ...current,
-        reviewStatus: 'correcciones',
-        status: 'correcciones'
+    this.validacionService.requestCorrections(currentRevision.id).subscribe(() => {
+      this.validacionService.getRevisionById(currentRevision.id).subscribe(updated => {
+        if (!updated) return;
+
+        this.revision.set(updated);
+
+        this.showStatusNotice(
+          'Se solicitaron correcciones al docente.',
+          'warning'
+        );
       });
     });
   }
 
   addComment(comment: string): void {
-    const current = this.revision();
+    const currentRevision = this.revision();
 
-    if (!current || !this.canReviewerEdit(current.reviewStatus)) return;
+    if (!currentRevision || !this.canReviewerEdit(currentRevision.reviewStatus)) return;
     if (!comment.trim()) return;
 
-    this.validacionService.addComment(current.id, comment).subscribe(() => {
-      this.revision.set({
-        ...current,
-        comentariosRevision: [...current.comentariosRevision, comment.trim()]
+    this.validacionService.addComment(currentRevision.id, comment).subscribe(() => {
+      this.validacionService.getRevisionById(currentRevision.id).subscribe(updated => {
+        if (!updated) return;
+
+        this.revision.set(updated);
+
+        this.showStatusNotice(
+          'Comentario agregado correctamente.',
+          'success'
+        );
       });
     });
   }
@@ -147,5 +171,31 @@ export class ValidacionDetail implements OnInit {
     }
 
     return 'bg-orange-100 text-orange-700 ring-orange-200';
+  }
+
+  getStatusNoticeClasses(type: 'info' | 'success' | 'warning'): string {
+    if (type === 'success') {
+      return 'border-green-200 bg-green-50 text-green-700';
+    }
+
+    if (type === 'warning') {
+      return 'border-orange-200 bg-orange-50 text-orange-700';
+    }
+
+    return 'border-cyan-200 bg-cyan-50 text-cyan-700';
+  }
+
+  private showStatusNotice(
+    message: string,
+    type: 'info' | 'success' | 'warning'
+  ): void {
+    this.statusNotice.set({
+      message,
+      type
+    });
+
+    setTimeout(() => {
+      this.statusNotice.set(null);
+    }, 3500);
   }
 }

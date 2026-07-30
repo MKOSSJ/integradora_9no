@@ -1,98 +1,143 @@
-import { Injectable, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Injectable, computed, signal } from '@angular/core';
 
-export type UserRole = 'DOCENTE' | 'REVISOR' | 'ADMIN' | 'DIRECTIVO';
+export type UserRole =
+  | 'ADMIN'
+  | 'REVISOR'
+  | 'DOCENTE';
 
-export interface AppUser {
+export interface AuthUser {
   id: number;
+  nombre: string;
   name: string;
+  initials: string;
   email: string;
   role: UserRole;
-  initials: string;
 }
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class AuthService {
-  private readonly userKey = 'userState';
-  private readonly authKey = 'isAuthenticated';
+  private readonly storageKey = 'sistema_academico_user';
 
-  currentUser = signal<AppUser | null>(this.getStoredUser());
+  private readonly currentUserSignal = signal<AuthUser | null>(
+    this.getStoredUser()
+  );
 
-  constructor(private router: Router) {}
+  currentUser = this.currentUserSignal.asReadonly();
 
-  login(email: string, password: string): void {
-    let user: AppUser;
+  user = this.currentUser;
 
-    const emailLower = email.toLowerCase();
+  isAuthenticated = computed(() => this.currentUserSignal() !== null);
 
-    if (emailLower.includes('admin')) {
-      user = {
-        id: 1,
-        name: 'Admin User',
-        email: '',
-        role: 'ADMIN',
-        initials: 'AU',
-      };
-    } else if (emailLower.includes('revisor')) {
-      user = {
-        id: 2,
-        name: 'Revisor Juan',
-        email,
-        role: 'REVISOR',
-        initials: 'RJ',
-      };
-    } else {
-      user = {
-        id: 3,
-        name: 'Carlos Pérez',
-        email,
-        role: 'DOCENTE',
-        initials: 'CP',
-      };
-      if (email === 'directivo@email.com') {
-        user = {
-          id: 4,
-          name: 'Directivo',
-          initials: 'DR',
-          email,
-          role: 'DIRECTIVO',
-        };
-      }
+  userRole = computed(() => this.currentUserSignal()?.role ?? null);
+
+  login(email: string, password: string): boolean {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    if (!normalizedEmail || !normalizedPassword) {
+      return false;
     }
 
-    localStorage.setItem(this.authKey, 'true');
-    localStorage.setItem(this.userKey, JSON.stringify(user));
+    const user = this.resolveMockUser(normalizedEmail);
 
-    this.currentUser.set(user);
-    this.router.navigate(['/dashboard']);
+    if (!user) {
+      return false;
+    }
+
+    this.clearOldSessionKeys();
+
+    this.currentUserSignal.set(user);
+    localStorage.setItem(this.storageKey, JSON.stringify(user));
+
+    return true;
   }
 
   logout(): void {
-    localStorage.removeItem(this.authKey);
-    localStorage.removeItem(this.userKey);
-
-    this.currentUser.set(null);
-    this.router.navigate(['/login']);
+    this.currentUserSignal.set(null);
+    this.clearOldSessionKeys();
   }
 
-  isAuthenticated(): boolean {
-    return localStorage.getItem(this.authKey) === 'true' && this.currentUser() !== null;
+  isLoggedIn(): boolean {
+    return this.isAuthenticated();
   }
 
-  private getStoredUser(): AppUser | null {
-    const data = localStorage.getItem(this.userKey);
+  getRole(): UserRole | null {
+    return this.userRole();
+  }
 
-    if (!data) {
-      return null;
+  hasRole(role: UserRole): boolean {
+    return this.userRole() === role;
+  }
+
+  private resolveMockUser(email: string): AuthUser | null {
+    if (email === 'admin@email.com' || email === 'directivo@email.com') {
+      return {
+        id: 1,
+        nombre: 'Administrador / Directivo',
+        name: 'Administrador / Directivo',
+        initials: 'AD',
+        email,
+        role: 'ADMIN'
+      };
     }
+
+    if (email === 'revisor@email.com') {
+      return {
+        id: 2,
+        nombre: 'Revisor Académico',
+        name: 'Revisor Académico',
+        initials: 'RA',
+        email,
+        role: 'REVISOR'
+      };
+    }
+
+    if (email === 'docente@email.com') {
+      return {
+        id: 3,
+        nombre: 'Docente',
+        name: 'Docente',
+        initials: 'DO',
+        email,
+        role: 'DOCENTE'
+      };
+    }
+
+    return null;
+  }
+
+  private getStoredUser(): AuthUser | null {
+    const storedUser = localStorage.getItem(this.storageKey);
+
+    if (!storedUser) return null;
 
     try {
-      return JSON.parse(data) as AppUser;
+      const parsedUser = JSON.parse(storedUser) as Partial<AuthUser>;
+
+      if (!parsedUser.email || !parsedUser.role) {
+        this.clearOldSessionKeys();
+        return null;
+      }
+
+      return {
+        id: parsedUser.id ?? 0,
+        nombre: parsedUser.nombre ?? parsedUser.name ?? 'Usuario',
+        name: parsedUser.name ?? parsedUser.nombre ?? 'Usuario',
+        initials: parsedUser.initials ?? 'US',
+        email: parsedUser.email,
+        role: parsedUser.role
+      };
     } catch {
-      localStorage.removeItem(this.userKey);
+      this.clearOldSessionKeys();
       return null;
     }
+  }
+
+  private clearOldSessionKeys(): void {
+    localStorage.removeItem(this.storageKey);
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userState');
   }
 }
