@@ -14,6 +14,8 @@ builder.Services.AddScoped<IAsignaturaService, AsignaturaService>();
 builder.Services.AddScoped<ICicloEscolarService, CicloEscolarService>();
 builder.Services.AddScoped<IPeriodoService, PeriodoService>();
 builder.Services.AddScoped<IGrupoService, GrupoService>();
+builder.Services.AddScoped<IAcademiaService, AcademiaService>();
+builder.Services.AddScoped<ICargaAcademicaService, CargaAcademicaService>();
 
 
 builder.Services.AddEndpointsApiExplorer();
