@@ -9,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<ICarreraService, CarreraService>();
+builder.Services.AddScoped<IAsignaturaService, AsignaturaService>();
+builder.Services.AddScoped<ICicloEscolarService, CicloEscolarService>();
+builder.Services.AddScoped<IPeriodoService, PeriodoService>();
+builder.Services.AddScoped<IGrupoService, GrupoService>();
 
 
 builder.Services.AddEndpointsApiExplorer();
