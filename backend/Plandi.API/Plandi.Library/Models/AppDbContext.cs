@@ -39,6 +39,7 @@ public class AppDbContext : DbContext
     public DbSet<Chat> Chats => Set<Chat>();
     public DbSet<ChatParticipante> ChatParticipantes => Set<ChatParticipante>();
     public DbSet<ChatMensaje> ChatMensajes => Set<ChatMensaje>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -514,6 +515,25 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.UsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.Ignore(e => e.IsExpired);
+
+            entity.Property(e => e.TokenHash)
+                .IsRequired()
+                .HasMaxLength(450); 
+
+            entity.HasIndex(e => e.TokenHash)
+                .IsUnique();
+
+            entity.Property(e => e.Expires).IsRequired();
+            entity.Property(e => e.Created).IsRequired();
+
+            entity.HasOne(e => e.Usuario)
+                .WithMany() 
+                .HasForeignKey(e => e.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict); 
         });
     }
 
