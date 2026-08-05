@@ -35,7 +35,7 @@ namespace Plandi.Services
                 new Claim(ClaimTypes.Role, ur.Rol.Nombre)));
 
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+                Encoding.UTF8.GetBytes(_config["Jwt:SecretKey"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var expirationMinutes = int.Parse(_config["Jwt:AccessTokenExpirationMinutes"]!);

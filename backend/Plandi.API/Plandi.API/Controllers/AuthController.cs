@@ -1,8 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Client;
-using Plandi.Library.Models;
 using Plandi.Services.Interfaces;
 using Plandi.Dto.Auth;
 
@@ -14,7 +13,6 @@ namespace Plandi.API.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ILogger<AuthController> _logger;
-
 
         public AuthController(IAuthService authService, ILogger<AuthController> logger)
         {
@@ -33,10 +31,12 @@ namespace Plandi.API.Controllers
             {
                 return BadRequest(new { message = "Datos de registro no proporcionados." });
             }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
             try
             {
                 var result = await _authService.RegisterUser(registerDto);
@@ -54,10 +54,150 @@ namespace Plandi.API.Controllers
                     Success = false,
                     Message = "Ocurrió un error interno en el servidor."
                 });
-                
+            }
+        }
+
+        [HttpPost("login")]
+        [EnableRateLimiting("loginPolicy")]
+        [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
+        {
+            if (loginDto == null)
+            {
+                return BadRequest(new { message = "Datos de inicio de sesión no proporcionados." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _authService.LoginUser(loginDto);
+                if (!result.Success)
+                {
+                    return Unauthorized(result);
+                }
+
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Unauthorized(new LoginResponseDto { Success = false, Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while logging in user.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new LoginResponseDto
+                {
+                    Success = false,
+                    Message = "Ocurrió un error interno en el servidor."
+                });
+            }
+        }
+
+        [HttpPost("refresh-token")]
+        [ProducesResponseType(typeof(RequestTokenResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RefreshToken([FromBody] RequestToken requestToken)
+        {
+            if (requestToken == null)
+            {
+                return BadRequest(new { message = "Refresh token no proporcionado." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _authService.RefreshTokenAsync(requestToken);
+                if (!result.Success)
+                {
+                    return Unauthorized(result);
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while refreshing token.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new RequestTokenResponse
+                {
+                    Success = false,
+                    Message = "Ocurrió un error interno en el servidor."
+                });
+            }
+        }
+
+        [HttpPost("forgot-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+        {
+            if (forgotPasswordDto == null)
+            {
+                return BadRequest(new { message = "Datos de recuperación no proporcionados." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _authService.ForgotPasswordAsync(forgotPasswordDto);
+                return Ok(new { message = "Si el correo existe, se ha enviado un enlace de recuperación." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during forgot password.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ocurrió un error interno en el servidor." });
+            }
+        }
+
+        [HttpPost("reset-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        {
+            if (resetPasswordDto == null)
+            {
+                return BadRequest(new { message = "Datos de restablecimiento no proporcionados." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _authService.ResetPasswordAsync(resetPasswordDto);
+                if (!result)
+                {
+                    return Unauthorized(new { message = "Token inválido o expirado." });
+                }
+
+                return Ok(new { message = "Contraseña restablecida correctamente." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during reset password.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ocurrió un error interno en el servidor." });
             }
         }
     }
-
-
 }
