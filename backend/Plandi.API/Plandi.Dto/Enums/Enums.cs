@@ -34,8 +34,7 @@ namespace Plandi.Dto.Enums
     {
         Docente = 1,
         Revisor = 2,
-        JefeAcademia = 3,
-        Coordinador = 4
+        Director = 3
     }
 
 
