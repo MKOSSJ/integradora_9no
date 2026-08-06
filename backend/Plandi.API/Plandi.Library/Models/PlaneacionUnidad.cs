@@ -9,13 +9,19 @@ namespace Plandi.Library.Models
         public long PlaneacionDidacticaId { get; set; }
         public PlaneacionDidactica PlaneacionDidactica { get; set; } = null!;
 
-        public string Numero { get; set; } = string.Empty;
+        public int? NumeroUnidad { get; set; } =null;
 
-        public string Nombre { get; set; } = string.Empty;
+        public string NombreUnidad { get; set; } = string.Empty;
 
-        public string? ResultadoAprendizaje { get; set; }
+        public string? PropositoEsperado { get; set; }
 
-        public int? Horas { get; set; }
+        public int? HorasSaber { get; set; }
+
+        public int? HorasSaberHacer { get; set; }
+
+        public int? HorasTotales { get; set; }
+
+        public decimal? PorcentajeUnidad { get; set; }
 
         public int Orden { get; set; }
 
@@ -24,6 +30,11 @@ namespace Plandi.Library.Models
 
         public DateTime? FechaUltimaModificacion { get; set; }
 
-        public ICollection<PlaneacionActividad> Actividades { get; set; } = new List<PlaneacionActividad>();
+        // Child collections
+        public ICollection<PlaneacionTema> Temas { get; set; } = new List<PlaneacionTema>();
+
+        public ICollection<PlaneacionEvaluacion> Evaluaciones { get; set; } = new List<PlaneacionEvaluacion>();
+
+        public ICollection<PlaneacionSecuencia> Secuencias { get; set; } = new List<PlaneacionSecuencia>();
     }
 }

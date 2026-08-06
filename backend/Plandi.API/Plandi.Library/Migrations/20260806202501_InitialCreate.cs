@@ -293,6 +293,60 @@ namespace Plandi.Library.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "planeaciones_didacticas",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PeriodoId = table.Column<long>(type: "bigint", nullable: false),
+                    AsignaturaId = table.Column<long>(type: "bigint", nullable: false),
+                    AcademiaId = table.Column<long>(type: "bigint", nullable: true),
+                    RevisorId = table.Column<long>(type: "bigint", nullable: true),
+                    Estado = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    UltimaModificacionPorId = table.Column<long>(type: "bigint", nullable: true),
+                    FechaUltimaModificacion = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<long>(type: "bigint", nullable: true),
+                    PublicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_planeaciones_didacticas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_planeaciones_didacticas_academias_AcademiaId",
+                        column: x => x.AcademiaId,
+                        principalTable: "academias",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_planeaciones_didacticas_asignaturas_AsignaturaId",
+                        column: x => x.AsignaturaId,
+                        principalTable: "asignaturas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_planeaciones_didacticas_periodos_PeriodoId",
+                        column: x => x.PeriodoId,
+                        principalTable: "periodos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_planeaciones_didacticas_usuarios_RevisorId",
+                        column: x => x.RevisorId,
+                        principalTable: "usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_planeaciones_didacticas_usuarios_UltimaModificacionPorId",
+                        column: x => x.UltimaModificacionPorId,
+                        principalTable: "usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "programas_asignatura",
                 columns: table => new
                 {
@@ -410,69 +464,6 @@ namespace Plandi.Library.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "planeaciones_didacticas",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PeriodoId = table.Column<long>(type: "bigint", nullable: false),
-                    AsignaturaId = table.Column<long>(type: "bigint", nullable: false),
-                    AcademiaId = table.Column<long>(type: "bigint", nullable: true),
-                    ProgramaAsignaturaId = table.Column<long>(type: "bigint", nullable: true),
-                    RevisorId = table.Column<long>(type: "bigint", nullable: true),
-                    Titulo = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
-                    Estado = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    UltimaModificacionPorId = table.Column<long>(type: "bigint", nullable: true),
-                    FechaUltimaModificacion = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedBy = table.Column<long>(type: "bigint", nullable: true),
-                    PublicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_planeaciones_didacticas", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_planeaciones_didacticas_academias_AcademiaId",
-                        column: x => x.AcademiaId,
-                        principalTable: "academias",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_planeaciones_didacticas_asignaturas_AsignaturaId",
-                        column: x => x.AsignaturaId,
-                        principalTable: "asignaturas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_planeaciones_didacticas_periodos_PeriodoId",
-                        column: x => x.PeriodoId,
-                        principalTable: "periodos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_planeaciones_didacticas_programas_asignatura_ProgramaAsignaturaId",
-                        column: x => x.ProgramaAsignaturaId,
-                        principalTable: "programas_asignatura",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_planeaciones_didacticas_usuarios_RevisorId",
-                        column: x => x.RevisorId,
-                        principalTable: "usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_planeaciones_didacticas_usuarios_UltimaModificacionPorId",
-                        column: x => x.UltimaModificacionPorId,
-                        principalTable: "usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "chats",
                 columns: table => new
                 {
@@ -498,52 +489,35 @@ namespace Plandi.Library.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "planeacion_docentes",
+                name: "planeacion_referencias",
                 columns: table => new
                 {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     PlaneacionDidacticaId = table.Column<long>(type: "bigint", nullable: false),
-                    DocenteId = table.Column<long>(type: "bigint", nullable: false),
+                    ReferenciaAPA = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Orden = table.Column<int>(type: "int", nullable: false),
+                    UltimaModificacionPorId = table.Column<long>(type: "bigint", nullable: true),
+                    FechaUltimaModificacion = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    PublicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Activo = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_planeacion_docentes", x => new { x.PlaneacionDidacticaId, x.DocenteId });
+                    table.PrimaryKey("PK_planeacion_referencias", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_planeacion_docentes_planeaciones_didacticas_PlaneacionDidacticaId",
+                        name: "FK_planeacion_referencias_planeaciones_didacticas_PlaneacionDidacticaId",
                         column: x => x.PlaneacionDidacticaId,
                         principalTable: "planeaciones_didacticas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_planeacion_docentes_usuarios_DocenteId",
-                        column: x => x.DocenteId,
+                        name: "FK_planeacion_referencias_usuarios_UltimaModificacionPorId",
+                        column: x => x.UltimaModificacionPorId,
                         principalTable: "usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "planeacion_grupos",
-                columns: table => new
-                {
-                    PlaneacionDidacticaId = table.Column<long>(type: "bigint", nullable: false),
-                    GrupoId = table.Column<long>(type: "bigint", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_planeacion_grupos", x => new { x.PlaneacionDidacticaId, x.GrupoId });
-                    table.ForeignKey(
-                        name: "FK_planeacion_grupos_grupos_GrupoId",
-                        column: x => x.GrupoId,
-                        principalTable: "grupos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_planeacion_grupos_planeaciones_didacticas_PlaneacionDidacticaId",
-                        column: x => x.PlaneacionDidacticaId,
-                        principalTable: "planeaciones_didacticas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -555,10 +529,13 @@ namespace Plandi.Library.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PlaneacionDidacticaId = table.Column<long>(type: "bigint", nullable: false),
-                    Numero = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Nombre = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
-                    ResultadoAprendizaje = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Horas = table.Column<int>(type: "int", nullable: true),
+                    NumeroUnidad = table.Column<int>(type: "int", maxLength: 20, nullable: false),
+                    NombreUnidad = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
+                    PropositoEsperado = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    HorasSaber = table.Column<int>(type: "int", nullable: true),
+                    HorasSaberHacer = table.Column<int>(type: "int", nullable: true),
+                    HorasTotales = table.Column<int>(type: "int", nullable: true),
+                    PorcentajeUnidad = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
                     Orden = table.Column<int>(type: "int", nullable: false),
                     UltimaModificacionPorId = table.Column<long>(type: "bigint", nullable: true),
                     FechaUltimaModificacion = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -579,6 +556,60 @@ namespace Plandi.Library.Migrations
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_planeacion_unidades_usuarios_UltimaModificacionPorId",
+                        column: x => x.UltimaModificacionPorId,
+                        principalTable: "usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "planeacion_caratulas",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PlaneacionDidacticaId = table.Column<long>(type: "bigint", nullable: false),
+                    ProgramaAsignaturaId = table.Column<long>(type: "bigint", nullable: true),
+                    ProgramaEducativo = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Cuatrimestre = table.Column<int>(type: "int", nullable: true),
+                    NombreAsignatura = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Docentes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PeriodoEscolar = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Grupos = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    PropositoAsignatura = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CompetenciaAsignatura = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TipoCompetencia = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Creditos = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
+                    Modalidad = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    HorasSaber = table.Column<int>(type: "int", nullable: true),
+                    HorasSaberHacer = table.Column<int>(type: "int", nullable: true),
+                    HorasTotales = table.Column<int>(type: "int", nullable: true),
+                    HorasSemana = table.Column<int>(type: "int", nullable: true),
+                    UltimaModificacionPorId = table.Column<long>(type: "bigint", nullable: true),
+                    Version = table.Column<int>(type: "int", nullable: false),
+                    PublicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_planeacion_caratulas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_planeacion_caratulas_planeaciones_didacticas_PlaneacionDidacticaId",
+                        column: x => x.PlaneacionDidacticaId,
+                        principalTable: "planeaciones_didacticas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_planeacion_caratulas_programas_asignatura_ProgramaAsignaturaId",
+                        column: x => x.ProgramaAsignaturaId,
+                        principalTable: "programas_asignatura",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_planeacion_caratulas_usuarios_UltimaModificacionPorId",
                         column: x => x.UltimaModificacionPorId,
                         principalTable: "usuarios",
                         principalColumn: "Id",
@@ -648,24 +679,23 @@ namespace Plandi.Library.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "planeacion_actividades",
+                name: "planeacion_evaluaciones",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PlaneacionUnidadId = table.Column<long>(type: "bigint", nullable: false),
-                    TipoActividad = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Semana = table.Column<int>(type: "int", nullable: true),
-                    Horas = table.Column<int>(type: "int", nullable: true),
-                    EstrategiaEnsenanza = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EstrategiaAprendizaje = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Evidencia = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    InstrumentoEvaluacion = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    PorcentajeEvaluacion = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
+                    PeriodoSemanas = table.Column<int>(type: "int", maxLength: 100, nullable: true),
+                    ResultadoAprendizaje = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EvidenciaAprendizaje = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Fase = table.Column<int>(type: "int", nullable: false),
+                    TipoEvaluacion = table.Column<int>(type: "int", nullable: true),
+                    AgenteEvaluador = table.Column<int>(type: "int", nullable: false),
+                    Ponderacion = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
+                    InstrumentoEvaluacion = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Orden = table.Column<int>(type: "int", nullable: false),
-                    CreatedBy = table.Column<long>(type: "bigint", nullable: true),
-                    UpdatedBy = table.Column<long>(type: "bigint", nullable: true),
+                    UltimaModificacionPorId = table.Column<long>(type: "bigint", nullable: true),
+                    FechaUltimaModificacion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     PublicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Activo = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -674,11 +704,17 @@ namespace Plandi.Library.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_planeacion_actividades", x => x.Id);
+                    table.PrimaryKey("PK_planeacion_evaluaciones", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_planeacion_actividades_planeacion_unidades_PlaneacionUnidadId",
+                        name: "FK_planeacion_evaluaciones_planeacion_unidades_PlaneacionUnidadId",
                         column: x => x.PlaneacionUnidadId,
                         principalTable: "planeacion_unidades",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_planeacion_evaluaciones_usuarios_UltimaModificacionPorId",
+                        column: x => x.UltimaModificacionPorId,
+                        principalTable: "usuarios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -694,6 +730,12 @@ namespace Plandi.Library.Migrations
                     RevisorId = table.Column<long>(type: "bigint", nullable: false),
                     Comentario = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Estado = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Seccion = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PlaneacionTemaId = table.Column<long>(type: "bigint", nullable: true),
+                    PlaneacionEvaluacionId = table.Column<long>(type: "bigint", nullable: true),
+                    PlaneacionSecuenciaId = table.Column<long>(type: "bigint", nullable: true),
+                    FechaRevision = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaAtendida = table.Column<DateTime>(type: "datetime2", nullable: true),
                     PublicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Activo = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -718,6 +760,82 @@ namespace Plandi.Library.Migrations
                     table.ForeignKey(
                         name: "FK_planeacion_observaciones_usuarios_RevisorId",
                         column: x => x.RevisorId,
+                        principalTable: "usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "planeacion_secuencias",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PlaneacionUnidadId = table.Column<long>(type: "bigint", nullable: false),
+                    Fase = table.Column<int>(type: "int", nullable: false),
+                    Estrategia = table.Column<int>(type: "int", nullable: false),
+                    ActividadDocente = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ActividadEstudiante = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EvidenciaAprendizaje = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MediosMateriales = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Orden = table.Column<int>(type: "int", nullable: false),
+                    UltimaModificacionPorId = table.Column<long>(type: "bigint", nullable: true),
+                    FechaUltimaModificacion = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    PublicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_planeacion_secuencias", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_planeacion_secuencias_planeacion_unidades_PlaneacionUnidadId",
+                        column: x => x.PlaneacionUnidadId,
+                        principalTable: "planeacion_unidades",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_planeacion_secuencias_usuarios_UltimaModificacionPorId",
+                        column: x => x.UltimaModificacionPorId,
+                        principalTable: "usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "planeacion_temas",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PlaneacionUnidadId = table.Column<long>(type: "bigint", nullable: false),
+                    Tema = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
+                    SaberConceptual = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SaberHacer = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SaberSer = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Orden = table.Column<int>(type: "int", nullable: false),
+                    UltimaModificacionPorId = table.Column<long>(type: "bigint", nullable: true),
+                    FechaUltimaModificacion = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    PublicId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_planeacion_temas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_planeacion_temas_planeacion_unidades_PlaneacionUnidadId",
+                        column: x => x.PlaneacionUnidadId,
+                        principalTable: "planeacion_unidades",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_planeacion_temas_usuarios_UltimaModificacionPorId",
+                        column: x => x.UltimaModificacionPorId,
                         principalTable: "usuarios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -814,6 +932,11 @@ namespace Plandi.Library.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "planeaciones_didacticas",
+                columns: new[] { "Id", "AcademiaId", "Activo", "AsignaturaId", "CreatedAt", "CreatedBy", "DeletedAt", "Estado", "FechaUltimaModificacion", "PeriodoId", "PublicId", "RevisorId", "UltimaModificacionPorId", "UpdatedAt" },
+                values: new object[] { 1L, null, true, 1L, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 1L, null, "EnProceso", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 1L, new Guid("cccccccc-0000-0000-0000-000000000001"), 4L, 2L, null });
+
+            migrationBuilder.InsertData(
                 table: "programas_asignatura",
                 columns: new[] { "Id", "AcademiaId", "Activo", "AsignaturaId", "Carrera", "ClaveAsignatura", "Competencia", "CreatedAt", "Creditos", "Cuatrimestre", "DeletedAt", "DocumentoId", "FechaUltimaModificacion", "HorasSemana", "HorasTotales", "JsonExtraido", "NombreAsignatura", "Proposito", "PublicId", "TextoExtraido", "UltimaModificacionPorId", "UpdatedAt" },
                 values: new object[] { 1L, 1L, true, 1L, "Ingeniería en Tecnologías de la Información e Innovación Digital", "AW-701", "Desarrollar aplicaciones web utilizando tecnologías actuales y buenas prácticas de programación.", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 5m, 7, null, 1L, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 5, 75, "{\r\n  \"unidades\": [\r\n    {\r\n      \"numero\": \"I\",\r\n      \"nombre\": \"Introducción a las aplicaciones web\",\r\n      \"resultado_aprendizaje\": \"El alumno identificará los componentes básicos de una aplicación web.\",\r\n      \"temas\": [\r\n        \"Cliente-servidor\",\r\n        \"HTTP\",\r\n        \"APIs REST\"\r\n      ]\r\n    },\r\n    {\r\n      \"numero\": \"II\",\r\n      \"nombre\": \"Desarrollo de APIs\",\r\n      \"resultado_aprendizaje\": \"El alumno desarrollará servicios web usando arquitectura por capas.\",\r\n      \"temas\": [\r\n        \"Controladores\",\r\n        \"Servicios\",\r\n        \"DTOs\",\r\n        \"Entity Framework Core\"\r\n      ]\r\n    }\r\n  ]\r\n}", "Aplicaciones Web", "El alumno desarrollará aplicaciones web funcionales aplicando arquitectura por capas.", new Guid("bbbbbbbb-0000-0000-0000-000000000001"), "Texto extraído de prueba del programa de asignatura.", 1L, null });
@@ -828,40 +951,17 @@ namespace Plandi.Library.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "planeaciones_didacticas",
-                columns: new[] { "Id", "AcademiaId", "Activo", "AsignaturaId", "CreatedAt", "CreatedBy", "DeletedAt", "Estado", "FechaUltimaModificacion", "PeriodoId", "ProgramaAsignaturaId", "PublicId", "RevisorId", "Titulo", "UltimaModificacionPorId", "UpdatedAt" },
-                values: new object[] { 1L, 1L, true, 1L, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 1L, null, "EnProceso", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 1L, 1L, new Guid("cccccccc-0000-0000-0000-000000000001"), 4L, "Planeación Didáctica - Aplicaciones Web - Septiembre-Diciembre 2026", 2L, null });
-
-            migrationBuilder.InsertData(
                 table: "chats",
                 columns: new[] { "Id", "Activo", "CreatedAt", "DeletedAt", "PlaneacionDidacticaId", "PublicId", "Titulo", "UpdatedAt" },
                 values: new object[] { 1L, true, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, 1L, new Guid("ffffffff-0000-0000-0000-000000000001"), "Chat - Planeación Aplicaciones Web", null });
 
             migrationBuilder.InsertData(
-                table: "planeacion_docentes",
-                columns: new[] { "DocenteId", "PlaneacionDidacticaId", "Activo", "CreatedAt" },
-                values: new object[,]
-                {
-                    { 2L, 1L, true, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) },
-                    { 3L, 1L, true, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) }
-                });
-
-            migrationBuilder.InsertData(
-                table: "planeacion_grupos",
-                columns: new[] { "GrupoId", "PlaneacionDidacticaId", "CreatedAt" },
-                values: new object[,]
-                {
-                    { 1L, 1L, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) },
-                    { 2L, 1L, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) }
-                });
-
-            migrationBuilder.InsertData(
                 table: "planeacion_unidades",
-                columns: new[] { "Id", "Activo", "CreatedAt", "DeletedAt", "FechaUltimaModificacion", "Horas", "Nombre", "Numero", "Orden", "PlaneacionDidacticaId", "PublicId", "ResultadoAprendizaje", "UltimaModificacionPorId", "UpdatedAt" },
+                columns: new[] { "Id", "Activo", "CreatedAt", "DeletedAt", "FechaUltimaModificacion", "HorasSaber", "HorasSaberHacer", "HorasTotales", "NombreUnidad", "NumeroUnidad", "Orden", "PlaneacionDidacticaId", "PorcentajeUnidad", "PropositoEsperado", "PublicId", "UltimaModificacionPorId", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1L, true, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 20, "Introducción a las aplicaciones web", "I", 1, 1L, new Guid("dddddddd-0000-0000-0000-000000000001"), "El alumno identificará los componentes básicos de una aplicación web.", 2L, null },
-                    { 2L, true, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 30, "Desarrollo de APIs", "II", 2, 1L, new Guid("dddddddd-0000-0000-0000-000000000002"), "El alumno desarrollará servicios web usando arquitectura por capas.", 3L, null }
+                    { 1L, true, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, 20, "Introducción a las aplicaciones web", 1, 1, 1L, null, "El alumno identificará los componentes básicos de una aplicación web.", new Guid("dddddddd-0000-0000-0000-000000000001"), 2L, null },
+                    { 2L, true, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, 30, "Desarrollo de APIs", 2, 2, 1L, null, "El alumno desarrollará servicios web usando arquitectura por capas.", new Guid("dddddddd-0000-0000-0000-000000000002"), 3L, null }
                 });
 
             migrationBuilder.InsertData(
@@ -884,18 +984,9 @@ namespace Plandi.Library.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "planeacion_actividades",
-                columns: new[] { "Id", "Activo", "CreatedAt", "CreatedBy", "DeletedAt", "Descripcion", "EstrategiaAprendizaje", "EstrategiaEnsenanza", "Evidencia", "Horas", "InstrumentoEvaluacion", "Orden", "PlaneacionUnidadId", "PorcentajeEvaluacion", "PublicId", "Semana", "TipoActividad", "UpdatedAt", "UpdatedBy" },
-                values: new object[,]
-                {
-                    { 1L, true, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2L, null, "Presentación de conceptos básicos de aplicaciones web.", "Discusión grupal y análisis de ejemplos.", "Exposición guiada y preguntas detonadoras.", "Mapa conceptual de arquitectura web.", 2, "Lista de cotejo", 1, 1L, 10m, new Guid("eeeeeeee-0000-0000-0000-000000000001"), 1, "APERTURA", null, null },
-                    { 2L, true, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 3L, null, "Construcción de una API REST con .NET por capas.", "Desarrollo guiado de endpoints.", "Demostración práctica.", "API funcional con controladores y servicios.", 6, "Rúbrica", 1, 2L, 30m, new Guid("eeeeeeee-0000-0000-0000-000000000002"), 4, "DESARROLLO", null, null }
-                });
-
-            migrationBuilder.InsertData(
                 table: "planeacion_observaciones",
-                columns: new[] { "Id", "Activo", "Comentario", "CreatedAt", "DeletedAt", "Estado", "PlaneacionDidacticaId", "PlaneacionUnidadId", "PublicId", "RevisorId", "UpdatedAt" },
-                values: new object[] { 1L, true, "La evidencia de la Unidad I debe estar mejor relacionada con el resultado de aprendizaje.", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "ABIERTA", 1L, 1L, new Guid("22222222-aaaa-0000-0000-000000000001"), 4L, null });
+                columns: new[] { "Id", "Activo", "Comentario", "CreatedAt", "DeletedAt", "Estado", "FechaAtendida", "FechaRevision", "PlaneacionDidacticaId", "PlaneacionEvaluacionId", "PlaneacionSecuenciaId", "PlaneacionTemaId", "PlaneacionUnidadId", "PublicId", "RevisorId", "Seccion", "UpdatedAt" },
+                values: new object[] { 1L, true, "La evidencia de la Unidad I debe estar mejor relacionada con el resultado de aprendizaje.", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "ABIERTA", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 1L, null, null, null, 1L, new Guid("22222222-aaaa-0000-0000-000000000001"), 4L, "Unidad 1 ", null });
 
             migrationBuilder.CreateIndex(
                 name: "IX_academia_usuarios_UsuarioId",
@@ -1025,19 +1116,30 @@ namespace Plandi.Library.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_planeacion_actividades_PlaneacionUnidadId_Orden",
-                table: "planeacion_actividades",
+                name: "IX_planeacion_caratulas_PlaneacionDidacticaId",
+                table: "planeacion_caratulas",
+                column: "PlaneacionDidacticaId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_planeacion_caratulas_ProgramaAsignaturaId",
+                table: "planeacion_caratulas",
+                column: "ProgramaAsignaturaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_planeacion_caratulas_UltimaModificacionPorId",
+                table: "planeacion_caratulas",
+                column: "UltimaModificacionPorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_planeacion_evaluaciones_PlaneacionUnidadId_Orden",
+                table: "planeacion_evaluaciones",
                 columns: new[] { "PlaneacionUnidadId", "Orden" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_planeacion_docentes_DocenteId",
-                table: "planeacion_docentes",
-                column: "DocenteId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_planeacion_grupos_GrupoId",
-                table: "planeacion_grupos",
-                column: "GrupoId");
+                name: "IX_planeacion_evaluaciones_UltimaModificacionPorId",
+                table: "planeacion_evaluaciones",
+                column: "UltimaModificacionPorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_planeacion_observaciones_PlaneacionDidacticaId",
@@ -1053,6 +1155,36 @@ namespace Plandi.Library.Migrations
                 name: "IX_planeacion_observaciones_RevisorId",
                 table: "planeacion_observaciones",
                 column: "RevisorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_planeacion_referencias_PlaneacionDidacticaId_Orden",
+                table: "planeacion_referencias",
+                columns: new[] { "PlaneacionDidacticaId", "Orden" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_planeacion_referencias_UltimaModificacionPorId",
+                table: "planeacion_referencias",
+                column: "UltimaModificacionPorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_planeacion_secuencias_PlaneacionUnidadId_Orden",
+                table: "planeacion_secuencias",
+                columns: new[] { "PlaneacionUnidadId", "Orden" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_planeacion_secuencias_UltimaModificacionPorId",
+                table: "planeacion_secuencias",
+                column: "UltimaModificacionPorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_planeacion_temas_PlaneacionUnidadId_Orden",
+                table: "planeacion_temas",
+                columns: new[] { "PlaneacionUnidadId", "Orden" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_planeacion_temas_UltimaModificacionPorId",
+                table: "planeacion_temas",
+                column: "UltimaModificacionPorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_planeacion_unidades_PlaneacionDidacticaId_Orden",
@@ -1085,11 +1217,6 @@ namespace Plandi.Library.Migrations
                 table: "planeaciones_didacticas",
                 columns: new[] { "PeriodoId", "AsignaturaId" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_planeaciones_didacticas_ProgramaAsignaturaId",
-                table: "planeaciones_didacticas",
-                column: "ProgramaAsignaturaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_planeaciones_didacticas_RevisorId",
@@ -1166,25 +1293,34 @@ namespace Plandi.Library.Migrations
                 name: "chat_participantes");
 
             migrationBuilder.DropTable(
-                name: "planeacion_actividades");
+                name: "planeacion_caratulas");
 
             migrationBuilder.DropTable(
-                name: "planeacion_docentes");
-
-            migrationBuilder.DropTable(
-                name: "planeacion_grupos");
+                name: "planeacion_evaluaciones");
 
             migrationBuilder.DropTable(
                 name: "planeacion_observaciones");
 
             migrationBuilder.DropTable(
+                name: "planeacion_referencias");
+
+            migrationBuilder.DropTable(
+                name: "planeacion_secuencias");
+
+            migrationBuilder.DropTable(
+                name: "planeacion_temas");
+
+            migrationBuilder.DropTable(
                 name: "usuario_roles");
+
+            migrationBuilder.DropTable(
+                name: "grupos");
 
             migrationBuilder.DropTable(
                 name: "chats");
 
             migrationBuilder.DropTable(
-                name: "grupos");
+                name: "programas_asignatura");
 
             migrationBuilder.DropTable(
                 name: "planeacion_unidades");
@@ -1196,28 +1332,25 @@ namespace Plandi.Library.Migrations
                 name: "carreras");
 
             migrationBuilder.DropTable(
+                name: "documentos");
+
+            migrationBuilder.DropTable(
                 name: "planeaciones_didacticas");
-
-            migrationBuilder.DropTable(
-                name: "periodos");
-
-            migrationBuilder.DropTable(
-                name: "programas_asignatura");
-
-            migrationBuilder.DropTable(
-                name: "ciclos_escolares");
 
             migrationBuilder.DropTable(
                 name: "asignaturas");
 
             migrationBuilder.DropTable(
-                name: "documentos");
+                name: "periodos");
+
+            migrationBuilder.DropTable(
+                name: "usuarios");
 
             migrationBuilder.DropTable(
                 name: "academias");
 
             migrationBuilder.DropTable(
-                name: "usuarios");
+                name: "ciclos_escolares");
         }
     }
 }

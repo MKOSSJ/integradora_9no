@@ -388,10 +388,9 @@ public static class DataSeeder
                 PublicId = Guid.Parse("cccccccc-0000-0000-0000-000000000001"),
                 PeriodoId = 1,
                 AsignaturaId = 1,
-                AcademiaId = 1,
-                ProgramaAsignaturaId = 1,
+               
                 RevisorId = 4,
-                Titulo = "Planeación Didáctica - Aplicaciones Web - Septiembre-Diciembre 2026",
+                
                 Estado = EstadoPlaneacion.EnProceso,
                 UltimaModificacionPorId = 2,
                 FechaUltimaModificacion = new DateTime(2026, 1, 1),
@@ -403,35 +402,7 @@ public static class DataSeeder
 
     private static void SeedPlaneacionRelaciones(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<PlaneacionDocente>().HasData(
-            new PlaneacionDocente
-            {
-                PlaneacionDidacticaId = 1,
-                DocenteId = 2,
-                CreatedAt = new DateTime(2026, 1, 1)
-            },
-            new PlaneacionDocente
-            {
-                PlaneacionDidacticaId = 1,
-                DocenteId = 3,
-                CreatedAt = new DateTime(2026, 1, 1)
-            }
-        );
-
-        modelBuilder.Entity<PlaneacionGrupo>().HasData(
-            new PlaneacionGrupo
-            {
-                PlaneacionDidacticaId = 1,
-                GrupoId = 1,
-                CreatedAt = new DateTime(2026, 1, 1)
-            },
-            new PlaneacionGrupo
-            {
-                PlaneacionDidacticaId = 1,
-                GrupoId = 2,
-                CreatedAt = new DateTime(2026, 1, 1)
-            }
-        );
+       
     }
 
     private static void SeedPlaneacionContenido(ModelBuilder modelBuilder)
@@ -442,10 +413,10 @@ public static class DataSeeder
                 Id = 1,
                 PublicId = Guid.Parse("dddddddd-0000-0000-0000-000000000001"),
                 PlaneacionDidacticaId = 1,
-                Numero = "I",
-                Nombre = "Introducción a las aplicaciones web",
-                ResultadoAprendizaje = "El alumno identificará los componentes básicos de una aplicación web.",
-                Horas = 20,
+                NumeroUnidad = 1,
+                NombreUnidad = "Introducción a las aplicaciones web",
+                PropositoEsperado = "El alumno identificará los componentes básicos de una aplicación web.",
+                HorasTotales = 20,
                 Orden = 1,
                 UltimaModificacionPorId = 2,
                 FechaUltimaModificacion = new DateTime(2026, 1, 1),
@@ -456,52 +427,13 @@ public static class DataSeeder
                 Id = 2,
                 PublicId = Guid.Parse("dddddddd-0000-0000-0000-000000000002"),
                 PlaneacionDidacticaId = 1,
-                Numero = "II",
-                Nombre = "Desarrollo de APIs",
-                ResultadoAprendizaje = "El alumno desarrollará servicios web usando arquitectura por capas.",
-                Horas = 30,
+                NumeroUnidad = 2,
+                NombreUnidad = "Desarrollo de APIs",
+                PropositoEsperado = "El alumno desarrollará servicios web usando arquitectura por capas.",
+                HorasTotales = 30,
                 Orden = 2,
                 UltimaModificacionPorId = 3,
                 FechaUltimaModificacion = new DateTime(2026, 1, 1),
-                CreatedAt = new DateTime(2026, 1, 1)
-            }
-        );
-
-        modelBuilder.Entity<PlaneacionActividad>().HasData(
-            new PlaneacionActividad
-            {
-                Id = 1,
-                PublicId = Guid.Parse("eeeeeeee-0000-0000-0000-000000000001"),
-                PlaneacionUnidadId = 1,
-                TipoActividad = "APERTURA",
-                Descripcion = "Presentación de conceptos básicos de aplicaciones web.",
-                Semana = 1,
-                Horas = 2,
-                EstrategiaEnsenanza = "Exposición guiada y preguntas detonadoras.",
-                EstrategiaAprendizaje = "Discusión grupal y análisis de ejemplos.",
-                Evidencia = "Mapa conceptual de arquitectura web.",
-                InstrumentoEvaluacion = "Lista de cotejo",
-                PorcentajeEvaluacion = 10,
-                Orden = 1,
-                CreatedBy = 2,
-                CreatedAt = new DateTime(2026, 1, 1)
-            },
-            new PlaneacionActividad
-            {
-                Id = 2,
-                PublicId = Guid.Parse("eeeeeeee-0000-0000-0000-000000000002"),
-                PlaneacionUnidadId = 2,
-                TipoActividad = "DESARROLLO",
-                Descripcion = "Construcción de una API REST con .NET por capas.",
-                Semana = 4,
-                Horas = 6,
-                EstrategiaEnsenanza = "Demostración práctica.",
-                EstrategiaAprendizaje = "Desarrollo guiado de endpoints.",
-                Evidencia = "API funcional con controladores y servicios.",
-                InstrumentoEvaluacion = "Rúbrica",
-                PorcentajeEvaluacion = 30,
-                Orden = 1,
-                CreatedBy = 3,
                 CreatedAt = new DateTime(2026, 1, 1)
             }
         );
@@ -575,6 +507,7 @@ public static class DataSeeder
                 PlaneacionDidacticaId = 1,
                 PlaneacionUnidadId = 1,
                 RevisorId = 4,
+                Seccion ="Unidad 1 ",
                 Comentario = "La evidencia de la Unidad I debe estar mejor relacionada con el resultado de aprendizaje.",
                 Estado = "ABIERTA",
                 CreatedAt = new DateTime(2026, 1, 1)

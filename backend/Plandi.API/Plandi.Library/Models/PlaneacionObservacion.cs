@@ -18,5 +18,17 @@ namespace Plandi.Library.Models
         public string Comentario { get; set; } = string.Empty;
 
         public string Estado { get; set; } = "ABIERTA";
+       
+        public String? Seccion { get; set; }
+
+        public long? PlaneacionTemaId { get; set; }
+
+        public long? PlaneacionEvaluacionId { get; set; }
+
+        public long? PlaneacionSecuenciaId { get; set; }
+
+        public DateTime FechaRevision { get; set; }
+
+        public DateTime? FechaAtendida { get; set; }
     }
 }

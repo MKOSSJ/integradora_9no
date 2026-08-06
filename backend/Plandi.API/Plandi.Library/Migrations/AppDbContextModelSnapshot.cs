@@ -845,7 +845,7 @@ namespace Plandi.Library.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Plandi.Library.Models.PlaneacionActividad", b =>
+            modelBuilder.Entity("Plandi.Library.Models.PlaneacionCaratula", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -856,107 +856,92 @@ namespace Plandi.Library.Migrations
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
+                    b.Property<string>("CompetenciaAsignatura")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<long?>("CreatedBy")
-                        .HasColumnType("bigint");
+                    b.Property<decimal?>("Creditos")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int?>("Cuatrimestre")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Descripcion")
-                        .IsRequired()
+                    b.Property<string>("Docentes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("EstrategiaAprendizaje")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Grupos")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("EstrategiaEnsenanza")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Evidencia")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("Horas")
+                    b.Property<int?>("HorasSaber")
                         .HasColumnType("int");
 
-                    b.Property<string>("InstrumentoEvaluacion")
+                    b.Property<int?>("HorasSaberHacer")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("HorasSemana")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("HorasTotales")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Modalidad")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NombreAsignatura")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<int>("Orden")
-                        .HasColumnType("int");
+                    b.Property<string>("PeriodoEscolar")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<long>("PlaneacionUnidadId")
+                    b.Property<long>("PlaneacionDidacticaId")
                         .HasColumnType("bigint");
 
-                    b.Property<decimal?>("PorcentajeEvaluacion")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                    b.Property<long?>("ProgramaAsignaturaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ProgramaEducativo")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("PropositoAsignatura")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("Semana")
-                        .HasColumnType("int");
+                    b.Property<string>("TipoCompetencia")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("TipoActividad")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<long?>("UltimaModificacionPorId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<long?>("UpdatedBy")
-                        .HasColumnType("bigint");
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PlaneacionUnidadId", "Orden");
+                    b.HasIndex("PlaneacionDidacticaId")
+                        .IsUnique();
 
-                    b.ToTable("planeacion_actividades", (string)null);
+                    b.HasIndex("ProgramaAsignaturaId");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            Activo = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedBy = 2L,
-                            Descripcion = "Presentación de conceptos básicos de aplicaciones web.",
-                            EstrategiaAprendizaje = "Discusión grupal y análisis de ejemplos.",
-                            EstrategiaEnsenanza = "Exposición guiada y preguntas detonadoras.",
-                            Evidencia = "Mapa conceptual de arquitectura web.",
-                            Horas = 2,
-                            InstrumentoEvaluacion = "Lista de cotejo",
-                            Orden = 1,
-                            PlaneacionUnidadId = 1L,
-                            PorcentajeEvaluacion = 10m,
-                            PublicId = new Guid("eeeeeeee-0000-0000-0000-000000000001"),
-                            Semana = 1,
-                            TipoActividad = "APERTURA"
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            Activo = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedBy = 3L,
-                            Descripcion = "Construcción de una API REST con .NET por capas.",
-                            EstrategiaAprendizaje = "Desarrollo guiado de endpoints.",
-                            EstrategiaEnsenanza = "Demostración práctica.",
-                            Evidencia = "API funcional con controladores y servicios.",
-                            Horas = 6,
-                            InstrumentoEvaluacion = "Rúbrica",
-                            Orden = 1,
-                            PlaneacionUnidadId = 2L,
-                            PorcentajeEvaluacion = 30m,
-                            PublicId = new Guid("eeeeeeee-0000-0000-0000-000000000002"),
-                            Semana = 4,
-                            TipoActividad = "DESARROLLO"
-                        });
+                    b.HasIndex("UltimaModificacionPorId");
+
+                    b.ToTable("planeacion_caratulas", (string)null);
                 });
 
             modelBuilder.Entity("Plandi.Library.Models.PlaneacionDidactica", b =>
@@ -996,19 +981,11 @@ namespace Plandi.Library.Migrations
                     b.Property<long>("PeriodoId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("ProgramaAsignaturaId")
-                        .HasColumnType("bigint");
-
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<long?>("RevisorId")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
 
                     b.Property<long?>("UltimaModificacionPorId")
                         .HasColumnType("bigint");
@@ -1024,8 +1001,6 @@ namespace Plandi.Library.Migrations
 
                     b.HasIndex("Estado");
 
-                    b.HasIndex("ProgramaAsignaturaId");
-
                     b.HasIndex("RevisorId");
 
                     b.HasIndex("UltimaModificacionPorId");
@@ -1039,7 +1014,6 @@ namespace Plandi.Library.Migrations
                         new
                         {
                             Id = 1L,
-                            AcademiaId = 1L,
                             Activo = true,
                             AsignaturaId = 1L,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -1047,81 +1021,80 @@ namespace Plandi.Library.Migrations
                             Estado = "EnProceso",
                             FechaUltimaModificacion = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             PeriodoId = 1L,
-                            ProgramaAsignaturaId = 1L,
                             PublicId = new Guid("cccccccc-0000-0000-0000-000000000001"),
                             RevisorId = 4L,
-                            Titulo = "Planeación Didáctica - Aplicaciones Web - Septiembre-Diciembre 2026",
                             UltimaModificacionPorId = 2L
                         });
                 });
 
-            modelBuilder.Entity("Plandi.Library.Models.PlaneacionDocente", b =>
+            modelBuilder.Entity("Plandi.Library.Models.PlaneacionEvaluacion", b =>
                 {
-                    b.Property<long>("PlaneacionDidacticaId")
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DocenteId")
-                        .HasColumnType("bigint");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("PlaneacionDidacticaId", "DocenteId");
-
-                    b.HasIndex("DocenteId");
-
-                    b.ToTable("planeacion_docentes", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            PlaneacionDidacticaId = 1L,
-                            DocenteId = 2L,
-                            Activo = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            PlaneacionDidacticaId = 1L,
-                            DocenteId = 3L,
-                            Activo = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        });
-                });
-
-            modelBuilder.Entity("Plandi.Library.Models.PlaneacionGrupo", b =>
-                {
-                    b.Property<long>("PlaneacionDidacticaId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("GrupoId")
-                        .HasColumnType("bigint");
+                    b.Property<int>("AgenteEvaluador")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("PlaneacionDidacticaId", "GrupoId");
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
 
-                    b.HasIndex("GrupoId");
+                    b.Property<string>("EvidenciaAprendizaje")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("planeacion_grupos", (string)null);
+                    b.Property<int>("Fase")
+                        .HasColumnType("int");
 
-                    b.HasData(
-                        new
-                        {
-                            PlaneacionDidacticaId = 1L,
-                            GrupoId = 1L,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            PlaneacionDidacticaId = 1L,
-                            GrupoId = 2L,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        });
+                    b.Property<DateTime?>("FechaUltimaModificacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InstrumentoEvaluacion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PeriodoSemanas")
+                        .HasMaxLength(100)
+                        .HasColumnType("int");
+
+                    b.Property<long>("PlaneacionUnidadId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal?>("Ponderacion")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ResultadoAprendizaje")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TipoEvaluacion")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("UltimaModificacionPorId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UltimaModificacionPorId");
+
+                    b.HasIndex("PlaneacionUnidadId", "Orden");
+
+                    b.ToTable("planeacion_evaluaciones", (string)null);
                 });
 
             modelBuilder.Entity("Plandi.Library.Models.PlaneacionObservacion", b =>
@@ -1150,7 +1123,22 @@ namespace Plandi.Library.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<DateTime?>("FechaAtendida")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaRevision")
+                        .HasColumnType("datetime2");
+
                     b.Property<long>("PlaneacionDidacticaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("PlaneacionEvaluacionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("PlaneacionSecuenciaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("PlaneacionTemaId")
                         .HasColumnType("bigint");
 
                     b.Property<long?>("PlaneacionUnidadId")
@@ -1161,6 +1149,9 @@ namespace Plandi.Library.Migrations
 
                     b.Property<long>("RevisorId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("Seccion")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1183,11 +1174,181 @@ namespace Plandi.Library.Migrations
                             Comentario = "La evidencia de la Unidad I debe estar mejor relacionada con el resultado de aprendizaje.",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Estado = "ABIERTA",
+                            FechaRevision = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             PlaneacionDidacticaId = 1L,
                             PlaneacionUnidadId = 1L,
                             PublicId = new Guid("22222222-aaaa-0000-0000-000000000001"),
-                            RevisorId = 4L
+                            RevisorId = 4L,
+                            Seccion = "Unidad 1 "
                         });
+                });
+
+            modelBuilder.Entity("Plandi.Library.Models.PlaneacionReferencia", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaUltimaModificacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<long>("PlaneacionDidacticaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReferenciaAPA")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("UltimaModificacionPorId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UltimaModificacionPorId");
+
+                    b.HasIndex("PlaneacionDidacticaId", "Orden");
+
+                    b.ToTable("planeacion_referencias", (string)null);
+                });
+
+            modelBuilder.Entity("Plandi.Library.Models.PlaneacionSecuencia", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ActividadDocente")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ActividadEstudiante")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Estrategia")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EvidenciaAprendizaje")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Fase")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FechaUltimaModificacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MediosMateriales")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<long>("PlaneacionUnidadId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long?>("UltimaModificacionPorId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UltimaModificacionPorId");
+
+                    b.HasIndex("PlaneacionUnidadId", "Orden");
+
+                    b.ToTable("planeacion_secuencias", (string)null);
+                });
+
+            modelBuilder.Entity("Plandi.Library.Models.PlaneacionTema", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaUltimaModificacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<long>("PlaneacionUnidadId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SaberConceptual")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SaberHacer")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SaberSer")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Tema")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<long?>("UltimaModificacionPorId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UltimaModificacionPorId");
+
+                    b.HasIndex("PlaneacionUnidadId", "Orden");
+
+                    b.ToTable("planeacion_temas", (string)null);
                 });
 
             modelBuilder.Entity("Plandi.Library.Models.PlaneacionUnidad", b =>
@@ -1210,18 +1371,23 @@ namespace Plandi.Library.Migrations
                     b.Property<DateTime?>("FechaUltimaModificacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("Horas")
+                    b.Property<int?>("HorasSaber")
                         .HasColumnType("int");
 
-                    b.Property<string>("Nombre")
+                    b.Property<int?>("HorasSaberHacer")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("HorasTotales")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NombreUnidad")
                         .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
-                    b.Property<string>("Numero")
-                        .IsRequired()
+                    b.Property<int>("NumeroUnidad")
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("int");
 
                     b.Property<int>("Orden")
                         .HasColumnType("int");
@@ -1229,11 +1395,15 @@ namespace Plandi.Library.Migrations
                     b.Property<long>("PlaneacionDidacticaId")
                         .HasColumnType("bigint");
 
+                    b.Property<decimal?>("PorcentajeUnidad")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("PropositoEsperado")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ResultadoAprendizaje")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<long?>("UltimaModificacionPorId")
                         .HasColumnType("bigint");
@@ -1257,13 +1427,13 @@ namespace Plandi.Library.Migrations
                             Activo = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FechaUltimaModificacion = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Horas = 20,
-                            Nombre = "Introducción a las aplicaciones web",
-                            Numero = "I",
+                            HorasTotales = 20,
+                            NombreUnidad = "Introducción a las aplicaciones web",
+                            NumeroUnidad = 1,
                             Orden = 1,
                             PlaneacionDidacticaId = 1L,
+                            PropositoEsperado = "El alumno identificará los componentes básicos de una aplicación web.",
                             PublicId = new Guid("dddddddd-0000-0000-0000-000000000001"),
-                            ResultadoAprendizaje = "El alumno identificará los componentes básicos de una aplicación web.",
                             UltimaModificacionPorId = 2L
                         },
                         new
@@ -1272,13 +1442,13 @@ namespace Plandi.Library.Migrations
                             Activo = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FechaUltimaModificacion = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Horas = 30,
-                            Nombre = "Desarrollo de APIs",
-                            Numero = "II",
+                            HorasTotales = 30,
+                            NombreUnidad = "Desarrollo de APIs",
+                            NumeroUnidad = 2,
                             Orden = 2,
                             PlaneacionDidacticaId = 1L,
+                            PropositoEsperado = "El alumno desarrollará servicios web usando arquitectura por capas.",
                             PublicId = new Guid("dddddddd-0000-0000-0000-000000000002"),
-                            ResultadoAprendizaje = "El alumno desarrollará servicios web usando arquitectura por capas.",
                             UltimaModificacionPorId = 3L
                         });
                 });
@@ -1800,28 +1970,41 @@ namespace Plandi.Library.Migrations
                     b.Navigation("CicloEscolar");
                 });
 
-            modelBuilder.Entity("Plandi.Library.Models.PlaneacionActividad", b =>
+            modelBuilder.Entity("Plandi.Library.Models.PlaneacionCaratula", b =>
                 {
-                    b.HasOne("Plandi.Library.Models.PlaneacionUnidad", "PlaneacionUnidad")
-                        .WithMany("Actividades")
-                        .HasForeignKey("PlaneacionUnidadId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("Plandi.Library.Models.PlaneacionDidactica", "PlaneacionDidactica")
+                        .WithOne("Caratula")
+                        .HasForeignKey("Plandi.Library.Models.PlaneacionCaratula", "PlaneacionDidacticaId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("PlaneacionUnidad");
+                    b.HasOne("Plandi.Library.Models.ProgramaAsignatura", "ProgramaAsignatura")
+                        .WithMany()
+                        .HasForeignKey("ProgramaAsignaturaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Plandi.Library.Models.Usuario", "UltimaModificacionPor")
+                        .WithMany()
+                        .HasForeignKey("UltimaModificacionPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PlaneacionDidactica");
+
+                    b.Navigation("ProgramaAsignatura");
+
+                    b.Navigation("UltimaModificacionPor");
                 });
 
             modelBuilder.Entity("Plandi.Library.Models.PlaneacionDidactica", b =>
                 {
                     b.HasOne("Plandi.Library.Models.Academia", "Academia")
                         .WithMany()
-                        .HasForeignKey("AcademiaId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("AcademiaId");
 
-                    b.HasOne("Plandi.Library.Models.Asignatura", "Asignatura")
+                    b.HasOne("Plandi.Library.Models.Asignatura", null)
                         .WithMany("PlaneacionesDidacticas")
                         .HasForeignKey("AsignaturaId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Plandi.Library.Models.Periodo", "Periodo")
@@ -1829,11 +2012,6 @@ namespace Plandi.Library.Migrations
                         .HasForeignKey("PeriodoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("Plandi.Library.Models.ProgramaAsignatura", "ProgramaAsignatura")
-                        .WithMany()
-                        .HasForeignKey("ProgramaAsignaturaId")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Plandi.Library.Models.Usuario", "Revisor")
                         .WithMany()
@@ -1847,59 +2025,35 @@ namespace Plandi.Library.Migrations
 
                     b.Navigation("Academia");
 
-                    b.Navigation("Asignatura");
-
                     b.Navigation("Periodo");
-
-                    b.Navigation("ProgramaAsignatura");
 
                     b.Navigation("Revisor");
 
                     b.Navigation("UltimaModificacionPor");
                 });
 
-            modelBuilder.Entity("Plandi.Library.Models.PlaneacionDocente", b =>
+            modelBuilder.Entity("Plandi.Library.Models.PlaneacionEvaluacion", b =>
                 {
-                    b.HasOne("Plandi.Library.Models.Usuario", "Docente")
+                    b.HasOne("Plandi.Library.Models.PlaneacionUnidad", "PlaneacionUnidad")
+                        .WithMany("Evaluaciones")
+                        .HasForeignKey("PlaneacionUnidadId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Plandi.Library.Models.Usuario", "UltimaModificacionPor")
                         .WithMany()
-                        .HasForeignKey("DocenteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("UltimaModificacionPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Plandi.Library.Models.PlaneacionDidactica", "PlaneacionDidactica")
-                        .WithMany("PlaneacionDocentes")
-                        .HasForeignKey("PlaneacionDidacticaId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Navigation("PlaneacionUnidad");
 
-                    b.Navigation("Docente");
-
-                    b.Navigation("PlaneacionDidactica");
-                });
-
-            modelBuilder.Entity("Plandi.Library.Models.PlaneacionGrupo", b =>
-                {
-                    b.HasOne("Plandi.Library.Models.Grupo", "Grupo")
-                        .WithMany("PlaneacionGrupos")
-                        .HasForeignKey("GrupoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Plandi.Library.Models.PlaneacionDidactica", "PlaneacionDidactica")
-                        .WithMany("PlaneacionGrupos")
-                        .HasForeignKey("PlaneacionDidacticaId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Grupo");
-
-                    b.Navigation("PlaneacionDidactica");
+                    b.Navigation("UltimaModificacionPor");
                 });
 
             modelBuilder.Entity("Plandi.Library.Models.PlaneacionObservacion", b =>
                 {
                     b.HasOne("Plandi.Library.Models.PlaneacionDidactica", "PlaneacionDidactica")
-                        .WithMany()
+                        .WithMany("Observaciones")
                         .HasForeignKey("PlaneacionDidacticaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1920,6 +2074,60 @@ namespace Plandi.Library.Migrations
                     b.Navigation("PlaneacionUnidad");
 
                     b.Navigation("Revisor");
+                });
+
+            modelBuilder.Entity("Plandi.Library.Models.PlaneacionReferencia", b =>
+                {
+                    b.HasOne("Plandi.Library.Models.PlaneacionDidactica", "PlaneacionDidactica")
+                        .WithMany("Referencias")
+                        .HasForeignKey("PlaneacionDidacticaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Plandi.Library.Models.Usuario", "UltimaModificacionPor")
+                        .WithMany()
+                        .HasForeignKey("UltimaModificacionPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PlaneacionDidactica");
+
+                    b.Navigation("UltimaModificacionPor");
+                });
+
+            modelBuilder.Entity("Plandi.Library.Models.PlaneacionSecuencia", b =>
+                {
+                    b.HasOne("Plandi.Library.Models.PlaneacionUnidad", "PlaneacionUnidad")
+                        .WithMany("Secuencias")
+                        .HasForeignKey("PlaneacionUnidadId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Plandi.Library.Models.Usuario", "UltimaModificacionPor")
+                        .WithMany()
+                        .HasForeignKey("UltimaModificacionPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PlaneacionUnidad");
+
+                    b.Navigation("UltimaModificacionPor");
+                });
+
+            modelBuilder.Entity("Plandi.Library.Models.PlaneacionTema", b =>
+                {
+                    b.HasOne("Plandi.Library.Models.PlaneacionUnidad", "PlaneacionUnidad")
+                        .WithMany("Temas")
+                        .HasForeignKey("PlaneacionUnidadId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Plandi.Library.Models.Usuario", "UltimaModificacionPor")
+                        .WithMany()
+                        .HasForeignKey("UltimaModificacionPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PlaneacionUnidad");
+
+                    b.Navigation("UltimaModificacionPor");
                 });
 
             modelBuilder.Entity("Plandi.Library.Models.PlaneacionUnidad", b =>
@@ -2032,8 +2240,6 @@ namespace Plandi.Library.Migrations
             modelBuilder.Entity("Plandi.Library.Models.Grupo", b =>
                 {
                     b.Navigation("CargasAcademicas");
-
-                    b.Navigation("PlaneacionGrupos");
                 });
 
             modelBuilder.Entity("Plandi.Library.Models.Periodo", b =>
@@ -2043,18 +2249,24 @@ namespace Plandi.Library.Migrations
 
             modelBuilder.Entity("Plandi.Library.Models.PlaneacionDidactica", b =>
                 {
+                    b.Navigation("Caratula");
+
                     b.Navigation("Chats");
 
-                    b.Navigation("PlaneacionDocentes");
+                    b.Navigation("Observaciones");
 
-                    b.Navigation("PlaneacionGrupos");
+                    b.Navigation("Referencias");
 
                     b.Navigation("Unidades");
                 });
 
             modelBuilder.Entity("Plandi.Library.Models.PlaneacionUnidad", b =>
                 {
-                    b.Navigation("Actividades");
+                    b.Navigation("Evaluaciones");
+
+                    b.Navigation("Secuencias");
+
+                    b.Navigation("Temas");
                 });
 
             modelBuilder.Entity("Plandi.Library.Models.Rol", b =>
