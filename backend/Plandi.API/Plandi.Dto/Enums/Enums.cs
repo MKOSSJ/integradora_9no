@@ -36,7 +36,7 @@ namespace Plandi.Dto.Enums
     {
         Docente = 1,
         Revisor = 2,
-        Director = 4
+        Director = 3
     }
 
     /// <summary>

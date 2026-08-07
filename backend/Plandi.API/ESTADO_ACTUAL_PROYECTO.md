@@ -92,7 +92,7 @@ Observaciones de consistencia: las versiones EF Core son uniformes (10.0.9 en lo
 - **2FA:** no encontrado.
 - **Recuperación de contraseña:** no encontrado.
 - **Hashing de contraseñas:** `Utils.EncryptPassword` (SHA256 en `Plandi.Dto/Utils/Utils.cs:11`) está definido pero sin llamadores. En `DataSeeder`, todos los usuarios semilla usan `PasswordHash = "DEV_HASH_SOLO_PRUEBAS"`.
-- **Enums de roles de academia:** `Plandi.Dto/Enums/Enums.cs` define `RolAcademia` (`Docente=1, Revisor=2, JefeAcademia=3, Coordinador=4`) usado por `AcademiaUsuario.RolEnAcademia`, también sin consumo por servicios.
+- **Enums de roles de academia:** `Plandi.Dto/Enums/Enums.cs` define `RolAcademia` (`Docente=1, Revisor=2, Director=3`) usado por `AcademiaUsuario.RolEnAcademia`, también sin consumo por servicios.
 
 ## 6. Inconsistencias y riesgos detectados
 
@@ -134,7 +134,7 @@ Observaciones de consistencia: las versiones EF Core son uniformes (10.0.9 en lo
 ## Convenciones reales ya establecidas en el repo (seguir, no inventar otras)
 - Entidades: `Plandi.Library/Models/`, una clase por archivo, PascalCase.
 - DTOs: raíz de `Plandi.Dto` (plano, sin subcarpeta por módulo — único DTO existente hoy es `UsuarioResponseDto.cs`).
-- Enums: todos juntos en `Plandi.Dto/Enums/Enums.cs` (ya incluye `RolAcademia` con 4 valores: Docente=1, Revisor=2, JefeAcademia=3, Coordinador=4 — no crear otro).
+- Enums: todos juntos en `Plandi.Dto/Enums/Enums.cs` (ya incluye `RolAcademia` con 3 valores: Docente=1, Revisor=2, Director=3 — no crear otro).
 - Interfaces de servicio: `Plandi.Services/Interfaces/`. Clases de servicio: raíz de `Plandi.Services`.
 - Controllers: `Plandi.API/Controllers/`.
 - Identificador público: `BaseEntity.PublicId` (Guid). Las tablas puente (`UsuarioRol`, `AcademiaUsuario`, `PlaneacionDocente`, `PlaneacionGrupo`, `ChatParticipante`) **no** tienen PublicId (llave compuesta).
