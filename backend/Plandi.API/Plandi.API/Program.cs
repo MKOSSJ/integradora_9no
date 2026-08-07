@@ -56,6 +56,19 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ICarreraService, CarreraService>();
+builder.Services.AddScoped<IAsignaturaService, AsignaturaService>();
+builder.Services.AddScoped<ICicloEscolarService, CicloEscolarService>();
+builder.Services.AddScoped<IPeriodoService, PeriodoService>();
+builder.Services.AddScoped<IGrupoService, GrupoService>();
+builder.Services.AddScoped<IAcademiaService, AcademiaService>();
+builder.Services.AddScoped<ICargaAcademicaService, CargaAcademicaService>();
+builder.Services.AddScoped<IPlaneacionCaratulaService, PlaneacionCaratulaService>();
+builder.Services.AddScoped<IPlaneacionTemaService, PlaneacionTemaService>();
+builder.Services.AddScoped<IPlaneacionEvaluacionService, PlaneacionEvaluacionService>();
+builder.Services.AddScoped<IPlaneacionSecuenciaService, PlaneacionSecuenciaService>();
+builder.Services.AddScoped<IPlaneacionReferenciaService, PlaneacionReferenciaService>();
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<PlaneacionesProfile>());
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -65,12 +78,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
-
-
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -78,9 +85,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseSwagger();
-app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseRateLimiter();

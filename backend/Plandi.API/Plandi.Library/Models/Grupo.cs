@@ -18,6 +18,5 @@ namespace Plandi.Library.Models
 
         public ICollection<CargaAcademica> CargasAcademicas { get; set; } = new List<CargaAcademica>();
 
-        public ICollection<PlaneacionGrupo> PlaneacionGrupos { get; set; } = new List<PlaneacionGrupo>();
     }
 }

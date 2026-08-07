@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Plandi.Library.Migrations
 {
     /// <inheritdoc />
-    public partial class modifyAuth : Migration
+    public partial class ModifyAuth : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
