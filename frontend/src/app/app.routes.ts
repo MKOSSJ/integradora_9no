@@ -9,15 +9,12 @@ export const routes: Routes = [
   },
   {
     path: 'auth/login',
-    loadComponent: () =>
-      import('./features/auth/login/login').then((m) => m.Login),
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
   },
   {
     path: 'auth/recuperar-password',
     loadComponent: () =>
-      import('./features/auth/recover-password/recover-password').then(
-        (m) => m.RecoverPassword,
-      ),
+      import('./features/auth/recover-password/recover-password').then((m) => m.RecoverPassword),
   },
   {
     path: 'login',
@@ -25,9 +22,18 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: '',
+    path: 'auth/verificar-codigo',
     loadComponent: () =>
-      import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
+      import('./features/auth/verify-code/verify-code').then((m) => m.VerifyCode),
+  },
+  {
+    path: 'auth/nueva-password',
+    loadComponent: () =>
+      import('./features/auth/new-password/new-password').then((m) => m.NewPassword),
+  },
+  {
+    path: '',
+    loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     canActivate: [authGuard],
     children: [
       {
@@ -37,8 +43,7 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
-        loadComponent: () =>
-          import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
         path: 'planeaciones',
@@ -56,8 +61,7 @@ export const routes: Routes = [
       },
       {
         path: 'reportes',
-        loadComponent: () =>
-          import('./features/reportes/reportes').then((m) => m.Reportes),
+        loadComponent: () => import('./features/reportes/reportes').then((m) => m.Reportes),
       },
 
       /* Validación */
@@ -87,30 +91,22 @@ export const routes: Routes = [
       {
         path: 'usuarios',
         loadComponent: () =>
-          import('./features/admin/pages/usuarios/usuarios').then(
-            (m) => m.Usuarios,
-          ),
+          import('./features/admin/pages/usuarios/usuarios').then((m) => m.Usuarios),
       },
       {
         path: 'carreras',
         loadComponent: () =>
-          import('./features/admin/pages/carreras/carreras').then(
-            (m) => m.Carreras,
-          ),
+          import('./features/admin/pages/carreras/carreras').then((m) => m.Carreras),
       },
       {
         path: 'asignaturas',
         loadComponent: () =>
-          import('./features/admin/pages/asignaturas/asignaturas').then(
-            (m) => m.Asignaturas,
-          ),
+          import('./features/admin/pages/asignaturas/asignaturas').then((m) => m.Asignaturas),
       },
       {
         path: 'periodos',
         loadComponent: () =>
-          import('./features/admin/pages/periodos/periodos').then(
-            (m) => m.Periodos,
-          ),
+          import('./features/admin/pages/periodos/periodos').then((m) => m.Periodos),
       },
       {
         path: 'importacion-academica',
@@ -124,16 +120,11 @@ export const routes: Routes = [
       {
         path: 'academias',
         loadComponent: () =>
-          import('./features/admin/pages/academias/academias').then(
-            (m) => m.Academias,
-          ),
+          import('./features/admin/pages/academias/academias').then((m) => m.Academias),
       },
       {
         path: 'grupos',
-        loadComponent: () =>
-          import('./features/admin/pages/grupos/grupos').then(
-            (m) => m.Grupos,
-          ),
+        loadComponent: () => import('./features/admin/pages/grupos/grupos').then((m) => m.Grupos),
       },
       {
         path: 'asignacion-academica',

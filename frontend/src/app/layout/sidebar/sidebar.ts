@@ -70,7 +70,7 @@ export class Sidebar {
   roleLabel = computed(() => {
     const currentRole = this.role();
 
-    if (currentRole === 'ADMIN') return 'Administrador / Directivo';
+    if (currentRole === 'DIRECTIVO') return ' Directivo';
     if (currentRole === 'REVISOR') return 'Revisor';
 
     return 'Docente';
@@ -119,7 +119,7 @@ export class Sidebar {
     {
       title: 'Administración',
       icon: LucideSettings,
-      roles: ['ADMIN'],
+      roles: ['DIRECTIVO'],
       items: [
         {
           label: 'Usuarios',
@@ -156,7 +156,7 @@ export class Sidebar {
     {
       title: 'Carga Académica',
       icon: LucideGraduationCap,
-      roles: ['ADMIN'],
+      roles: ['DIRECTIVO'],
       items: [
         {
           label: 'Academias',

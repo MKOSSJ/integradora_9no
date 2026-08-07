@@ -1,7 +1,12 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { Observable, of } from 'rxjs';
+
+import { ForgotPasswordDto } from '../dto/auth/forgot-password.dto';
+import { VerifyCodeDto } from '../dto/auth/verify-code.dto';
+import { ResetPasswordDto } from '../dto/auth/reset-password.dto';
 
 export type UserRole =
-  | 'ADMIN'
+  | 'DIRECTIVO'
   | 'REVISOR'
   | 'DOCENTE';
 
@@ -79,7 +84,7 @@ export class AuthService {
         name: 'Administrador / Directivo',
         initials: 'AD',
         email,
-        role: 'ADMIN'
+        role: 'DIRECTIVO'
       };
     }
 
@@ -140,4 +145,28 @@ export class AuthService {
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('userState');
   }
+
+  forgotPassword(dto: ForgotPasswordDto): Observable<boolean> {
+
+  console.log(dto);
+
+  return of(true);
+
+}
+
+verifyCode(dto: VerifyCodeDto): Observable<boolean> {
+
+  console.log(dto);
+
+  return of(true);
+
+}
+
+resetPassword(dto: ResetPasswordDto): Observable<boolean> {
+
+  console.log(dto);
+
+  return of(true);
+
+}
 }

@@ -67,7 +67,7 @@ export class Dashboard {
   roleLabel = computed(() => {
     const role = this.user()?.role;
 
-    if (role === 'ADMIN') return 'Administrador';
+    if (role === 'DIRECTIVO') return 'Directivo';
     if (role === 'REVISOR') return 'Revisor';
     return 'Docente';
   });
@@ -75,7 +75,7 @@ export class Dashboard {
   welcomeTitle = computed(() => {
     const role = this.user()?.role;
 
-    if (role === 'ADMIN') return 'Panel de administración';
+    if (role === 'DIRECTIVO') return 'Panel de administración';
     if (role === 'REVISOR') return 'Panel de revisión académica';
     return 'Panel docente';
   });
@@ -83,7 +83,7 @@ export class Dashboard {
   welcomeDescription = computed(() => {
     const role = this.user()?.role;
 
-    if (role === 'ADMIN') {
+    if (role === 'DIRECTIVO') {
       return 'Gestiona usuarios, academias, grupos y carga académica desde un solo lugar.';
     }
 
@@ -97,7 +97,7 @@ export class Dashboard {
   statCards = computed<StatCard[]>(() => {
     const role = this.user()?.role;
 
-    if (role === 'ADMIN') {
+    if (role === 'DIRECTIVO') {
       return [
         {
           title: 'Usuarios registrados',
@@ -198,7 +198,7 @@ export class Dashboard {
   quickActions = computed<QuickAction[]>(() => {
     const role = this.user()?.role;
 
-    if (role === 'ADMIN') {
+    if (role === 'DIRECTIVO') {
       return [
         {
           title: 'Gestionar usuarios',
@@ -269,7 +269,7 @@ export class Dashboard {
   recentActivity = computed<ActivityItem[]>(() => {
     const role = this.user()?.role;
 
-    if (role === 'ADMIN') {
+    if (role === 'DIRECTIVO') {
       return [
         {
           title: 'Carga académica actualizada',
