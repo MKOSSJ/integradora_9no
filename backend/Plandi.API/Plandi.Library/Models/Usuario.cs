@@ -20,8 +20,19 @@ namespace Plandi.Library.Models
 
         public DateTime? UltimoAcceso { get; set; }
 
+        public bool TwoFactorEnabled { get; set; } = false;
+        public string? TwoFactorSecretKey { get; set; }   
+
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpires { get; set; }
+
+        public int AccessFailedCount { get; set; } = 0;
+        public DateTime? LockoutEnd { get; set; }
+
         public ICollection<UsuarioRol> UsuarioRoles { get; set; } = new List<UsuarioRol>();
 
         public ICollection<AcademiaUsuario> AcademiaUsuarios { get; set; } = new List<AcademiaUsuario>();
+
+        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Plandi.Library.Models;
 
@@ -11,9 +12,11 @@ using Plandi.Library.Models;
 namespace Plandi.Library.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260806202501_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1572,59 +1575,6 @@ namespace Plandi.Library.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Plandi.Library.Models.RefreshToken", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("Expires")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("PublicId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ReplacedByTokenHash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("Revoked")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("UsuarioId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique();
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("RefreshTokens");
-                });
-
             modelBuilder.Entity("Plandi.Library.Models.Rol", b =>
                 {
                     b.Property<long>("Id")
@@ -1711,9 +1661,6 @@ namespace Plandi.Library.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
-
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
@@ -1737,9 +1684,6 @@ namespace Plandi.Library.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<DateTime?>("LockoutEnd")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1750,24 +1694,12 @@ namespace Plandi.Library.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("PasswordResetToken")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("PasswordResetTokenExpires")
-                        .HasColumnType("datetime2");
-
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Telefono")
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("TwoFactorSecretKey")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UltimoAcceso")
                         .HasColumnType("datetime2");
@@ -1786,54 +1718,46 @@ namespace Plandi.Library.Migrations
                         new
                         {
                             Id = 1L,
-                            AccessFailedCount = 0,
                             Activo = true,
                             ApellidoPaterno = "Sistema",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin@uth.edu.mx",
                             Nombre = "Admin",
                             PasswordHash = "DEV_HASH_SOLO_PRUEBAS",
-                            PublicId = new Guid("20000000-0000-0000-0000-000000000001"),
-                            TwoFactorEnabled = false
+                            PublicId = new Guid("20000000-0000-0000-0000-000000000001")
                         },
                         new
                         {
                             Id = 2L,
-                            AccessFailedCount = 0,
                             Activo = true,
                             ApellidoPaterno = "Pérez",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "juan.perez@uth.edu.mx",
                             Nombre = "Juan",
                             PasswordHash = "DEV_HASH_SOLO_PRUEBAS",
-                            PublicId = new Guid("20000000-0000-0000-0000-000000000002"),
-                            TwoFactorEnabled = false
+                            PublicId = new Guid("20000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
                             Id = 3L,
-                            AccessFailedCount = 0,
                             Activo = true,
                             ApellidoPaterno = "Torres",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "ana.torres@uth.edu.mx",
                             Nombre = "Ana",
                             PasswordHash = "DEV_HASH_SOLO_PRUEBAS",
-                            PublicId = new Guid("20000000-0000-0000-0000-000000000003"),
-                            TwoFactorEnabled = false
+                            PublicId = new Guid("20000000-0000-0000-0000-000000000003")
                         },
                         new
                         {
                             Id = 4L,
-                            AccessFailedCount = 0,
                             Activo = true,
                             ApellidoPaterno = "López",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "maria.lopez@uth.edu.mx",
                             Nombre = "María",
                             PasswordHash = "DEV_HASH_SOLO_PRUEBAS",
-                            PublicId = new Guid("20000000-0000-0000-0000-000000000004"),
-                            TwoFactorEnabled = false
+                            PublicId = new Guid("20000000-0000-0000-0000-000000000004")
                         });
                 });
 
@@ -2259,17 +2183,6 @@ namespace Plandi.Library.Migrations
                     b.Navigation("UltimaModificacionPor");
                 });
 
-            modelBuilder.Entity("Plandi.Library.Models.RefreshToken", b =>
-                {
-                    b.HasOne("Plandi.Library.Models.Usuario", "Usuario")
-                        .WithMany("RefreshTokens")
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Usuario");
-                });
-
             modelBuilder.Entity("Plandi.Library.Models.UsuarioRol", b =>
                 {
                     b.HasOne("Plandi.Library.Models.Rol", "Rol")
@@ -2367,8 +2280,6 @@ namespace Plandi.Library.Migrations
             modelBuilder.Entity("Plandi.Library.Models.Usuario", b =>
                 {
                     b.Navigation("AcademiaUsuarios");
-
-                    b.Navigation("RefreshTokens");
 
                     b.Navigation("UsuarioRoles");
                 });
