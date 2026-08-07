@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Plandi.Dto.Auth;
 using Plandi.Library.Models;
+using Plandi.Dto.Utils;
 using Plandi.Services.Interfaces;
 using System.Data;
 using System.Security.Cryptography;
@@ -153,7 +154,7 @@ namespace Plandi.Services
                 return;
             }
 
-            var resetToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            var resetToken = Utils.GenerateCode();
             usuario.PasswordResetToken = resetToken;
             usuario.PasswordResetTokenExpires = DateTime.UtcNow.AddHours(1);
 

@@ -531,7 +531,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Created).IsRequired();
 
             entity.HasOne(e => e.Usuario)
-                .WithMany() 
+                .WithMany(u => u.RefreshTokens) 
                 .HasForeignKey(e => e.UsuarioId)
                 .OnDelete(DeleteBehavior.Restrict); 
         });
