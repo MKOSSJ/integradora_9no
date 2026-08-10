@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Plandi.API/Plandi.API.csproj" />
+  <Project Path="Plandi.Dto/Plandi.Dto.csproj" />
+  <Project Path="Plandi.Library/Plandi.Library.csproj" />
+  <Project Path="Plandi.Services/Plandi.Services.csproj" />
+</Solution>

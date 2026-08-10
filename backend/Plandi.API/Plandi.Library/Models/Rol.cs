@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Plandi.Library.Models
+{
+    public class Rol : BaseEntity
+    {
+        public string Nombre { get; set; } = string.Empty;
+
+        public string? Descripcion { get; set; }
+
+        public ICollection<UsuarioRol> UsuarioRoles { get; set; } = new List<UsuarioRol>();
+    }
+
+}
