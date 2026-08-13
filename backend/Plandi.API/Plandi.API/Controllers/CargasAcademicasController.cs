@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
 using Plandi.Services.Interfaces;
+using Plandi.API.Models;
 
 namespace Plandi.API.Controllers
 {
@@ -10,10 +11,37 @@ namespace Plandi.API.Controllers
     public class CargasAcademicasController : ControllerBase
     {
         private readonly ICargaAcademicaService _cargaAcademicaService;
+        private readonly IImportacionCargaAcademicaService _importacionCargaAcademicaService;
 
-        public CargasAcademicasController(ICargaAcademicaService cargaAcademicaService)
+        public CargasAcademicasController(ICargaAcademicaService cargaAcademicaService, IImportacionCargaAcademicaService importacionCargaAcademicaService)
         {
             _cargaAcademicaService = cargaAcademicaService;
+            _importacionCargaAcademicaService = importacionCargaAcademicaService;
+        }
+
+        /// <summary>Importa asignaciones desde un CSV o XLSX con Asignatura, Cuatrimestre, P.E. y Docente.</summary>
+        [HttpPost("importar")]
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(ApiResponse<ImportacionCargaAcademicaResultadoDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> Importar([FromForm] ImportarCargaAcademicaForm request, CancellationToken cancellationToken)
+        {
+            if (request.File is null || request.File.Length == 0)
+                return BadRequest(ApiResponse<ImportacionCargaAcademicaResultadoDto>.Fail("Debe adjuntar un archivo CSV o XLSX no vacío."));
+
+            try
+            {
+                await using var stream = request.File.OpenReadStream();
+                var result = await _importacionCargaAcademicaService.Importar(stream, request.File.FileName, request.PeriodoPublicId, cancellationToken);
+                return Ok(ApiResponse<ImportacionCargaAcademicaResultadoDto>.Ok(result, "Importación finalizada."));
+            }
+            catch (AppException ex)
+            {
+                return BadRequest(ApiResponse<ImportacionCargaAcademicaResultadoDto>.Fail(ex.Message));
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<ImportacionCargaAcademicaResultadoDto>.Fail("Ocurrió un error interno al importar la carga académica."));
+            }
         }
 
         [HttpGet]

@@ -10,5 +10,6 @@ namespace Plandi.Dto.Auth
         public DateTime? AccessTokenExpiresAt { get; set; }
         public string? RefreshToken { get; set; } = string.Empty;
         public bool RequiresTwoFactor { get; set; } = false; 
+        public List<string> Roles { get; set; } = [];
     }   
 }

@@ -3,4 +3,5 @@
   <Project Path="Plandi.Dto/Plandi.Dto.csproj" />
   <Project Path="Plandi.Library/Plandi.Library.csproj" />
   <Project Path="Plandi.Services/Plandi.Services.csproj" />
+  <Project Path="Plandi.Services.Tests/Plandi.Services.Tests.csproj" />
 </Solution>
