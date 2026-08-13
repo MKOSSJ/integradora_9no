@@ -12,7 +12,7 @@ namespace Plandi.Dto.Enums
         CorreccionSolicitada = 4,
         Aprobada = 5,
         Rechazada = 6,
-        Generada = 7
+        Finalizada = 7
     }
 
     public enum TipoDocumento
@@ -32,7 +32,7 @@ namespace Plandi.Dto.Enums
         Error = 4
     }
 
-    public enum RolAcademia
+    public enum Rol
     {
         Docente = 1,
         Revisor = 2,

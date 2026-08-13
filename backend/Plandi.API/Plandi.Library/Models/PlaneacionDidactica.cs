@@ -11,6 +11,9 @@ namespace Plandi.Library.Models
         public Periodo Periodo { get; set; } = null!;
 
         public long AsignaturaId { get; set; }
+        public Asignatura Asignatura { get; set; } = null!;
+
+        public long? AcademiaId { get; set; }
 
         public Academia? Academia { get; set; }
 

@@ -27,6 +27,7 @@ public class AppDbContext : DbContext
     public DbSet<CargaAcademica> CargasAcademicas => Set<CargaAcademica>();
 
     public DbSet<Documento> Documentos => Set<Documento>();
+    public DbSet<PlaneacionTemplate> PlaneacionTemplates => Set<PlaneacionTemplate>();
     public DbSet<ProgramaAsignatura> ProgramasAsignatura => Set<ProgramaAsignatura>();
 
     public DbSet<PlaneacionDidactica> PlaneacionesDidacticas => Set<PlaneacionDidactica>();
@@ -68,8 +69,8 @@ public class AppDbContext : DbContext
             entity.Property(x => x.Nombre).HasMaxLength(100).IsRequired();
             entity.Property(x => x.ApellidoPaterno).HasMaxLength(100).IsRequired();
             entity.Property(x => x.ApellidoMaterno).HasMaxLength(100);
-            entity.Property(x => x.Email).HasMaxLength(150).IsRequired();
-            entity.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired();
+            entity.Property(x => x.Email).HasMaxLength(150);
+            entity.Property(x => x.PasswordHash).HasMaxLength(500);
             entity.Property(x => x.Telefono).HasMaxLength(30);
         });
 
@@ -119,9 +120,8 @@ public class AppDbContext : DbContext
 
             entity.HasKey(x => new { x.AcademiaId, x.UsuarioId });
 
-            entity.Property(x => x.RolEnAcademia)
-                .HasConversion<string>()
-                .HasMaxLength(50);
+            entity.Property(x => x.Rol)
+                .HasConversion<int>();
 
             entity.HasOne(x => x.Academia)
                 .WithMany(x => x.AcademiaUsuarios)
@@ -188,6 +188,7 @@ public class AppDbContext : DbContext
                 .WithMany(x => x.Grupos)
                 .HasForeignKey(x => x.PeriodoId)
                 .OnDelete(DeleteBehavior.Restrict);
+
         });
 
         modelBuilder.Entity<Asignatura>(entity =>
@@ -319,6 +320,17 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.UltimaModificacionPorId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<PlaneacionTemplate>(entity =>
+        {
+            entity.ToTable("plantillas_planeacion");
+            entity.HasIndex(x => x.Activa).HasFilter("[Activa] = 1").IsUnique();
+            entity.HasIndex(x => x.Version).IsUnique();
+            entity.HasOne(x => x.Documento)
+                .WithMany()
+                .HasForeignKey(x => x.DocumentoId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 
     private static void ConfigurePlaneaciones(ModelBuilder modelBuilder)
@@ -333,12 +345,21 @@ public class AppDbContext : DbContext
 
 
             entity.Property(x => x.Estado)
-                .HasConversion<string>()
-                .HasMaxLength(50);
+                .HasConversion<int>();
 
             entity.HasOne(x => x.Periodo)
                 .WithMany()
                 .HasForeignKey(x => x.PeriodoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.Asignatura)
+                .WithMany(x => x.PlaneacionesDidacticas)
+                .HasForeignKey(x => x.AsignaturaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.Academia)
+                .WithMany()
+                .HasForeignKey(x => x.AcademiaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
 

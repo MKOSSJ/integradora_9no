@@ -12,7 +12,7 @@ namespace Plandi.Dto
 
         public string? ApellidoMaterno { get; set; }
 
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         public string? Telefono { get; set; }
 

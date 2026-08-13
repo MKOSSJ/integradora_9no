@@ -21,7 +21,7 @@ namespace Plandi.API.Controllers
             _logger = logger;
         }
 
-        [Authorize(Policy = "RequireAdministratorRole")]
+        //[Authorize(Policy = "RequireAdministratorRole")]
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
