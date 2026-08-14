@@ -91,8 +91,10 @@ public sealed class PlaneacionesRevisorService(AppDbContext context, IAutorizaci
     public async Task<IReadOnlyList<PlaneacionResumenDto>> ObtenerAsync(long revisorId, CancellationToken cancellationToken = default)
     {
         await autorizacion.ExigirRolAsync(revisorId, RolAutorizacion.Revisor, cancellationToken);
+        // Las planeaciones privadas del docente no se exponen al revisor hasta enviarse a revisión.
         var planeaciones = await PlaneacionFlujoSupport.QueryDetalle(context)
-            .Where(p => p.Activo && p.DeletedAt == null && p.RevisorId == revisorId)
+            .Where(p => p.Activo && p.DeletedAt == null && p.RevisorId == revisorId &&
+                p.Estado != EstadoPlaneacion.Borrador && p.Estado != EstadoPlaneacion.EnProceso)
             .OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt)
             .ToListAsync(cancellationToken);
         return planeaciones.Select(PlaneacionFlujoSupport.Resumen).ToList();
@@ -103,6 +105,7 @@ public sealed class PlaneacionesRevisorService(AppDbContext context, IAutorizaci
         await autorizacion.ExigirRolAsync(revisorId, RolAutorizacion.Revisor, cancellationToken);
         var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
         PlaneacionFlujoSupport.ExigirRevisorAsignado(planeacion, revisorId);
+        PlaneacionFlujoSupport.ExigirVisibleParaRevisor(planeacion);
         return PlaneacionFlujoSupport.Detalle(planeacion);
     }
 }
@@ -172,12 +175,12 @@ internal static class PlaneacionFlujoSupport
     {
         var asignado = await context.CargasAcademicas.AnyAsync(c => c.Activo && c.DeletedAt == null && c.DocenteId == docenteId &&
             c.PeriodoId == planeacion.PeriodoId && c.AsignaturaId == planeacion.AsignaturaId, cancellationToken);
-        if (!asignado) throw new AppException("No tiene asignada esta planeación como docente.");
+        if (!asignado) throw new ForbiddenException("No tiene asignada esta planeación como docente.");
     }
 
     internal static void ExigirRevisorAsignado(PlaneacionDidactica planeacion, long revisorId)
     {
-        if (planeacion.RevisorId != revisorId) throw new AppException("No tiene asignada esta planeación como revisor.");
+        if (planeacion.RevisorId != revisorId) throw new ForbiddenException("No tiene asignada esta planeación como revisor.");
     }
 
     internal static PlaneacionResumenDto Resumen(PlaneacionDidactica p) => new()
@@ -213,7 +216,7 @@ internal static class PlaneacionFlujoSupport
 
     private static UnidadPlaneacionEdicionDto Unidad(PlaneacionUnidad u) => new()
     {
-        Id = u.Id, NumeroUnidad = u.NumeroUnidad, NombreUnidad = u.NombreUnidad, PropositoEsperado = u.PropositoEsperado,
+        PublicId = u.PublicId, NumeroUnidad = u.NumeroUnidad, NombreUnidad = u.NombreUnidad, PropositoEsperado = u.PropositoEsperado,
         HorasSaber = u.HorasSaber, HorasSaberHacer = u.HorasSaberHacer, HorasTotales = u.HorasTotales,
         PorcentajeUnidad = u.PorcentajeUnidad, Orden = u.Orden,
         Temas = u.Temas.Where(t => t.Activo && t.DeletedAt == null).OrderBy(t => t.Orden).Select(Tema).ToList(),
@@ -221,10 +224,10 @@ internal static class PlaneacionFlujoSupport
         Secuencias = u.Secuencias.Where(s => s.Activo && s.DeletedAt == null).OrderBy(s => s.Orden).Select(Secuencia).ToList()
     };
 
-    private static TemaPlaneacionEdicionDto Tema(PlaneacionTema t) => new() { Id = t.Id, Tema = t.Tema, SaberConceptual = t.SaberConceptual, SaberHacer = t.SaberHacer, SaberSer = t.SaberSer, Orden = t.Orden };
-    private static EvaluacionPlaneacionEdicionDto Evaluacion(PlaneacionEvaluacion e) => new() { Id = e.Id, PeriodoSemanas = e.PeriodoSemanas, ResultadoAprendizaje = e.ResultadoAprendizaje, EvidenciaAprendizaje = e.EvidenciaAprendizaje, Fase = e.Fase, TipoEvaluacion = e.TipoEvaluacion, AgenteEvaluador = e.AgenteEvaluador, Ponderacion = e.Ponderacion, InstrumentoEvaluacion = e.InstrumentoEvaluacion, Orden = e.Orden };
-    private static SecuenciaPlaneacionEdicionDto Secuencia(PlaneacionSecuencia s) => new() { Id = s.Id, Fase = s.Fase, Estrategia = s.Estrategia, ActividadDocente = s.ActividadDocente, ActividadEstudiante = s.ActividadEstudiante, EvidenciaAprendizaje = s.EvidenciaAprendizaje, MediosMateriales = s.MediosMateriales, Orden = s.Orden };
-    private static ReferenciaPlaneacionEdicionDto Referencia(PlaneacionReferencia r) => new() { Id = r.Id, ReferenciaAPA = r.ReferenciaAPA, Orden = r.Orden };
+    private static TemaPlaneacionEdicionDto Tema(PlaneacionTema t) => new() { PublicId = t.PublicId, Tema = t.Tema, SaberConceptual = t.SaberConceptual, SaberHacer = t.SaberHacer, SaberSer = t.SaberSer, Orden = t.Orden };
+    private static EvaluacionPlaneacionEdicionDto Evaluacion(PlaneacionEvaluacion e) => new() { PublicId = e.PublicId, PeriodoSemanas = e.PeriodoSemanas, ResultadoAprendizaje = e.ResultadoAprendizaje, EvidenciaAprendizaje = e.EvidenciaAprendizaje, Fase = e.Fase, TipoEvaluacion = e.TipoEvaluacion, AgenteEvaluador = e.AgenteEvaluador, Ponderacion = e.Ponderacion, InstrumentoEvaluacion = e.InstrumentoEvaluacion, Orden = e.Orden };
+    private static SecuenciaPlaneacionEdicionDto Secuencia(PlaneacionSecuencia s) => new() { PublicId = s.PublicId, Fase = s.Fase, Estrategia = s.Estrategia, ActividadDocente = s.ActividadDocente, ActividadEstudiante = s.ActividadEstudiante, EvidenciaAprendizaje = s.EvidenciaAprendizaje, MediosMateriales = s.MediosMateriales, Orden = s.Orden };
+    private static ReferenciaPlaneacionEdicionDto Referencia(PlaneacionReferencia r) => new() { PublicId = r.PublicId, ReferenciaAPA = r.ReferenciaAPA, Orden = r.Orden };
     private static string NombreCompleto(Usuario u) => string.Join(" ", new[] { u.Nombre, u.ApellidoPaterno, u.ApellidoMaterno }.Where(x => !string.IsNullOrWhiteSpace(x)));
 
     internal static void ActualizarCaratula(PlaneacionDidactica p, CaratulaPlaneacionEdicionDto d, long usuarioId)
@@ -239,14 +242,14 @@ internal static class PlaneacionFlujoSupport
 
     internal static void SincronizarUnidades(PlaneacionDidactica p, IReadOnlyCollection<UnidadPlaneacionEdicionDto> datos, long usuarioId)
     {
-        ValidarIds(datos.Select(x => x.Id), "unidades");
-        var existentes = p.Unidades.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.Id);
-        var idsRecibidos = datos.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToHashSet();
-        foreach (var x in existentes.Values.Where(x => !idsRecibidos.Contains(x.Id))) Desactivar(x);
+        ValidarIds(datos.Select(x => x.PublicId), "unidades");
+        var existentes = p.Unidades.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.PublicId);
+        var idsRecibidos = datos.Where(x => x.PublicId.HasValue).Select(x => x.PublicId!.Value).ToHashSet();
+        foreach (var x in existentes.Values.Where(x => !idsRecibidos.Contains(x.PublicId))) Desactivar(x);
         foreach (var d in datos)
         {
-            var u = d.Id.HasValue
-                ? existentes.GetValueOrDefault(d.Id.Value) ?? throw new AppException("Una unidad no pertenece a la planeación.")
+            var u = d.PublicId.HasValue
+                ? existentes.GetValueOrDefault(d.PublicId.Value) ?? throw new AppException("Una unidad no pertenece a la planeación.")
                 : AgregarUnidad(p);
             u.NumeroUnidad = d.NumeroUnidad; u.NombreUnidad = d.NombreUnidad; u.PropositoEsperado = d.PropositoEsperado;
             u.HorasSaber = d.HorasSaber; u.HorasSaberHacer = d.HorasSaberHacer; u.HorasTotales = d.HorasTotales; u.PorcentajeUnidad = d.PorcentajeUnidad; u.Orden = d.Orden;
@@ -257,36 +260,36 @@ internal static class PlaneacionFlujoSupport
 
     internal static void SincronizarReferencias(PlaneacionDidactica p, IReadOnlyCollection<ReferenciaPlaneacionEdicionDto> datos, long usuarioId)
     {
-        ValidarIds(datos.Select(x => x.Id), "referencias");
-        var existentes = p.Referencias.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.Id);
-        var ids = datos.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToHashSet();
-        foreach (var x in existentes.Values.Where(x => !ids.Contains(x.Id))) Desactivar(x);
+        ValidarIds(datos.Select(x => x.PublicId), "referencias");
+        var existentes = p.Referencias.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.PublicId);
+        var ids = datos.Where(x => x.PublicId.HasValue).Select(x => x.PublicId!.Value).ToHashSet();
+        foreach (var x in existentes.Values.Where(x => !ids.Contains(x.PublicId))) Desactivar(x);
         foreach (var d in datos)
         {
-            var r = d.Id.HasValue ? existentes.GetValueOrDefault(d.Id.Value) ?? throw new AppException("Una referencia no pertenece a la planeación.") : AgregarReferencia(p);
+            var r = d.PublicId.HasValue ? existentes.GetValueOrDefault(d.PublicId.Value) ?? throw new AppException("Una referencia no pertenece a la planeación.") : AgregarReferencia(p);
             r.ReferenciaAPA = d.ReferenciaAPA; r.Orden = d.Orden; r.UltimaModificacionPorId = usuarioId; r.FechaUltimaModificacion = DateTime.UtcNow; r.UpdatedAt = DateTime.UtcNow;
         }
     }
 
     private static void SincronizarTemas(PlaneacionUnidad u, IReadOnlyCollection<TemaPlaneacionEdicionDto> datos, long usuarioId)
     {
-        ValidarIds(datos.Select(x => x.Id), "temas"); var e = u.Temas.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.Id); var ids = datos.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToHashSet();
-        foreach (var x in e.Values.Where(x => !ids.Contains(x.Id))) Desactivar(x);
-        foreach (var d in datos) { var x = d.Id.HasValue ? e.GetValueOrDefault(d.Id.Value) ?? throw new AppException("Un tema no pertenece a la unidad.") : AgregarTema(u); x.Tema = d.Tema; x.SaberConceptual = d.SaberConceptual; x.SaberHacer = d.SaberHacer; x.SaberSer = d.SaberSer; x.Orden = d.Orden; Auditar(x, usuarioId); }
+        ValidarIds(datos.Select(x => x.PublicId), "temas"); var e = u.Temas.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.PublicId); var ids = datos.Where(x => x.PublicId.HasValue).Select(x => x.PublicId!.Value).ToHashSet();
+        foreach (var x in e.Values.Where(x => !ids.Contains(x.PublicId))) Desactivar(x);
+        foreach (var d in datos) { var x = d.PublicId.HasValue ? e.GetValueOrDefault(d.PublicId.Value) ?? throw new AppException("Un tema no pertenece a la unidad.") : AgregarTema(u); x.Tema = d.Tema; x.SaberConceptual = d.SaberConceptual; x.SaberHacer = d.SaberHacer; x.SaberSer = d.SaberSer; x.Orden = d.Orden; Auditar(x, usuarioId); }
     }
 
     private static void SincronizarEvaluaciones(PlaneacionUnidad u, IReadOnlyCollection<EvaluacionPlaneacionEdicionDto> datos, long usuarioId)
     {
-        ValidarIds(datos.Select(x => x.Id), "evaluaciones"); var e = u.Evaluaciones.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.Id); var ids = datos.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToHashSet();
-        foreach (var x in e.Values.Where(x => !ids.Contains(x.Id))) Desactivar(x);
-        foreach (var d in datos) { var x = d.Id.HasValue ? e.GetValueOrDefault(d.Id.Value) ?? throw new AppException("Una evaluación no pertenece a la unidad.") : AgregarEvaluacion(u); x.PeriodoSemanas = d.PeriodoSemanas; x.ResultadoAprendizaje = d.ResultadoAprendizaje; x.EvidenciaAprendizaje = d.EvidenciaAprendizaje; x.Fase = d.Fase; x.TipoEvaluacion = d.TipoEvaluacion; x.AgenteEvaluador = d.AgenteEvaluador; x.Ponderacion = d.Ponderacion; x.InstrumentoEvaluacion = d.InstrumentoEvaluacion; x.Orden = d.Orden; Auditar(x, usuarioId); }
+        ValidarIds(datos.Select(x => x.PublicId), "evaluaciones"); var e = u.Evaluaciones.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.PublicId); var ids = datos.Where(x => x.PublicId.HasValue).Select(x => x.PublicId!.Value).ToHashSet();
+        foreach (var x in e.Values.Where(x => !ids.Contains(x.PublicId))) Desactivar(x);
+        foreach (var d in datos) { var x = d.PublicId.HasValue ? e.GetValueOrDefault(d.PublicId.Value) ?? throw new AppException("Una evaluación no pertenece a la unidad.") : AgregarEvaluacion(u); x.PeriodoSemanas = d.PeriodoSemanas; x.ResultadoAprendizaje = d.ResultadoAprendizaje; x.EvidenciaAprendizaje = d.EvidenciaAprendizaje; x.Fase = d.Fase; x.TipoEvaluacion = d.TipoEvaluacion; x.AgenteEvaluador = d.AgenteEvaluador; x.Ponderacion = d.Ponderacion; x.InstrumentoEvaluacion = d.InstrumentoEvaluacion; x.Orden = d.Orden; Auditar(x, usuarioId); }
     }
 
     private static void SincronizarSecuencias(PlaneacionUnidad u, IReadOnlyCollection<SecuenciaPlaneacionEdicionDto> datos, long usuarioId)
     {
-        ValidarIds(datos.Select(x => x.Id), "secuencias"); var e = u.Secuencias.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.Id); var ids = datos.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToHashSet();
-        foreach (var x in e.Values.Where(x => !ids.Contains(x.Id))) Desactivar(x);
-        foreach (var d in datos) { var x = d.Id.HasValue ? e.GetValueOrDefault(d.Id.Value) ?? throw new AppException("Una secuencia no pertenece a la unidad.") : AgregarSecuencia(u); x.Fase = d.Fase; x.Estrategia = d.Estrategia; x.ActividadDocente = d.ActividadDocente; x.ActividadEstudiante = d.ActividadEstudiante; x.EvidenciaAprendizaje = d.EvidenciaAprendizaje; x.MediosMateriales = d.MediosMateriales; x.Orden = d.Orden; Auditar(x, usuarioId); }
+        ValidarIds(datos.Select(x => x.PublicId), "secuencias"); var e = u.Secuencias.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.PublicId); var ids = datos.Where(x => x.PublicId.HasValue).Select(x => x.PublicId!.Value).ToHashSet();
+        foreach (var x in e.Values.Where(x => !ids.Contains(x.PublicId))) Desactivar(x);
+        foreach (var d in datos) { var x = d.PublicId.HasValue ? e.GetValueOrDefault(d.PublicId.Value) ?? throw new AppException("Una secuencia no pertenece a la unidad.") : AgregarSecuencia(u); x.Fase = d.Fase; x.Estrategia = d.Estrategia; x.ActividadDocente = d.ActividadDocente; x.ActividadEstudiante = d.ActividadEstudiante; x.EvidenciaAprendizaje = d.EvidenciaAprendizaje; x.MediosMateriales = d.MediosMateriales; x.Orden = d.Orden; Auditar(x, usuarioId); }
     }
 
     private static PlaneacionUnidad AgregarUnidad(PlaneacionDidactica p) { var x = new PlaneacionUnidad(); p.Unidades.Add(x); return x; }
@@ -298,5 +301,11 @@ internal static class PlaneacionFlujoSupport
     private static void Auditar(PlaneacionEvaluacion x, long id) { x.UltimaModificacionPorId = id; x.FechaUltimaModificacion = DateTime.UtcNow; x.UpdatedAt = DateTime.UtcNow; }
     private static void Auditar(PlaneacionSecuencia x, long id) { x.UltimaModificacionPorId = id; x.FechaUltimaModificacion = DateTime.UtcNow; x.UpdatedAt = DateTime.UtcNow; }
     private static void Desactivar(BaseEntity x) { x.Activo = false; x.DeletedAt = DateTime.UtcNow; x.UpdatedAt = DateTime.UtcNow; }
-    private static void ValidarIds(IEnumerable<long?> ids, string seccion) { var recibidos = ids.Where(x => x.HasValue).Select(x => x!.Value).ToList(); if (recibidos.Count != recibidos.Distinct().Count()) throw new AppException($"Hay identificadores duplicados en {seccion}."); }
+    private static void ValidarIds(IEnumerable<Guid?> ids, string seccion) { var recibidos = ids.Where(x => x.HasValue).Select(x => x!.Value).ToList(); if (recibidos.Count != recibidos.Distinct().Count()) throw new AppException($"Hay identificadores duplicados en {seccion}."); }
+
+    internal static void ExigirVisibleParaRevisor(PlaneacionDidactica planeacion)
+    {
+        if (planeacion.Estado is EstadoPlaneacion.Borrador or EstadoPlaneacion.EnProceso)
+            throw new ForbiddenException("La planeación aún no ha sido enviada a revisión.");
+    }
 }

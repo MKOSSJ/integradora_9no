@@ -11,10 +11,10 @@ namespace Plandi.Services.Interfaces
 
         Task<CarreraResponseDto> GetById(Guid publicId);
 
-        Task<CarreraResponseDto> Create(CarreraRequestDto request);
+        Task<CarreraResponseDto> Create(CarreraRequestDto request, long actorId);
 
-        Task<CarreraResponseDto> Update(Guid publicId, CarreraRequestDto request);
+        Task<CarreraResponseDto> Update(Guid publicId, CarreraRequestDto request, long actorId);
 
-        Task<bool> Delete(Guid publicId);
+        Task<bool> Delete(Guid publicId, long actorId);
     }
 }

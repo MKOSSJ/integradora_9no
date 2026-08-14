@@ -20,8 +20,8 @@ namespace Plandi.Dto
     // Response DTO (Output)
     public class PlaneacionReferenciaDto
     {
-        public long Id { get; set; }
-        public long PlaneacionDidacticaId { get; set; }
+        public Guid PublicId { get; set; }
+        public Guid PlaneacionDidacticaPublicId { get; set; }
         public string ReferenciaAPA { get; set; } = string.Empty;
         public int Orden { get; set; }
         public DateTime? FechaUltimaModificacion { get; set; }

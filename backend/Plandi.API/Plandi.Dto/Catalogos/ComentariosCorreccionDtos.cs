@@ -6,6 +6,7 @@ namespace Plandi.Dto.Catalogos;
 public sealed class CrearComentarioCorreccionDto
 {
     [Required]
+    [MaxLength(4000)]
     public string Mensaje { get; set; } = string.Empty;
 }
 

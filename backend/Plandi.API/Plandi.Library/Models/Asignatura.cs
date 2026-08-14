@@ -6,6 +6,9 @@ namespace Plandi.Library.Models
 {
     public class Asignatura : BaseEntity
     {
+        public long? CreatedBy { get; set; }
+        public long? UpdatedBy { get; set; }
+
         public long? AcademiaId { get; set; }
         public Academia? Academia { get; set; }
 

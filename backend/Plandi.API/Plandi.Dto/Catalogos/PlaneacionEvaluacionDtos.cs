@@ -35,8 +35,8 @@ namespace Plandi.Dto
     // Response DTO (Output)
     public class PlaneacionEvaluacionDto
     {
-        public long Id { get; set; }
-        public long PlaneacionUnidadId { get; set; }
+        public Guid PublicId { get; set; }
+        public Guid PlaneacionUnidadPublicId { get; set; }
         public string? PeriodoSemanas { get; set; }
         public string? ResultadoAprendizaje { get; set; }
         public string? EvidenciaAprendizaje { get; set; }

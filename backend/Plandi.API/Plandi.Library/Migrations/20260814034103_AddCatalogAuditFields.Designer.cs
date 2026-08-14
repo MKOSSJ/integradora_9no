@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Plandi.Library.Models;
 
@@ -11,9 +12,11 @@ using Plandi.Library.Models;
 namespace Plandi.Library.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260814034103_AddCatalogAuditFields")]
+    partial class AddCatalogAuditFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,8 +66,7 @@ namespace Plandi.Library.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Nombre")
-                        .IsUnique()
-                        .HasFilter("[DeletedAt] IS NULL");
+                        .IsUnique();
 
                     b.ToTable("academias", (string)null);
                 });
@@ -153,8 +155,7 @@ namespace Plandi.Library.Migrations
                     b.HasIndex("AcademiaId");
 
                     b.HasIndex("Clave")
-                        .IsUnique()
-                        .HasFilter("[DeletedAt] IS NULL");
+                        .IsUnique();
 
                     b.ToTable("asignaturas", (string)null);
                 });
@@ -219,8 +220,7 @@ namespace Plandi.Library.Migrations
                     b.HasIndex("RevisorId");
 
                     b.HasIndex("PeriodoId", "GrupoId", "AsignaturaId", "DocenteId")
-                        .IsUnique()
-                        .HasFilter("[DeletedAt] IS NULL");
+                        .IsUnique();
 
                     b.ToTable("carga_academica", (string)null);
                 });
@@ -271,8 +271,7 @@ namespace Plandi.Library.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Clave")
-                        .IsUnique()
-                        .HasFilter("[DeletedAt] IS NULL");
+                        .IsUnique();
 
                     b.ToTable("carreras", (string)null);
                 });
@@ -310,9 +309,7 @@ namespace Plandi.Library.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PlaneacionDidacticaId", "Titulo")
-                        .IsUnique()
-                        .HasFilter("[DeletedAt] IS NULL");
+                    b.HasIndex("PlaneacionDidacticaId");
 
                     b.ToTable("chats", (string)null);
                 });
@@ -441,8 +438,7 @@ namespace Plandi.Library.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Nombre")
-                        .IsUnique()
-                        .HasFilter("[DeletedAt] IS NULL");
+                        .IsUnique();
 
                     b.ToTable("ciclos_escolares", (string)null);
                 });
@@ -584,8 +580,7 @@ namespace Plandi.Library.Migrations
                     b.HasIndex("CarreraId");
 
                     b.HasIndex("PeriodoId", "Nombre")
-                        .IsUnique()
-                        .HasFilter("[DeletedAt] IS NULL");
+                        .IsUnique();
 
                     b.ToTable("grupos", (string)null);
                 });
@@ -636,8 +631,7 @@ namespace Plandi.Library.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CicloEscolarId", "Nombre")
-                        .IsUnique()
-                        .HasFilter("[DeletedAt] IS NULL");
+                        .IsUnique();
 
                     b.ToTable("periodos", (string)null);
                 });
@@ -1412,8 +1406,7 @@ namespace Plandi.Library.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Nombre")
-                        .IsUnique()
-                        .HasFilter("[DeletedAt] IS NULL");
+                        .IsUnique();
 
                     b.ToTable("roles", (string)null);
 

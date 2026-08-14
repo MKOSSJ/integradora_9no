@@ -11,10 +11,10 @@ namespace Plandi.Services.Interfaces
 
         Task<CicloEscolarResponseDto> GetById(Guid publicId);
 
-        Task<CicloEscolarResponseDto> Create(CicloEscolarRequestDto request);
+        Task<CicloEscolarResponseDto> Create(CicloEscolarRequestDto request, long actorId);
 
-        Task<CicloEscolarResponseDto> Update(Guid publicId, CicloEscolarRequestDto request);
+        Task<CicloEscolarResponseDto> Update(Guid publicId, CicloEscolarRequestDto request, long actorId);
 
-        Task<bool> Delete(Guid publicId);
+        Task<bool> Delete(Guid publicId, long actorId);
     }
 }

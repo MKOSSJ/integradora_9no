@@ -10,6 +10,7 @@ namespace Plandi.Dto.Catalogos
         public Guid UsuarioPublicId { get; set; }
 
         [Required]
+        [EnumDataType(typeof(RolAcademia))]
         public RolAcademia Rol { get; set; }
     }
 

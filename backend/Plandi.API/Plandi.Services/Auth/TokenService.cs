@@ -33,12 +33,14 @@ namespace Plandi.Services
 
             // One role claim per membership: JWT and ASP.NET Core preserve all of them.
             claims.AddRange(usuario.UsuarioRoles
+                .Where(ur => ur.Rol.Activo && ur.Rol.DeletedAt == null)
                 .Select(ur => ur.Rol.Nombre)
                 .Distinct(StringComparer.Ordinal)
                 .Select(rol => new Claim(ClaimTypes.Role, rol)));
 
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:SecretKey"]!));
+                Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SIGNING_KEY") ?? _config["Jwt:Key"]
+                    ?? throw new InvalidOperationException("No se configuró la clave de firma JWT.")));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var expirationMinutes = int.Parse(_config["Jwt:AccessTokenExpirationMinutes"]!);
@@ -86,7 +88,7 @@ namespace Plandi.Services
                         .ThenInclude(ur => ur.Rol)
                 .FirstOrDefaultAsync(rt => rt.TokenHash == tokenHashCalculado);
 
-            if (tokenExist == null || !tokenExist.isActive)
+            if (tokenExist == null || !tokenExist.isActive || !tokenExist.Usuario.Activo || tokenExist.Usuario.DeletedAt != null)
             {
                 return new RequestTokenResponse
                 {
@@ -120,7 +122,8 @@ namespace Plandi.Services
                 AccessToken = newAccessToken,
                 AccessTokenExpiresAt = newExpiresAt,    
                 RefreshToken = newRefreshToken,
-                Roles = usuario.UsuarioRoles.Select(ur => ur.Rol.Nombre).Distinct().OrderBy(rol => rol).ToList()
+                Roles = usuario.UsuarioRoles.Where(ur => ur.Rol.Activo && ur.Rol.DeletedAt == null)
+                    .Select(ur => ur.Rol.Nombre).Distinct().OrderBy(rol => rol).ToList()
             };
         }
     }

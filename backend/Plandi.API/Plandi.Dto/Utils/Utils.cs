@@ -8,8 +8,6 @@ namespace Plandi.Dto.Utils
 {
     public class Utils
     {
-        private const string Alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        private static readonly Random _random = new();
         public static string EncryptPassword(string password)
         {
             using (var sha256 = SHA256.Create())
@@ -28,10 +26,10 @@ namespace Plandi.Dto.Utils
 
         public static string GenerateCode()
         {
-            int length = 6;
-            return new string(Enumerable.Repeat(Alphanumeric, length)
-                .Select(s => s[_random.Next(s.Length)]).ToArray());
+            return Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         }
+
+        public static string HashToken(string token) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 
 
 

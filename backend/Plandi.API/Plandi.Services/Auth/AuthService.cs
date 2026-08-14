@@ -63,11 +63,11 @@ namespace Plandi.Services
             var usuario = await _dBContext.Usuarios
                 .Include(u => u.UsuarioRoles)
                     .ThenInclude(ur => ur.Rol)
-                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == emailCleaned);
+                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == emailCleaned && u.Activo && u.DeletedAt == null);
 
             if (usuario == null)
             {
-                throw new InvalidOperationException("El correo electrónico no está registrado.");
+                throw new InvalidOperationException("Usuario o contraseña incorrectos.");
             }
 
             if (usuario.LockoutEnd.HasValue && usuario.LockoutEnd.Value > DateTime.UtcNow)
@@ -103,7 +103,7 @@ namespace Plandi.Services
                 return new LoginResponseDto
                 {
                     Success = false,
-                    Message = "Usuario o contraseña incorrecta."
+                    Message = "Usuario o contraseña incorrectos."
                 };
             }
 
@@ -153,7 +153,7 @@ namespace Plandi.Services
             }
 
             var resetToken = Utils.GenerateCode();
-            usuario.PasswordResetToken = resetToken;
+            usuario.PasswordResetToken = Utils.HashToken(resetToken);
             usuario.PasswordResetTokenExpires = DateTime.UtcNow.AddHours(1);
 
             await _dBContext.SaveChangesAsync();
@@ -168,8 +168,9 @@ namespace Plandi.Services
                 return false;
             }
 
+            var tokenHash = Utils.HashToken(token);
             var usuario = await _dBContext.Usuarios.FirstOrDefaultAsync(u =>
-                u.PasswordResetToken == token &&
+                u.PasswordResetToken == tokenHash && u.Activo && u.DeletedAt == null &&
                 u.PasswordResetTokenExpires.HasValue &&
                 u.PasswordResetTokenExpires.Value > DateTime.UtcNow);
 

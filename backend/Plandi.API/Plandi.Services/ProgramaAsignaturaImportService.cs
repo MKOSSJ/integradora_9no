@@ -19,17 +19,27 @@ public sealed class ProgramaAsignaturaImportService(
     IPdfTextExtractor pdfTextExtractor,
     ProgramaAsignaturaExtractor programaExtractor) : IProgramaAsignaturaImportService
 {
+    public const long MaxPdfBytes = 25 * 1024 * 1024;
+    private const string PdfMimeType = "application/pdf";
+    private static readonly TimeSpan ProcessingTimeout = TimeSpan.FromMinutes(2);
+
     public async Task<string> ExtraerTextoAsync(Stream archivo, string nombreArchivo, CancellationToken cancellationToken = default)
     {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(ProcessingTimeout);
+        cancellationToken = timeout.Token;
         var bytes = await ReadAndValidatePdfAsync(archivo, nombreArchivo, cancellationToken);
         return ExtractRawText(bytes, nombreArchivo);
     }
 
     public async Task<ProgramaAsignaturaImportacionResultadoDto> ImportarAsync(Stream archivo, string nombreArchivo,
-        long tamanoBytes, string? mimeType, Guid subidoPorPublicId, string directorioStorage, CancellationToken cancellationToken = default)
+        long tamanoBytes, string? mimeType, long subidoPorId, string directorioStorage, CancellationToken cancellationToken = default)
     {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(ProcessingTimeout);
+        cancellationToken = timeout.Token;
         var result = new ProgramaAsignaturaImportacionResultadoDto { Archivo = nombreArchivo };
-        var user = await dbContext.Usuarios.SingleOrDefaultAsync(user => user.PublicId == subidoPorPublicId && user.Activo && user.DeletedAt == null, cancellationToken)
+        var user = await dbContext.Usuarios.SingleOrDefaultAsync(user => user.Id == subidoPorId && user.Activo && user.DeletedAt == null, cancellationToken)
             ?? throw new AppException("El usuario que realiza la carga no existe.");
         var bytes = await ReadAndValidatePdfAsync(archivo, nombreArchivo, cancellationToken);
         var hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
@@ -37,6 +47,11 @@ public sealed class ProgramaAsignaturaImportService(
             .FirstOrDefaultAsync(document => document.HashSha256 == hash && document.Activo && document.DeletedAt == null, cancellationToken);
         if (duplicate?.ProgramaAsignatura is not null)
         {
+            if (duplicate.MimeType != PdfMimeType)
+            {
+                duplicate.MimeType = PdfMimeType;
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
             result.ProgramaAsignaturaPublicId = duplicate.ProgramaAsignatura.PublicId;
             result.Asignatura = duplicate.ProgramaAsignatura.NombreAsignatura;
             result.Clave = duplicate.ProgramaAsignatura.ClaveAsignatura;
@@ -63,7 +78,7 @@ public sealed class ProgramaAsignaturaImportService(
             NombreOriginal = nombreArchivo,
             NombreGuardado = savedName,
             Extension = ".pdf",
-            MimeType = string.IsNullOrWhiteSpace(mimeType) ? "application/pdf" : mimeType,
+            MimeType = PdfMimeType,
             TamanoBytes = tamanoBytes,
             RutaStorage = fullPath,
             HashSha256 = hash,
@@ -133,9 +148,13 @@ public sealed class ProgramaAsignaturaImportService(
     {
         if (!string.Equals(Path.GetExtension(fileName), ".pdf", StringComparison.OrdinalIgnoreCase))
             throw new AppException("Solo se admiten programas de asignatura en formato PDF.");
+        if (file.CanSeek && file.Length > MaxPdfBytes)
+            throw new AppException("El PDF no puede exceder 25 MB.");
         await using var memory = new MemoryStream();
         await file.CopyToAsync(memory, cancellationToken);
         var bytes = memory.ToArray();
+        if (bytes.Length > MaxPdfBytes)
+            throw new AppException("El PDF no puede exceder 25 MB.");
         if (bytes.Length == 0 || !Encoding.ASCII.GetString(bytes, 0, Math.Min(bytes.Length, 5)).StartsWith("%PDF-"))
             throw new AppException("El archivo no es un PDF valido.");
         return bytes;

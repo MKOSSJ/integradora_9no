@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
@@ -6,14 +7,17 @@ using Plandi.Services.Interfaces;
 namespace Plandi.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class AsignaturasController : ControllerBase
     {
         private readonly IAsignaturaService _asignaturaService;
+        private readonly IAutorizacionService _autorizacionService;
 
-        public AsignaturasController(IAsignaturaService asignaturaService)
+        public AsignaturasController(IAsignaturaService asignaturaService, IAutorizacionService autorizacionService)
         {
             _asignaturaService = asignaturaService;
+            _autorizacionService = autorizacionService;
         }
 
         [HttpGet]
@@ -53,11 +57,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Create([FromBody] AsignaturaRequestDto request)
         {
             try
             {
-                var result = await _asignaturaService.Create(request);
+                var result = await _asignaturaService.Create(request, UsuarioId);
                 return Ok(ApiResponse<AsignaturaResponseDto>.Ok(result, "Asignatura creada correctamente."));
             }
             catch (AppException ex)
@@ -71,11 +76,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPut("{publicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Update(Guid publicId, [FromBody] AsignaturaRequestDto request)
         {
             try
             {
-                var result = await _asignaturaService.Update(publicId, request);
+                var result = await _asignaturaService.Update(publicId, request, UsuarioId);
                 return Ok(ApiResponse<AsignaturaResponseDto>.Ok(result, "Asignatura actualizada correctamente."));
             }
             catch (AppException ex)
@@ -89,11 +95,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("{publicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Delete(Guid publicId)
         {
             try
             {
-                var result = await _asignaturaService.Delete(publicId);
+                var result = await _asignaturaService.Delete(publicId, UsuarioId);
                 return Ok(ApiResponse<bool>.Ok(result, "Asignatura eliminada correctamente."));
             }
             catch (AppException ex)
@@ -105,5 +112,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(500, ApiResponse<bool>.Fail("Ocurrió un error interno al eliminar la asignatura."));
             }
         }
+
+        private long UsuarioId => _autorizacionService.ObtenerUsuarioId(User);
     }
 }

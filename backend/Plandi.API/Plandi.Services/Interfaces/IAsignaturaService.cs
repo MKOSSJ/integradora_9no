@@ -11,10 +11,10 @@ namespace Plandi.Services.Interfaces
 
         Task<AsignaturaResponseDto> GetById(Guid publicId);
 
-        Task<AsignaturaResponseDto> Create(AsignaturaRequestDto request);
+        Task<AsignaturaResponseDto> Create(AsignaturaRequestDto request, long actorId);
 
-        Task<AsignaturaResponseDto> Update(Guid publicId, AsignaturaRequestDto request);
+        Task<AsignaturaResponseDto> Update(Guid publicId, AsignaturaRequestDto request, long actorId);
 
-        Task<bool> Delete(Guid publicId);
+        Task<bool> Delete(Guid publicId, long actorId);
     }
 }

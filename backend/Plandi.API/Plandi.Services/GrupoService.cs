@@ -34,7 +34,7 @@ namespace Plandi.Services
             return ToDto(grupo);
         }
 
-        public async Task<GrupoResponseDto> Create(GrupoRequestDto request)
+        public async Task<GrupoResponseDto> Create(GrupoRequestDto request, long actorId)
         {
             var carreraId = await ResolveCarreraId(request.CarreraPublicId);
             var periodoId = await ResolvePeriodoId(request.PeriodoPublicId);
@@ -46,7 +46,8 @@ namespace Plandi.Services
                 Nombre = request.Nombre,
                 Cuatrimestre = request.Cuatrimestre,
                 CarreraId = carreraId,
-                PeriodoId = periodoId
+                PeriodoId = periodoId,
+                CreatedBy = actorId
             };
 
             _dbContext.Grupos.Add(grupo);
@@ -57,7 +58,7 @@ namespace Plandi.Services
             return ToDto(grupo);
         }
 
-        public async Task<GrupoResponseDto> Update(Guid publicId, GrupoRequestDto request)
+        public async Task<GrupoResponseDto> Update(Guid publicId, GrupoRequestDto request, long actorId)
         {
             var grupo = await GetEntity(publicId);
 
@@ -71,6 +72,7 @@ namespace Plandi.Services
             grupo.CarreraId = carreraId;
             grupo.PeriodoId = periodoId;
             grupo.UpdatedAt = DateTime.UtcNow;
+            grupo.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
             await _dbContext.Entry(grupo).Reference(g => g.Carrera).LoadAsync();
@@ -79,13 +81,14 @@ namespace Plandi.Services
             return ToDto(grupo);
         }
 
-        public async Task<bool> Delete(Guid publicId)
+        public async Task<bool> Delete(Guid publicId, long actorId)
         {
             var grupo = await GetEntity(publicId);
 
             grupo.Activo = false;
             grupo.DeletedAt = DateTime.UtcNow;
             grupo.UpdatedAt = DateTime.UtcNow;
+            grupo.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
 

@@ -50,7 +50,7 @@ namespace Plandi.API.Controllers
         // ========== CARÁTULA ENDPOINTS ==========
 
         [HttpGet("caratula/{planeacionId}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionCaratulaDto>>> GetCaratula(long planeacionId)
+        public async Task<ActionResult<ApiResponse<PlaneacionCaratulaDto>>> GetCaratula(Guid planeacionId)
         {
             try
             {
@@ -67,7 +67,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("caratula/{planeacionId}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionCaratulaDto>>> CreateCaratula(long planeacionId, [FromBody] CreatePlaneacionCaratulaDto dto)
+        public async Task<ActionResult<ApiResponse<PlaneacionCaratulaDto>>> CreateCaratula(Guid planeacionId, [FromBody] CreatePlaneacionCaratulaDto dto)
         {
             try
             {
@@ -86,7 +86,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPut("caratula/{id}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionCaratulaDto>>> UpdateCaratula(long id, [FromBody] UpdatePlaneacionCaratulaDto dto)
+        public async Task<ActionResult<ApiResponse<PlaneacionCaratulaDto>>> UpdateCaratula(Guid id, [FromBody] UpdatePlaneacionCaratulaDto dto)
         {
             try
             {
@@ -104,7 +104,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("caratula/{id}")]
-        public async Task<ActionResult<ApiResponse<string>>> DeleteCaratula(long id)
+        public async Task<ActionResult<ApiResponse<string>>> DeleteCaratula(Guid id)
         {
             try
             {
@@ -124,7 +124,7 @@ namespace Plandi.API.Controllers
         // ========== TEMAS ENDPOINTS ==========
 
         [HttpGet("temas/{id}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionTemaDto>>> GetTema(long id)
+        public async Task<ActionResult<ApiResponse<PlaneacionTemaDto>>> GetTema(Guid id)
         {
             try
             {
@@ -138,7 +138,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpGet("unidad/{unidadId}/temas")]
-        public async Task<ActionResult<ApiResponse<List<PlaneacionTemaDto>>>> GetTemasByUnidad(long unidadId)
+        public async Task<ActionResult<ApiResponse<List<PlaneacionTemaDto>>>> GetTemasByUnidad(Guid unidadId)
         {
             try
             {
@@ -152,12 +152,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("unidad/{unidadId}/temas")]
-        public async Task<ActionResult<ApiResponse<PlaneacionTemaDto>>> CreateTema(long unidadId, [FromBody] CreatePlaneacionTemaDtos dto)
+        public async Task<ActionResult<ApiResponse<PlaneacionTemaDto>>> CreateTema(Guid unidadId, [FromBody] CreatePlaneacionTemaDtos dto)
         {
             try
             {
                 var tema = await _temaService.CreateAsync(unidadId, dto);
-                return CreatedAtAction(nameof(GetTema), new { id = tema.Id },
+                return CreatedAtAction(nameof(GetTema), new { id = tema.PublicId },
                     new ApiResponse<PlaneacionTemaDto> { Success = true, Data = tema });
             }
             catch (InvalidOperationException ex)
@@ -167,7 +167,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPut("temas/{id}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionTemaDto>>> UpdateTema(long id, [FromBody] UpdatePlaneacionTemaDtos dto)
+        public async Task<ActionResult<ApiResponse<PlaneacionTemaDto>>> UpdateTema(Guid id, [FromBody] UpdatePlaneacionTemaDtos dto)
         {
             try
             {
@@ -181,7 +181,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("temas/{id}")]
-        public async Task<ActionResult<ApiResponse<string>>> DeleteTema(long id)
+        public async Task<ActionResult<ApiResponse<string>>> DeleteTema(Guid id)
         {
             try
             {
@@ -197,7 +197,7 @@ namespace Plandi.API.Controllers
         // ========== EVALUACIONES ENDPOINTS ==========
 
         [HttpGet("evaluaciones/{id}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionEvaluacionDto>>> GetEvaluacion(long id)
+        public async Task<ActionResult<ApiResponse<PlaneacionEvaluacionDto>>> GetEvaluacion(Guid id)
         {
             try
             {
@@ -211,7 +211,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpGet("unidad/{unidadId}/evaluaciones")]
-        public async Task<ActionResult<ApiResponse<List<PlaneacionEvaluacionDto>>>> GetEvaluacionesByUnidad(long unidadId)
+        public async Task<ActionResult<ApiResponse<List<PlaneacionEvaluacionDto>>>> GetEvaluacionesByUnidad(Guid unidadId)
         {
             try
             {
@@ -225,12 +225,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("unidad/{unidadId}/evaluaciones")]
-        public async Task<ActionResult<ApiResponse<PlaneacionEvaluacionDto>>> CreateEvaluacion(long unidadId, [FromBody] CreatePlaneacionEvaluacionDto dto)
+        public async Task<ActionResult<ApiResponse<PlaneacionEvaluacionDto>>> CreateEvaluacion(Guid unidadId, [FromBody] CreatePlaneacionEvaluacionDto dto)
         {
             try
             {
                 var evaluacion = await _evaluacionService.CreateAsync(unidadId, dto);
-                return CreatedAtAction(nameof(GetEvaluacion), new { id = evaluacion.Id },
+                return CreatedAtAction(nameof(GetEvaluacion), new { id = evaluacion.PublicId },
                     new ApiResponse<PlaneacionEvaluacionDto> { Success = true, Data = evaluacion });
             }
             catch (InvalidOperationException ex)
@@ -240,7 +240,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPut("evaluaciones/{id}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionEvaluacionDto>>> UpdateEvaluacion(long id, [FromBody] UpdatePlaneacionEvaluacionDto dto)
+        public async Task<ActionResult<ApiResponse<PlaneacionEvaluacionDto>>> UpdateEvaluacion(Guid id, [FromBody] UpdatePlaneacionEvaluacionDto dto)
         {
             try
             {
@@ -254,7 +254,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("evaluaciones/{id}")]
-        public async Task<ActionResult<ApiResponse<string>>> DeleteEvaluacion(long id)
+        public async Task<ActionResult<ApiResponse<string>>> DeleteEvaluacion(Guid id)
         {
             try
             {
@@ -270,7 +270,7 @@ namespace Plandi.API.Controllers
         // ========== SECUENCIAS ENDPOINTS ==========
 
         [HttpGet("secuencias/{id}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionSecuenciaDto>>> GetSecuencia(long id)
+        public async Task<ActionResult<ApiResponse<PlaneacionSecuenciaDto>>> GetSecuencia(Guid id)
         {
             try
             {
@@ -284,7 +284,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpGet("unidad/{unidadId}/secuencias")]
-        public async Task<ActionResult<ApiResponse<List<PlaneacionSecuenciaDto>>>> GetSecuenciasByUnidad(long unidadId)
+        public async Task<ActionResult<ApiResponse<List<PlaneacionSecuenciaDto>>>> GetSecuenciasByUnidad(Guid unidadId)
         {
             try
             {
@@ -298,12 +298,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("unidad/{unidadId}/secuencias")]
-        public async Task<ActionResult<ApiResponse<PlaneacionSecuenciaDto>>> CreateSecuencia(long unidadId, [FromBody] CreatePlaneacionSecuenciaDto dto)
+        public async Task<ActionResult<ApiResponse<PlaneacionSecuenciaDto>>> CreateSecuencia(Guid unidadId, [FromBody] CreatePlaneacionSecuenciaDto dto)
         {
             try
             {
                 var secuencia = await _secuenciaService.CreateAsync(unidadId, dto);
-                return CreatedAtAction(nameof(GetSecuencia), new { id = secuencia.Id },
+                return CreatedAtAction(nameof(GetSecuencia), new { id = secuencia.PublicId },
                     new ApiResponse<PlaneacionSecuenciaDto> { Success = true, Data = secuencia });
             }
             catch (InvalidOperationException ex)
@@ -313,7 +313,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPut("secuencias/{id}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionSecuenciaDto>>> UpdateSecuencia(long id, [FromBody] UpdatePlaneacionSecuenciaDto dto)
+        public async Task<ActionResult<ApiResponse<PlaneacionSecuenciaDto>>> UpdateSecuencia(Guid id, [FromBody] UpdatePlaneacionSecuenciaDto dto)
         {
             try
             {
@@ -327,7 +327,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("secuencias/{id}")]
-        public async Task<ActionResult<ApiResponse<string>>> DeleteSecuencia(long id)
+        public async Task<ActionResult<ApiResponse<string>>> DeleteSecuencia(Guid id)
         {
             try
             {
@@ -343,7 +343,7 @@ namespace Plandi.API.Controllers
         // ========== REFERENCIAS ENDPOINTS ==========
 
         [HttpGet("referencias/{id}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionReferenciaDto>>> GetReferencia(long id)
+        public async Task<ActionResult<ApiResponse<PlaneacionReferenciaDto>>> GetReferencia(Guid id)
         {
             try
             {
@@ -357,7 +357,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpGet("planeacion/{planeacionId}/referencias")]
-        public async Task<ActionResult<ApiResponse<List<PlaneacionReferenciaDto>>>> GetReferenciasByPlaneacion(long planeacionId)
+        public async Task<ActionResult<ApiResponse<List<PlaneacionReferenciaDto>>>> GetReferenciasByPlaneacion(Guid planeacionId)
         {
             try
             {
@@ -371,12 +371,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("planeacion/{planeacionId}/referencias")]
-        public async Task<ActionResult<ApiResponse<PlaneacionReferenciaDto>>> CreateReferencia(long planeacionId, [FromBody] CreatePlaneacionReferenciaDto dto)
+        public async Task<ActionResult<ApiResponse<PlaneacionReferenciaDto>>> CreateReferencia(Guid planeacionId, [FromBody] CreatePlaneacionReferenciaDto dto)
         {
             try
             {
                 var referencia = await _referenciaService.CreateAsync(planeacionId, dto);
-                return CreatedAtAction(nameof(GetReferencia), new { id = referencia.Id },
+                return CreatedAtAction(nameof(GetReferencia), new { id = referencia.PublicId },
                     new ApiResponse<PlaneacionReferenciaDto> { Success = true, Data = referencia });
             }
             catch (InvalidOperationException ex)
@@ -386,7 +386,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPut("referencias/{id}")]
-        public async Task<ActionResult<ApiResponse<PlaneacionReferenciaDto>>> UpdateReferencia(long id, [FromBody] UpdatePlaneacionReferenciaDto dto)
+        public async Task<ActionResult<ApiResponse<PlaneacionReferenciaDto>>> UpdateReferencia(Guid id, [FromBody] UpdatePlaneacionReferenciaDto dto)
         {
             try
             {
@@ -400,7 +400,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("referencias/{id}")]
-        public async Task<ActionResult<ApiResponse<string>>> DeleteReferencia(long id)
+        public async Task<ActionResult<ApiResponse<string>>> DeleteReferencia(Guid id)
         {
             try
             {

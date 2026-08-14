@@ -1,22 +1,27 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
 using Plandi.Services.Interfaces;
 using Plandi.API.Models;
+using Plandi.Services;
 
 namespace Plandi.API.Controllers
 {
     [ApiController]
+    [Authorize(Roles = "Director")]
     [Route("api/[controller]")]
     public class CargasAcademicasController : ControllerBase
     {
         private readonly ICargaAcademicaService _cargaAcademicaService;
         private readonly IImportacionCargaAcademicaService _importacionCargaAcademicaService;
+        private readonly IAutorizacionService _autorizacionService;
 
-        public CargasAcademicasController(ICargaAcademicaService cargaAcademicaService, IImportacionCargaAcademicaService importacionCargaAcademicaService)
+        public CargasAcademicasController(ICargaAcademicaService cargaAcademicaService, IImportacionCargaAcademicaService importacionCargaAcademicaService, IAutorizacionService autorizacionService)
         {
             _cargaAcademicaService = cargaAcademicaService;
             _importacionCargaAcademicaService = importacionCargaAcademicaService;
+            _autorizacionService = autorizacionService;
         }
 
         /// <summary>Importa asignaciones desde un CSV o XLSX con Asignatura, Cuatrimestre, P.E. y Docente.</summary>
@@ -27,11 +32,13 @@ namespace Plandi.API.Controllers
         {
             if (request.File is null || request.File.Length == 0)
                 return BadRequest(ApiResponse<ImportacionCargaAcademicaResultadoDto>.Fail("Debe adjuntar un archivo CSV o XLSX no vacío."));
+            if (request.File.Length > ImportacionCargaAcademicaService.MaxFileBytes)
+                return BadRequest(ApiResponse<ImportacionCargaAcademicaResultadoDto>.Fail("El archivo no puede exceder 10 MB."));
 
             try
             {
                 await using var stream = request.File.OpenReadStream();
-                var result = await _importacionCargaAcademicaService.Importar(stream, request.File.FileName, request.PeriodoPublicId, cancellationToken);
+                var result = await _importacionCargaAcademicaService.Importar(stream, request.File.FileName, request.PeriodoPublicId, UsuarioId, cancellationToken);
                 return Ok(ApiResponse<ImportacionCargaAcademicaResultadoDto>.Ok(result, "Importación finalizada."));
             }
             catch (AppException ex)
@@ -85,7 +92,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _cargaAcademicaService.Create(request);
+                var result = await _cargaAcademicaService.Create(request, UsuarioId);
                 return Ok(ApiResponse<CargaAcademicaResponseDto>.Ok(result, "Carga académica creada correctamente."));
             }
             catch (AppException ex)
@@ -103,7 +110,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _cargaAcademicaService.Update(publicId, request);
+                var result = await _cargaAcademicaService.Update(publicId, request, UsuarioId);
                 return Ok(ApiResponse<CargaAcademicaResponseDto>.Ok(result, "Carga académica actualizada correctamente."));
             }
             catch (AppException ex)
@@ -121,7 +128,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _cargaAcademicaService.Delete(publicId);
+                var result = await _cargaAcademicaService.Delete(publicId, UsuarioId);
                 return Ok(ApiResponse<bool>.Ok(result, "Carga académica eliminada correctamente."));
             }
             catch (AppException ex)
@@ -133,5 +140,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(500, ApiResponse<bool>.Fail("Ocurrió un error interno al eliminar la carga académica."));
             }
         }
+
+        private long UsuarioId => _autorizacionService.ObtenerUsuarioId(User);
     }
 }

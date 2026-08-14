@@ -25,5 +25,6 @@ namespace Plandi.Library.Models
         public Academia? Academia { get; set; }
 
         public long? CreatedBy { get; set; }
+        public long? UpdatedBy { get; set; }
     }
 }

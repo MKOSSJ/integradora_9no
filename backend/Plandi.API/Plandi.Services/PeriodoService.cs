@@ -33,7 +33,7 @@ namespace Plandi.Services
             return ToDto(periodo);
         }
 
-        public async Task<PeriodoResponseDto> Create(PeriodoRequestDto request)
+        public async Task<PeriodoResponseDto> Create(PeriodoRequestDto request, long actorId)
         {
             var cicloEscolarId = await ResolveCicloEscolarId(request.CicloEscolarPublicId);
 
@@ -45,7 +45,8 @@ namespace Plandi.Services
                 CicloEscolarId = cicloEscolarId,
                 Nombre = request.Nombre,
                 FechaInicio = request.FechaInicio,
-                FechaFin = request.FechaFin
+                FechaFin = request.FechaFin,
+                CreatedBy = actorId
             };
 
             _dbContext.Periodos.Add(periodo);
@@ -55,7 +56,7 @@ namespace Plandi.Services
             return ToDto(periodo);
         }
 
-        public async Task<PeriodoResponseDto> Update(Guid publicId, PeriodoRequestDto request)
+        public async Task<PeriodoResponseDto> Update(Guid publicId, PeriodoRequestDto request, long actorId)
         {
             var periodo = await GetEntity(publicId);
 
@@ -69,6 +70,7 @@ namespace Plandi.Services
             periodo.FechaInicio = request.FechaInicio;
             periodo.FechaFin = request.FechaFin;
             periodo.UpdatedAt = DateTime.UtcNow;
+            periodo.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
             await _dbContext.Entry(periodo).Reference(p => p.CicloEscolar).LoadAsync();
@@ -76,13 +78,14 @@ namespace Plandi.Services
             return ToDto(periodo);
         }
 
-        public async Task<bool> Delete(Guid publicId)
+        public async Task<bool> Delete(Guid publicId, long actorId)
         {
             var periodo = await GetEntity(publicId);
 
             periodo.Activo = false;
             periodo.DeletedAt = DateTime.UtcNow;
             periodo.UpdatedAt = DateTime.UtcNow;
+            periodo.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
 

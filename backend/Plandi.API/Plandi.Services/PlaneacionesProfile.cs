@@ -22,7 +22,9 @@ namespace Plandi.Services
             CreateMap<PlaneacionDidactica, PlaneacionDidacticaSimpleDto>();
 
             // PlaneacionCaratula Mappings
-            CreateMap<PlaneacionCaratula, PlaneacionCaratulaDto>();
+            CreateMap<PlaneacionCaratula, PlaneacionCaratulaDto>()
+                .ForMember(dest => dest.PlaneacionDidacticaPublicId, opt => opt.MapFrom(src => src.PlaneacionDidactica.PublicId))
+                .ForMember(dest => dest.ProgramaAsignaturaPublicId, opt => opt.MapFrom(src => src.ProgramaAsignatura == null ? (Guid?)null : src.ProgramaAsignatura.PublicId));
             CreateMap<CreatePlaneacionCaratulaDto, PlaneacionCaratula>();
             CreateMap<UpdatePlaneacionCaratulaDto, PlaneacionCaratula>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
@@ -40,25 +42,29 @@ namespace Plandi.Services
             CreateMap<PlaneacionUnidad, PlaneacionUnidadSimpleDto>();
 
             // PlaneacionTema Mappings
-            CreateMap<PlaneacionTema, PlaneacionTemaDto>();
+            CreateMap<PlaneacionTema, PlaneacionTemaDto>()
+                .ForMember(dest => dest.PlaneacionUnidadPublicId, opt => opt.MapFrom(src => src.PlaneacionUnidad.PublicId));
             CreateMap<CreatePlaneacionTemaDtos, PlaneacionTema>();
             CreateMap<UpdatePlaneacionTemaDtos, PlaneacionTema>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
             // PlaneacionEvaluacion Mappings
-            CreateMap<PlaneacionEvaluacion, PlaneacionEvaluacionDto>();
+            CreateMap<PlaneacionEvaluacion, PlaneacionEvaluacionDto>()
+                .ForMember(dest => dest.PlaneacionUnidadPublicId, opt => opt.MapFrom(src => src.PlaneacionUnidad.PublicId));
             CreateMap<CreatePlaneacionEvaluacionDto, PlaneacionEvaluacion>();
             CreateMap<UpdatePlaneacionEvaluacionDto, PlaneacionEvaluacion>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
             // PlaneacionSecuencia Mappings
-            CreateMap<PlaneacionSecuencia, PlaneacionSecuenciaDto>();
+            CreateMap<PlaneacionSecuencia, PlaneacionSecuenciaDto>()
+                .ForMember(dest => dest.PlaneacionUnidadPublicId, opt => opt.MapFrom(src => src.PlaneacionUnidad.PublicId));
             CreateMap<CreatePlaneacionSecuenciaDto, PlaneacionSecuencia>();
             CreateMap<UpdatePlaneacionSecuenciaDto, PlaneacionSecuencia>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
             // PlaneacionReferencia Mappings
-            CreateMap<PlaneacionReferencia, PlaneacionReferenciaDto>();
+            CreateMap<PlaneacionReferencia, PlaneacionReferenciaDto>()
+                .ForMember(dest => dest.PlaneacionDidacticaPublicId, opt => opt.MapFrom(src => src.PlaneacionDidactica.PublicId));
             CreateMap<CreatePlaneacionReferenciaDto, PlaneacionReferencia>();
             CreateMap<UpdatePlaneacionReferenciaDto, PlaneacionReferencia>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));

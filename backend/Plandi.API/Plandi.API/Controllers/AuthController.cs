@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using Plandi.Services.Interfaces;
 using Plandi.Dto.Auth;
+using Plandi.API.Security;
 
 namespace Plandi.API.Controllers
 {
@@ -13,14 +14,17 @@ namespace Plandi.API.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ILogger<AuthController> _logger;
+        private readonly PasswordRecoveryRateLimiter _passwordRecoveryRateLimiter;
 
-        public AuthController(IAuthService authService, ILogger<AuthController> logger)
+        public AuthController(IAuthService authService, ILogger<AuthController> logger, PasswordRecoveryRateLimiter passwordRecoveryRateLimiter)
         {
             _authService = authService;
             _logger = logger;
+            _passwordRecoveryRateLimiter = passwordRecoveryRateLimiter;
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(RegisterResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -58,6 +62,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         [EnableRateLimiting("loginPolicy")]
         [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -101,6 +106,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("refresh-token")]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(RequestTokenResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -139,6 +145,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("forgot-password")]
+        [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -154,6 +161,9 @@ namespace Plandi.API.Controllers
                 return BadRequest(ModelState);
             }
 
+            if (!_passwordRecoveryRateLimiter.TryAcquire(RemoteIp, forgotPasswordDto.Email))
+                return StatusCode(StatusCodes.Status429TooManyRequests, new { message = "Demasiadas solicitudes. Intente más tarde." });
+
             try
             {
                 await _authService.ForgotPasswordAsync(forgotPasswordDto);
@@ -167,6 +177,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("reset-password")]
+        [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -182,6 +193,9 @@ namespace Plandi.API.Controllers
             {
                 return BadRequest(ModelState);
             }
+
+            if (!_passwordRecoveryRateLimiter.TryAcquire(RemoteIp, resetPasswordDto.PasswordResetToken))
+                return StatusCode(StatusCodes.Status429TooManyRequests, new { message = "Demasiados intentos. Intente más tarde." });
 
             try
             {
@@ -199,5 +213,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ocurrió un error interno en el servidor." });
             }
         }
+
+        private string RemoteIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     }
 }

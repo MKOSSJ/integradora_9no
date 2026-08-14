@@ -12,10 +12,13 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using Plandi.Dto.Common;
+using Plandi.API.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var jwtKey = builder.Configuration["Jwt:SecretKey"]!;
+var jwtKey = Environment.GetEnvironmentVariable("JWT_SIGNING_KEY") ?? builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.StartsWith("CAMBIAR_", StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+    throw new InvalidOperationException("Configure una Jwt:Key de al menos 32 bytes mediante User Secrets o la variable JWT_SIGNING_KEY.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -37,6 +40,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization(options =>
 {
+    options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
     options.AddPolicy("RequireDirectorRole", policy =>
         policy.RequireRole("Director"));
 });
@@ -57,6 +63,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddSingleton<PasswordRecoveryRateLimiter>();
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -148,6 +155,11 @@ app.Use(async (httpContext, next) =>
     catch (NotFoundException exception)
     {
         httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+        await httpContext.Response.WriteAsJsonAsync(ApiResponse<object>.Fail(exception.Message));
+    }
+    catch (ForbiddenException exception)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
         await httpContext.Response.WriteAsJsonAsync(ApiResponse<object>.Fail(exception.Message));
     }
     catch (AppException exception)

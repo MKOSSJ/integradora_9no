@@ -17,12 +17,18 @@ public sealed class ComentariosCorreccionService(AppDbContext context) : IComent
         long usuarioId,
         CancellationToken cancellationToken = default)
     {
+        var mensajeNormalizado = solicitud.Mensaje?.Trim();
+        if (string.IsNullOrWhiteSpace(mensajeNormalizado))
+            throw new AppException("El comentario no puede estar vacío.");
+        if (mensajeNormalizado.Length > 4000)
+            throw new AppException("El comentario no puede exceder 4000 caracteres.");
+
         var planeacion = await BuscarPlaneacionAsync(planeacionPublicId, cancellationToken);
         var usuario = await BuscarUsuarioConRolesAsync(usuarioId, cancellationToken);
         if (TieneRol(usuario, RolAutorizacion.Director))
             throw new AppException("El Director solo puede consultar los comentarios de corrección.");
-        if (planeacion.Estado == EstadoPlaneacion.Aprobada)
-            throw new AppException("No pueden agregarse comentarios mientras la planeación está aprobada.");
+        if (planeacion.Estado is not (EstadoPlaneacion.EnRevision or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.Reabierta))
+            throw new AppException("Solo pueden agregarse comentarios durante revisión, corrección solicitada o reapertura.");
 
         var rolEnChat = await ExigirParticipanteAsync(planeacion, usuario, cancellationToken);
         var chat = await context.Chats
@@ -52,7 +58,7 @@ public sealed class ComentariosCorreccionService(AppDbContext context) : IComent
             Chat = chat,
             UsuarioId = usuario.Id,
             Usuario = usuario,
-            Mensaje = solicitud.Mensaje.Trim()
+            Mensaje = mensajeNormalizado
         };
         chat.Mensajes.Add(mensaje);
         await context.SaveChangesAsync(cancellationToken);
@@ -114,7 +120,11 @@ public sealed class ComentariosCorreccionService(AppDbContext context) : IComent
             cancellationToken);
 
         if (!esDocente && !esRevisor)
-            throw new AppException("Solo los docentes y el revisor asignados pueden acceder a los comentarios de corrección.");
+            throw new ForbiddenException("Solo los docentes y el revisor asignados pueden acceder a los comentarios de corrección.");
+
+        // Un revisor asignado no puede acceder al borrador privado antes de que el docente lo envíe.
+        if (esRevisor && !esDocente && planeacion.Estado is EstadoPlaneacion.Borrador or EstadoPlaneacion.EnProceso)
+            throw new ForbiddenException("La planeación aún no ha sido enviada a revisión.");
 
         return esRevisor ? "Revisor" : "Docente";
     }

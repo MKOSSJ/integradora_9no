@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
@@ -6,14 +7,17 @@ using Plandi.Services.Interfaces;
 namespace Plandi.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class AcademiasController : ControllerBase
     {
         private readonly IAcademiaService _academiaService;
+        private readonly IAutorizacionService _autorizacionService;
 
-        public AcademiasController(IAcademiaService academiaService)
+        public AcademiasController(IAcademiaService academiaService, IAutorizacionService autorizacionService)
         {
             _academiaService = academiaService;
+            _autorizacionService = autorizacionService;
         }
 
         [HttpGet]
@@ -53,11 +57,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Create([FromBody] AcademiaRequestDto request)
         {
             try
             {
-                var result = await _academiaService.Create(request);
+                var result = await _academiaService.Create(request, UsuarioId);
                 return Ok(ApiResponse<AcademiaResponseDto>.Ok(result, "Academia creada correctamente."));
             }
             catch (AppException ex)
@@ -71,11 +76,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPut("{publicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Update(Guid publicId, [FromBody] AcademiaRequestDto request)
         {
             try
             {
-                var result = await _academiaService.Update(publicId, request);
+                var result = await _academiaService.Update(publicId, request, UsuarioId);
                 return Ok(ApiResponse<AcademiaResponseDto>.Ok(result, "Academia actualizada correctamente."));
             }
             catch (AppException ex)
@@ -89,11 +95,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("{publicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Delete(Guid publicId)
         {
             try
             {
-                var result = await _academiaService.Delete(publicId);
+                var result = await _academiaService.Delete(publicId, UsuarioId);
                 return Ok(ApiResponse<bool>.Ok(result, "Academia eliminada correctamente."));
             }
             catch (AppException ex)
@@ -125,6 +132,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("{publicId:guid}/usuarios")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> AsignarUsuario(Guid publicId, [FromBody] AcademiaUsuarioRequestDto request)
         {
             try
@@ -143,6 +151,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("{publicId:guid}/usuarios/{usuarioPublicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> DesasignarUsuario(Guid publicId, Guid usuarioPublicId)
         {
             try
@@ -159,5 +168,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(500, ApiResponse<bool>.Fail("Ocurrió un error interno al desasignar el usuario de la academia."));
             }
         }
+
+        private long UsuarioId => _autorizacionService.ObtenerUsuarioId(User);
     }
 }

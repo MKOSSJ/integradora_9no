@@ -84,7 +84,7 @@ public sealed class PlaneacionDocumentosService(AppDbContext context, IAutorizac
         var program = p.Caratula?.ProgramaAsignatura;
         return new PlaneacionDetalleConArchivosDto { Planeacion = PlaneacionFlujoSupport.Detalle(p), Archivos = new PlaneacionArchivosDto
         {
-            ProgramaAsignatura = program?.Documento is { } d && File.Exists(d.RutaStorage) ? new ArchivoRelacionadoDto { Disponible = true, Nombre = d.NombreOriginal, MimeType = d.MimeType, UrlVisualizacion = $"/api/programas-asignatura/{program.PublicId}/archivo", UrlDescarga = $"/api/programas-asignatura/{program.PublicId}/archivo/descarga" } : new(),
+            ProgramaAsignatura = program?.Documento is { } d && File.Exists(d.RutaStorage) ? new ArchivoRelacionadoDto { Disponible = true, Nombre = d.NombreOriginal, MimeType = "application/pdf", UrlVisualizacion = $"/api/programas-asignatura/{program.PublicId}/archivo", UrlDescarga = $"/api/programas-asignatura/{program.PublicId}/archivo/descarga" } : new(),
             PlaneacionDidactica = new ArchivoRelacionadoDto { Disponible = true, Nombre = PlaneacionTemplateService.NombreSeguro($"Planeacion_{p.Caratula?.NombreAsignatura ?? p.Asignatura.Nombre}.pdf", ".pdf"), MimeType = "application/pdf", UrlVisualizacion = $"/api/planeaciones-documentos/{p.PublicId}/pdf", UrlDescarga = $"/api/planeaciones-documentos/{p.PublicId}/pdf/descarga" }
         }};
     }
@@ -95,7 +95,7 @@ public sealed class PlaneacionDocumentosService(AppDbContext context, IAutorizac
         var planeacion = await context.PlaneacionesDidacticas.Include(x => x.Caratula).FirstOrDefaultAsync(x => x.Caratula!.ProgramaAsignaturaId == program.Id && x.Activo && x.DeletedAt == null, cancellationToken) ?? throw new UnauthorizedAccessException("No tiene una planeación asociada a este programa.");
         await AutorizarAsync(planeacion, usuarioId, cancellationToken);
         if (!File.Exists(program.Documento.RutaStorage)) throw new AppException("El archivo del programa no se encuentra disponible.");
-        return new ArchivoContenido(await File.ReadAllBytesAsync(program.Documento.RutaStorage, cancellationToken), program.Documento.MimeType, PlaneacionTemplateService.NombreSeguro(program.Documento.NombreOriginal, ".pdf"));
+        return new ArchivoContenido(await File.ReadAllBytesAsync(program.Documento.RutaStorage, cancellationToken), "application/pdf", PlaneacionTemplateService.NombreSeguro(program.Documento.NombreOriginal, ".pdf"));
     }
 
     internal async Task<PlaneacionDidactica> BuscarYAutorizarAsync(Guid publicId, long usuarioId, CancellationToken ct)

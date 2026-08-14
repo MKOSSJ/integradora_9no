@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
@@ -6,14 +7,17 @@ using Plandi.Services.Interfaces;
 namespace Plandi.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class CiclosEscolaresController : ControllerBase
     {
         private readonly ICicloEscolarService _cicloEscolarService;
+        private readonly IAutorizacionService _autorizacionService;
 
-        public CiclosEscolaresController(ICicloEscolarService cicloEscolarService)
+        public CiclosEscolaresController(ICicloEscolarService cicloEscolarService, IAutorizacionService autorizacionService)
         {
             _cicloEscolarService = cicloEscolarService;
+            _autorizacionService = autorizacionService;
         }
 
         [HttpGet]
@@ -53,11 +57,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Create([FromBody] CicloEscolarRequestDto request)
         {
             try
             {
-                var result = await _cicloEscolarService.Create(request);
+                var result = await _cicloEscolarService.Create(request, UsuarioId);
                 return Ok(ApiResponse<CicloEscolarResponseDto>.Ok(result, "Ciclo escolar creado correctamente."));
             }
             catch (AppException ex)
@@ -71,11 +76,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPut("{publicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Update(Guid publicId, [FromBody] CicloEscolarRequestDto request)
         {
             try
             {
-                var result = await _cicloEscolarService.Update(publicId, request);
+                var result = await _cicloEscolarService.Update(publicId, request, UsuarioId);
                 return Ok(ApiResponse<CicloEscolarResponseDto>.Ok(result, "Ciclo escolar actualizado correctamente."));
             }
             catch (AppException ex)
@@ -89,11 +95,12 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("{publicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Delete(Guid publicId)
         {
             try
             {
-                var result = await _cicloEscolarService.Delete(publicId);
+                var result = await _cicloEscolarService.Delete(publicId, UsuarioId);
                 return Ok(ApiResponse<bool>.Ok(result, "Ciclo escolar eliminado correctamente."));
             }
             catch (AppException ex)
@@ -105,5 +112,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(500, ApiResponse<bool>.Fail("Ocurrió un error interno al eliminar el ciclo escolar."));
             }
         }
+
+        private long UsuarioId => _autorizacionService.ObtenerUsuarioId(User);
     }
 }
