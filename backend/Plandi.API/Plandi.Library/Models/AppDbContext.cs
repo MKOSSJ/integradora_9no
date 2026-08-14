@@ -78,7 +78,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("roles");
 
-            entity.HasIndex(x => x.Nombre).IsUnique();
+            entity.HasIndex(x => x.Nombre).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(50).IsRequired();
             entity.Property(x => x.Descripcion).HasMaxLength(250);
@@ -108,7 +108,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("academias");
 
-            entity.HasIndex(x => x.Nombre).IsUnique();
+            entity.HasIndex(x => x.Nombre).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(150).IsRequired();
             entity.Property(x => x.Descripcion).HasMaxLength(300);
@@ -141,7 +141,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("carreras");
 
-            entity.HasIndex(x => x.Clave).IsUnique();
+            entity.HasIndex(x => x.Clave).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Clave).HasMaxLength(50).IsRequired();
@@ -152,7 +152,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("ciclos_escolares");
 
-            entity.HasIndex(x => x.Nombre).IsUnique();
+            entity.HasIndex(x => x.Nombre).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(50).IsRequired();
         });
@@ -161,7 +161,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("periodos");
 
-            entity.HasIndex(x => new { x.CicloEscolarId, x.Nombre }).IsUnique();
+            entity.HasIndex(x => new { x.CicloEscolarId, x.Nombre }).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(100).IsRequired();
 
@@ -175,7 +175,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("grupos");
 
-            entity.HasIndex(x => new { x.PeriodoId, x.Nombre }).IsUnique();
+            entity.HasIndex(x => new { x.PeriodoId, x.Nombre }).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(50).IsRequired();
 
@@ -195,7 +195,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("asignaturas");
 
-            entity.HasIndex(x => x.Clave).IsUnique();
+            entity.HasIndex(x => x.Clave).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Clave).HasMaxLength(50).IsRequired();
@@ -217,7 +217,7 @@ public class AppDbContext : DbContext
                 x.GrupoId,
                 x.AsignaturaId,
                 x.DocenteId
-            }).IsUnique();
+            }).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.HasOne(x => x.Periodo)
                 .WithMany()
@@ -561,6 +561,7 @@ public class AppDbContext : DbContext
             entity.ToTable("chats");
 
             entity.Property(x => x.Titulo).HasMaxLength(250).IsRequired();
+            entity.HasIndex(x => new { x.PlaneacionDidacticaId, x.Titulo }).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.HasOne(x => x.PlaneacionDidactica)
                 .WithMany(x => x.Chats)

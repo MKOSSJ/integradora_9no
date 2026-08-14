@@ -175,12 +175,12 @@ internal static class PlaneacionFlujoSupport
     {
         var asignado = await context.CargasAcademicas.AnyAsync(c => c.Activo && c.DeletedAt == null && c.DocenteId == docenteId &&
             c.PeriodoId == planeacion.PeriodoId && c.AsignaturaId == planeacion.AsignaturaId, cancellationToken);
-        if (!asignado) throw new AppException("No tiene asignada esta planeación como docente.");
+        if (!asignado) throw new ForbiddenException("No tiene asignada esta planeación como docente.");
     }
 
     internal static void ExigirRevisorAsignado(PlaneacionDidactica planeacion, long revisorId)
     {
-        if (planeacion.RevisorId != revisorId) throw new AppException("No tiene asignada esta planeación como revisor.");
+        if (planeacion.RevisorId != revisorId) throw new ForbiddenException("No tiene asignada esta planeación como revisor.");
     }
 
     internal static PlaneacionResumenDto Resumen(PlaneacionDidactica p) => new()
@@ -306,6 +306,6 @@ internal static class PlaneacionFlujoSupport
     internal static void ExigirVisibleParaRevisor(PlaneacionDidactica planeacion)
     {
         if (planeacion.Estado is EstadoPlaneacion.Borrador or EstadoPlaneacion.EnProceso)
-            throw new AppException("La planeación aún no ha sido enviada a revisión.");
+            throw new ForbiddenException("La planeación aún no ha sido enviada a revisión.");
     }
 }

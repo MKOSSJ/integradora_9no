@@ -120,11 +120,11 @@ public sealed class ComentariosCorreccionService(AppDbContext context) : IComent
             cancellationToken);
 
         if (!esDocente && !esRevisor)
-            throw new AppException("Solo los docentes y el revisor asignados pueden acceder a los comentarios de corrección.");
+            throw new ForbiddenException("Solo los docentes y el revisor asignados pueden acceder a los comentarios de corrección.");
 
         // Un revisor asignado no puede acceder al borrador privado antes de que el docente lo envíe.
         if (esRevisor && !esDocente && planeacion.Estado is EstadoPlaneacion.Borrador or EstadoPlaneacion.EnProceso)
-            throw new AppException("La planeación aún no ha sido enviada a revisión.");
+            throw new ForbiddenException("La planeación aún no ha sido enviada a revisión.");
 
         return esRevisor ? "Revisor" : "Docente";
     }

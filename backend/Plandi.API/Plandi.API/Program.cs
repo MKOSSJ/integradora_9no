@@ -157,6 +157,11 @@ app.Use(async (httpContext, next) =>
         httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
         await httpContext.Response.WriteAsJsonAsync(ApiResponse<object>.Fail(exception.Message));
     }
+    catch (ForbiddenException exception)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+        await httpContext.Response.WriteAsJsonAsync(ApiResponse<object>.Fail(exception.Message));
+    }
     catch (AppException exception)
     {
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
