@@ -81,6 +81,62 @@ public sealed class ComentariosCorreccionTests
         await Assert.ThrowsAsync<AppException>(() => servicio.ListarAsync(escenario.Planeacion.PublicId, noAsignado.Id));
     }
 
+    [Theory]
+    [InlineData(EstadoPlaneacion.Borrador)]
+    [InlineData(EstadoPlaneacion.EnProceso)]
+    [InlineData(EstadoPlaneacion.Aprobada)]
+    [InlineData(EstadoPlaneacion.Rechazada)]
+    [InlineData(EstadoPlaneacion.Finalizada)]
+    public async Task Comentarios_solo_se_crean_en_estados_permitidos(EstadoPlaneacion estado)
+    {
+        await using var escenario = await CrearEscenarioAsync(estado);
+        var servicio = new ComentariosCorreccionService(escenario.Contexto);
+
+        await Assert.ThrowsAsync<AppException>(() => servicio.CrearAsync(
+            escenario.Planeacion.PublicId,
+            new CrearComentarioCorreccionDto { Mensaje = "No permitido" },
+            escenario.Docente.Id));
+    }
+
+    [Theory]
+    [InlineData(EstadoPlaneacion.EnRevision)]
+    [InlineData(EstadoPlaneacion.CorreccionSolicitada)]
+    [InlineData(EstadoPlaneacion.Reabierta)]
+    public async Task Comentarios_se_crean_en_estados_permitidos(EstadoPlaneacion estado)
+    {
+        await using var escenario = await CrearEscenarioAsync(estado);
+
+        var comentario = await new ComentariosCorreccionService(escenario.Contexto).CrearAsync(
+            escenario.Planeacion.PublicId,
+            new CrearComentarioCorreccionDto { Mensaje = "  Permitido  " },
+            escenario.Docente.Id);
+
+        Assert.Equal("Permitido", comentario.Mensaje);
+    }
+
+    [Fact]
+    public async Task Comentario_rechaza_blancos_y_mas_de_4000_caracteres()
+    {
+        await using var escenario = await CrearEscenarioAsync(EstadoPlaneacion.EnRevision);
+        var servicio = new ComentariosCorreccionService(escenario.Contexto);
+
+        await Assert.ThrowsAsync<AppException>(() => servicio.CrearAsync(
+            escenario.Planeacion.PublicId, new CrearComentarioCorreccionDto { Mensaje = "   " }, escenario.Docente.Id));
+        await Assert.ThrowsAsync<AppException>(() => servicio.CrearAsync(
+            escenario.Planeacion.PublicId, new CrearComentarioCorreccionDto { Mensaje = new string('x', 4001) }, escenario.Docente.Id));
+    }
+
+    [Fact]
+    public async Task Revisor_no_puede_listar_comentarios_del_borrador_privado()
+    {
+        await using var escenario = await CrearEscenarioAsync(EstadoPlaneacion.Borrador);
+        var servicio = new ComentariosCorreccionService(escenario.Contexto);
+
+        await Assert.ThrowsAsync<AppException>(() => servicio.ListarAsync(escenario.Planeacion.PublicId, escenario.Revisor.Id));
+        var comoDirector = await servicio.ListarAsync(escenario.Planeacion.PublicId, escenario.Director.Id);
+        Assert.Empty(comoDirector.Comentarios);
+    }
+
     [Fact]
     public async Task Aprobada_pasa_a_Reabierta_y_Reabierta_regresa_a_EnRevision()
     {

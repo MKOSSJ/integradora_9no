@@ -67,7 +67,7 @@ namespace Plandi.Services
 
             if (usuario == null)
             {
-                throw new InvalidOperationException("El correo electrónico no está registrado.");
+                throw new InvalidOperationException("Usuario o contraseña incorrectos.");
             }
 
             if (usuario.LockoutEnd.HasValue && usuario.LockoutEnd.Value > DateTime.UtcNow)
@@ -103,7 +103,7 @@ namespace Plandi.Services
                 return new LoginResponseDto
                 {
                     Success = false,
-                    Message = "Usuario o contraseña incorrecta."
+                    Message = "Usuario o contraseña incorrectos."
                 };
             }
 

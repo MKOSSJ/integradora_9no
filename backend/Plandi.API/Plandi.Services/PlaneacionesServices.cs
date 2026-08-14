@@ -22,22 +22,25 @@ namespace Plandi.Services
             _mapper = mapper;
         }
 
-        public async Task<PlaneacionCaratulaDto?> GetByPlaneacionIdAsync(long planeacionId)
+        public async Task<PlaneacionCaratulaDto?> GetByPlaneacionIdAsync(Guid planeacionPublicId)
         {
             var caratula = await _context.PlaneacionCaratulas
-                .FirstOrDefaultAsync(x => x.PlaneacionDidacticaId == planeacionId && x.Activo);
+                .Include(x => x.PlaneacionDidactica)
+                .Include(x => x.ProgramaAsignatura)
+                .FirstOrDefaultAsync(x => x.PlaneacionDidactica.PublicId == planeacionPublicId && x.Activo);
 
             return caratula == null ? null : _mapper.Map<PlaneacionCaratulaDto>(caratula);
         }
 
-        public async Task<PlaneacionCaratulaDto> CreateAsync(long planeacionId, CreatePlaneacionCaratulaDto dto)
+        public async Task<PlaneacionCaratulaDto> CreateAsync(Guid planeacionPublicId, CreatePlaneacionCaratulaDto dto)
         {
-            var planeacion = await _context.PlaneacionesDidacticas.FindAsync(planeacionId);
-            if (planeacion == null)
-                throw new InvalidOperationException($"Planeación con Id {planeacionId} no encontrada.");
+            var planeacion = await PlaneacionLegacySupport.BuscarPlaneacionAsync(_context, planeacionPublicId);
+            PlaneacionLegacySupport.ExigirMutable(planeacion);
 
             var caratula = _mapper.Map<PlaneacionCaratula>(dto);
-            caratula.PlaneacionDidacticaId = planeacionId;
+            caratula.PlaneacionDidactica = planeacion;
+            if (dto.ProgramaAsignaturaPublicId.HasValue)
+                caratula.ProgramaAsignatura = await PlaneacionLegacySupport.BuscarProgramaAsync(_context, dto.ProgramaAsignaturaPublicId.Value);
 
             _context.PlaneacionCaratulas.Add(caratula);
             await _context.SaveChangesAsync();
@@ -45,13 +48,19 @@ namespace Plandi.Services
             return _mapper.Map<PlaneacionCaratulaDto>(caratula);
         }
 
-        public async Task<PlaneacionCaratulaDto> UpdateAsync(long id, UpdatePlaneacionCaratulaDto dto)
+        public async Task<PlaneacionCaratulaDto> UpdateAsync(Guid publicId, UpdatePlaneacionCaratulaDto dto)
         {
-            var caratula = await _context.PlaneacionCaratulas.FindAsync(id);
+            var caratula = await _context.PlaneacionCaratulas
+                .Include(x => x.PlaneacionDidactica)
+                .Include(x => x.ProgramaAsignatura)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (caratula == null)
-                throw new InvalidOperationException($"Carátula con Id {id} no encontrada.");
+                throw new InvalidOperationException("Carátula no encontrada.");
+            PlaneacionLegacySupport.ExigirMutable(caratula.PlaneacionDidactica);
 
             _mapper.Map(dto, caratula);
+            if (dto.ProgramaAsignaturaPublicId.HasValue)
+                caratula.ProgramaAsignatura = await PlaneacionLegacySupport.BuscarProgramaAsync(_context, dto.ProgramaAsignaturaPublicId.Value);
 
 
             await _context.SaveChangesAsync();
@@ -59,11 +68,13 @@ namespace Plandi.Services
             return _mapper.Map<PlaneacionCaratulaDto>(caratula);
         }
 
-        public async Task DeleteAsync(long id)
+        public async Task DeleteAsync(Guid publicId)
         {
-            var caratula = await _context.PlaneacionCaratulas.FindAsync(id);
+            var caratula = await _context.PlaneacionCaratulas.Include(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (caratula == null)
-                throw new InvalidOperationException($"Carátula con Id {id} no encontrada.");
+                throw new InvalidOperationException("Carátula no encontrada.");
+            PlaneacionLegacySupport.ExigirMutable(caratula.PlaneacionDidactica);
 
             caratula.Activo = false;
             caratula.DeletedAt = DateTime.UtcNow;
@@ -83,36 +94,37 @@ namespace Plandi.Services
             _mapper = mapper;
         }
 
-        public async Task<PlaneacionTemaDto> GetByIdAsync(long id)
+        public async Task<PlaneacionTemaDto> GetByIdAsync(Guid publicId)
         {
             var tema = await _context.PlaneacionTemas.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == id && x.Activo);
+                .Include(x => x.PlaneacionUnidad)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
 
             if (tema == null)
-                throw new InvalidOperationException($"Tema con Id {id} no encontrado.");
+                throw new InvalidOperationException("Tema no encontrado.");
 
             return _mapper.Map<PlaneacionTemaDto>(tema);
         }
 
-        public async Task<List<PlaneacionTemaDto>> GetByUnidadIdAsync(long unidadId)
+        public async Task<List<PlaneacionTemaDto>> GetByUnidadIdAsync(Guid unidadPublicId)
         {
             var temas = await _context.PlaneacionTemas
                 .AsNoTracking()
-                .Where(x => x.PlaneacionUnidadId == unidadId && x.Activo)
+                .Include(x => x.PlaneacionUnidad)
+                .Where(x => x.PlaneacionUnidad.PublicId == unidadPublicId && x.Activo)
                 .OrderBy(x => x.Orden)
                 .ToListAsync();
 
             return _mapper.Map<List<PlaneacionTemaDto>>(temas);
         }
 
-        public async Task<PlaneacionTemaDto> CreateAsync(long unidadId, CreatePlaneacionTemaDtos dto)
+        public async Task<PlaneacionTemaDto> CreateAsync(Guid unidadPublicId, CreatePlaneacionTemaDtos dto)
         {
-            var unidad = await _context.PlaneacionUnidades.FindAsync(unidadId);
-            if (unidad == null)
-                throw new InvalidOperationException($"Unidad con Id {unidadId} no encontrada.");
+            var unidad = await PlaneacionLegacySupport.BuscarUnidadAsync(_context, unidadPublicId);
+            PlaneacionLegacySupport.ExigirMutable(unidad.PlaneacionDidactica);
 
             var tema = _mapper.Map<PlaneacionTema>(dto);
-            tema.PlaneacionUnidadId = unidadId;
+            tema.PlaneacionUnidad = unidad;
 
             _context.PlaneacionTemas.Add(tema);
             await _context.SaveChangesAsync();
@@ -120,11 +132,13 @@ namespace Plandi.Services
             return _mapper.Map<PlaneacionTemaDto>(tema);
         }
 
-        public async Task<PlaneacionTemaDto> UpdateAsync(long id, UpdatePlaneacionTemaDtos dto)
+        public async Task<PlaneacionTemaDto> UpdateAsync(Guid publicId, UpdatePlaneacionTemaDtos dto)
         {
-            var tema = await _context.PlaneacionTemas.FindAsync(id);
+            var tema = await _context.PlaneacionTemas.Include(x => x.PlaneacionUnidad).ThenInclude(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (tema == null)
-                throw new InvalidOperationException($"Tema con Id {id} no encontrado.");
+                throw new InvalidOperationException("Tema no encontrado.");
+            PlaneacionLegacySupport.ExigirMutable(tema.PlaneacionUnidad.PlaneacionDidactica);
 
             _mapper.Map(dto, tema);
             tema.FechaUltimaModificacion = DateTime.UtcNow;
@@ -134,11 +148,13 @@ namespace Plandi.Services
             return _mapper.Map<PlaneacionTemaDto>(tema);
         }
 
-        public async Task DeleteAsync(long id)
+        public async Task DeleteAsync(Guid publicId)
         {
-            var tema = await _context.PlaneacionTemas.FindAsync(id);
+            var tema = await _context.PlaneacionTemas.Include(x => x.PlaneacionUnidad).ThenInclude(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (tema == null)
-                throw new InvalidOperationException($"Tema con Id {id} no encontrado.");
+                throw new InvalidOperationException("Tema no encontrado.");
+            PlaneacionLegacySupport.ExigirMutable(tema.PlaneacionUnidad.PlaneacionDidactica);
 
             tema.Activo = false;
             tema.DeletedAt = DateTime.UtcNow;
@@ -158,36 +174,37 @@ namespace Plandi.Services
             _mapper = mapper;
         }
 
-        public async Task<PlaneacionEvaluacionDto> GetByIdAsync(long id)
+        public async Task<PlaneacionEvaluacionDto> GetByIdAsync(Guid publicId)
         {
             var evaluacion = await _context.PlaneacionEvaluaciones.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == id && x.Activo);
+                .Include(x => x.PlaneacionUnidad)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
 
             if (evaluacion == null)
-                throw new InvalidOperationException($"Evaluación con Id {id} no encontrada.");
+                throw new InvalidOperationException("Evaluación no encontrada.");
 
             return _mapper.Map<PlaneacionEvaluacionDto>(evaluacion);
         }
 
-        public async Task<List<PlaneacionEvaluacionDto>> GetByUnidadIdAsync(long unidadId)
+        public async Task<List<PlaneacionEvaluacionDto>> GetByUnidadIdAsync(Guid unidadPublicId)
         {
             var evaluaciones = await _context.PlaneacionEvaluaciones
                 .AsNoTracking()
-                .Where(x => x.PlaneacionUnidadId == unidadId && x.Activo)
+                .Include(x => x.PlaneacionUnidad)
+                .Where(x => x.PlaneacionUnidad.PublicId == unidadPublicId && x.Activo)
                 .OrderBy(x => x.Orden)
                 .ToListAsync();
 
             return _mapper.Map<List<PlaneacionEvaluacionDto>>(evaluaciones);
         }
 
-        public async Task<PlaneacionEvaluacionDto> CreateAsync(long unidadId, CreatePlaneacionEvaluacionDto dto)
+        public async Task<PlaneacionEvaluacionDto> CreateAsync(Guid unidadPublicId, CreatePlaneacionEvaluacionDto dto)
         {
-            var unidad = await _context.PlaneacionUnidades.FindAsync(unidadId);
-            if (unidad == null)
-                throw new InvalidOperationException($"Unidad con Id {unidadId} no encontrada.");
+            var unidad = await PlaneacionLegacySupport.BuscarUnidadAsync(_context, unidadPublicId);
+            PlaneacionLegacySupport.ExigirMutable(unidad.PlaneacionDidactica);
 
             var evaluacion = _mapper.Map<PlaneacionEvaluacion>(dto);
-            evaluacion.PlaneacionUnidadId = unidadId;
+            evaluacion.PlaneacionUnidad = unidad;
 
             _context.PlaneacionEvaluaciones.Add(evaluacion);
             await _context.SaveChangesAsync();
@@ -195,11 +212,13 @@ namespace Plandi.Services
             return _mapper.Map<PlaneacionEvaluacionDto>(evaluacion);
         }
 
-        public async Task<PlaneacionEvaluacionDto> UpdateAsync(long id, UpdatePlaneacionEvaluacionDto dto)
+        public async Task<PlaneacionEvaluacionDto> UpdateAsync(Guid publicId, UpdatePlaneacionEvaluacionDto dto)
         {
-            var evaluacion = await _context.PlaneacionEvaluaciones.FindAsync(id);
+            var evaluacion = await _context.PlaneacionEvaluaciones.Include(x => x.PlaneacionUnidad).ThenInclude(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (evaluacion == null)
-                throw new InvalidOperationException($"Evaluación con Id {id} no encontrada.");
+                throw new InvalidOperationException("Evaluación no encontrada.");
+            PlaneacionLegacySupport.ExigirMutable(evaluacion.PlaneacionUnidad.PlaneacionDidactica);
 
             _mapper.Map(dto, evaluacion);
             evaluacion.FechaUltimaModificacion = DateTime.UtcNow;
@@ -209,11 +228,13 @@ namespace Plandi.Services
             return _mapper.Map<PlaneacionEvaluacionDto>(evaluacion);
         }
 
-        public async Task DeleteAsync(long id)
+        public async Task DeleteAsync(Guid publicId)
         {
-            var evaluacion = await _context.PlaneacionEvaluaciones.FindAsync(id);
+            var evaluacion = await _context.PlaneacionEvaluaciones.Include(x => x.PlaneacionUnidad).ThenInclude(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (evaluacion == null)
-                throw new InvalidOperationException($"Evaluación con Id {id} no encontrada.");
+                throw new InvalidOperationException("Evaluación no encontrada.");
+            PlaneacionLegacySupport.ExigirMutable(evaluacion.PlaneacionUnidad.PlaneacionDidactica);
 
             evaluacion.Activo = false;
             evaluacion.DeletedAt = DateTime.UtcNow;
@@ -233,33 +254,34 @@ namespace Plandi.Services
             _mapper = mapper;
         }
 
-        public async Task<PlaneacionSecuenciaDto> GetByIdAsync(long id)
+        public async Task<PlaneacionSecuenciaDto> GetByIdAsync(Guid publicId)
         {
             var secuencia = await _context.PlaneacionSecuencias.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == id && x.Activo);
+                .Include(x => x.PlaneacionUnidad)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
 
             if (secuencia == null)
-                throw new InvalidOperationException($"Secuencia con Id {id} no encontrada.");
+                throw new InvalidOperationException("Secuencia no encontrada.");
 
             return _mapper.Map<PlaneacionSecuenciaDto>(secuencia);
         }
 
-        public async Task<List<PlaneacionSecuenciaDto>> GetByUnidadIdAsync(long unidadId)
+        public async Task<List<PlaneacionSecuenciaDto>> GetByUnidadIdAsync(Guid unidadPublicId)
         {
             var secuencias = await _context.PlaneacionSecuencias
                 .AsNoTracking()
-                .Where(x => x.PlaneacionUnidadId == unidadId && x.Activo)
+                .Include(x => x.PlaneacionUnidad)
+                .Where(x => x.PlaneacionUnidad.PublicId == unidadPublicId && x.Activo)
                 .OrderBy(x => x.Orden)
                 .ToListAsync();
 
             return _mapper.Map<List<PlaneacionSecuenciaDto>>(secuencias);
         }
 
-        public async Task<PlaneacionSecuenciaDto> CreateAsync(long unidadId, CreatePlaneacionSecuenciaDto dto)
+        public async Task<PlaneacionSecuenciaDto> CreateAsync(Guid unidadPublicId, CreatePlaneacionSecuenciaDto dto)
         {
-            var unidad = await _context.PlaneacionUnidades.FindAsync(unidadId);
-            if (unidad == null)
-                throw new InvalidOperationException($"Unidad con Id {unidadId} no encontrada.");
+            var unidad = await PlaneacionLegacySupport.BuscarUnidadAsync(_context, unidadPublicId);
+            PlaneacionLegacySupport.ExigirMutable(unidad.PlaneacionDidactica);
 
             // Validar que la estrategia sea válida para la fase seleccionada
             if (!EConverter.IsValidStrategyForPhase(dto.Fase, dto.Estrategia))
@@ -268,7 +290,7 @@ namespace Plandi.Services
                     $"Seleccione una estrategia correspondiente a la fase elegida.");
 
             var secuencia = _mapper.Map<PlaneacionSecuencia>(dto);
-            secuencia.PlaneacionUnidadId = unidadId;
+            secuencia.PlaneacionUnidad = unidad;
 
             _context.PlaneacionSecuencias.Add(secuencia);
             await _context.SaveChangesAsync();
@@ -276,11 +298,13 @@ namespace Plandi.Services
             return _mapper.Map<PlaneacionSecuenciaDto>(secuencia);
         }
 
-        public async Task<PlaneacionSecuenciaDto> UpdateAsync(long id, UpdatePlaneacionSecuenciaDto dto)
+        public async Task<PlaneacionSecuenciaDto> UpdateAsync(Guid publicId, UpdatePlaneacionSecuenciaDto dto)
         {
-            var secuencia = await _context.PlaneacionSecuencias.FindAsync(id);
+            var secuencia = await _context.PlaneacionSecuencias.Include(x => x.PlaneacionUnidad).ThenInclude(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (secuencia == null)
-                throw new InvalidOperationException($"Secuencia con Id {id} no encontrada.");
+                throw new InvalidOperationException("Secuencia no encontrada.");
+            PlaneacionLegacySupport.ExigirMutable(secuencia.PlaneacionUnidad.PlaneacionDidactica);
 
             // Si se está actualizando la fase y/o estrategia, validar que sean compatibles
             if (dto.Fase.HasValue && dto.Estrategia.HasValue)
@@ -315,11 +339,13 @@ namespace Plandi.Services
             return _mapper.Map<PlaneacionSecuenciaDto>(secuencia);
         }
 
-        public async Task DeleteAsync(long id)
+        public async Task DeleteAsync(Guid publicId)
         {
-            var secuencia = await _context.PlaneacionSecuencias.FindAsync(id);
+            var secuencia = await _context.PlaneacionSecuencias.Include(x => x.PlaneacionUnidad).ThenInclude(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (secuencia == null)
-                throw new InvalidOperationException($"Secuencia con Id {id} no encontrada.");
+                throw new InvalidOperationException("Secuencia no encontrada.");
+            PlaneacionLegacySupport.ExigirMutable(secuencia.PlaneacionUnidad.PlaneacionDidactica);
 
             secuencia.Activo = false;
             secuencia.DeletedAt = DateTime.UtcNow;
@@ -339,36 +365,37 @@ namespace Plandi.Services
             _mapper = mapper;
         }
 
-        public async Task<PlaneacionReferenciaDto> GetByIdAsync(long id)
+        public async Task<PlaneacionReferenciaDto> GetByIdAsync(Guid publicId)
         {
             var referencia = await _context.PlaneacionReferencias.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == id && x.Activo);
+                .Include(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
 
             if (referencia == null)
-                throw new InvalidOperationException($"Referencia con Id {id} no encontrada.");
+                throw new InvalidOperationException("Referencia no encontrada.");
 
             return _mapper.Map<PlaneacionReferenciaDto>(referencia);
         }
 
-        public async Task<List<PlaneacionReferenciaDto>> GetByPlaneacionIdAsync(long planeacionId)
+        public async Task<List<PlaneacionReferenciaDto>> GetByPlaneacionIdAsync(Guid planeacionPublicId)
         {
             var referencias = await _context.PlaneacionReferencias
                 .AsNoTracking()
-                .Where(x => x.PlaneacionDidacticaId == planeacionId && x.Activo)
+                .Include(x => x.PlaneacionDidactica)
+                .Where(x => x.PlaneacionDidactica.PublicId == planeacionPublicId && x.Activo)
                 .OrderBy(x => x.Orden)
                 .ToListAsync();
 
             return _mapper.Map<List<PlaneacionReferenciaDto>>(referencias);
         }
 
-        public async Task<PlaneacionReferenciaDto> CreateAsync(long planeacionId, CreatePlaneacionReferenciaDto dto)
+        public async Task<PlaneacionReferenciaDto> CreateAsync(Guid planeacionPublicId, CreatePlaneacionReferenciaDto dto)
         {
-            var planeacion = await _context.PlaneacionesDidacticas.FindAsync(planeacionId);
-            if (planeacion == null)
-                throw new InvalidOperationException($"Planeación con Id {planeacionId} no encontrada.");
+            var planeacion = await PlaneacionLegacySupport.BuscarPlaneacionAsync(_context, planeacionPublicId);
+            PlaneacionLegacySupport.ExigirMutable(planeacion);
 
             var referencia = _mapper.Map<PlaneacionReferencia>(dto);
-            referencia.PlaneacionDidacticaId = planeacionId;
+            referencia.PlaneacionDidactica = planeacion;
 
             _context.PlaneacionReferencias.Add(referencia);
             await _context.SaveChangesAsync();
@@ -376,11 +403,13 @@ namespace Plandi.Services
             return _mapper.Map<PlaneacionReferenciaDto>(referencia);
         }
 
-        public async Task<PlaneacionReferenciaDto> UpdateAsync(long id, UpdatePlaneacionReferenciaDto dto)
+        public async Task<PlaneacionReferenciaDto> UpdateAsync(Guid publicId, UpdatePlaneacionReferenciaDto dto)
         {
-            var referencia = await _context.PlaneacionReferencias.FindAsync(id);
+            var referencia = await _context.PlaneacionReferencias.Include(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (referencia == null)
-                throw new InvalidOperationException($"Referencia con Id {id} no encontrada.");
+                throw new InvalidOperationException("Referencia no encontrada.");
+            PlaneacionLegacySupport.ExigirMutable(referencia.PlaneacionDidactica);
 
             _mapper.Map(dto, referencia);
             referencia.FechaUltimaModificacion = DateTime.UtcNow;
@@ -390,16 +419,40 @@ namespace Plandi.Services
             return _mapper.Map<PlaneacionReferenciaDto>(referencia);
         }
 
-        public async Task DeleteAsync(long id)
+        public async Task DeleteAsync(Guid publicId)
         {
-            var referencia = await _context.PlaneacionReferencias.FindAsync(id);
+            var referencia = await _context.PlaneacionReferencias.Include(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (referencia == null)
-                throw new InvalidOperationException($"Referencia con Id {id} no encontrada.");
+                throw new InvalidOperationException("Referencia no encontrada.");
+            PlaneacionLegacySupport.ExigirMutable(referencia.PlaneacionDidactica);
 
             referencia.Activo = false;
             referencia.DeletedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+        }
+    }
+
+    internal static class PlaneacionLegacySupport
+    {
+        internal static async Task<PlaneacionDidactica> BuscarPlaneacionAsync(AppDbContext context, Guid publicId) =>
+            await context.PlaneacionesDidacticas.FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo && x.DeletedAt == null)
+            ?? throw new InvalidOperationException("Planeación no encontrada.");
+
+        internal static async Task<PlaneacionUnidad> BuscarUnidadAsync(AppDbContext context, Guid publicId) =>
+            await context.PlaneacionUnidades.Include(x => x.PlaneacionDidactica)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo && x.DeletedAt == null)
+            ?? throw new InvalidOperationException("Unidad no encontrada.");
+
+        internal static async Task<ProgramaAsignatura> BuscarProgramaAsync(AppDbContext context, Guid publicId) =>
+            await context.ProgramasAsignatura.FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo && x.DeletedAt == null)
+            ?? throw new InvalidOperationException("Programa de asignatura no encontrado.");
+
+        internal static void ExigirMutable(PlaneacionDidactica planeacion)
+        {
+            if (planeacion.Estado is EstadoPlaneacion.Aprobada or EstadoPlaneacion.Rechazada or EstadoPlaneacion.Finalizada)
+                throw new InvalidOperationException("No se puede modificar una planeación aprobada, rechazada o finalizada.");
         }
     }
 }

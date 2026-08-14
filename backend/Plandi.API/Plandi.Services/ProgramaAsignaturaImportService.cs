@@ -20,6 +20,7 @@ public sealed class ProgramaAsignaturaImportService(
     ProgramaAsignaturaExtractor programaExtractor) : IProgramaAsignaturaImportService
 {
     public const long MaxPdfBytes = 25 * 1024 * 1024;
+    private const string PdfMimeType = "application/pdf";
     private static readonly TimeSpan ProcessingTimeout = TimeSpan.FromMinutes(2);
 
     public async Task<string> ExtraerTextoAsync(Stream archivo, string nombreArchivo, CancellationToken cancellationToken = default)
@@ -46,6 +47,11 @@ public sealed class ProgramaAsignaturaImportService(
             .FirstOrDefaultAsync(document => document.HashSha256 == hash && document.Activo && document.DeletedAt == null, cancellationToken);
         if (duplicate?.ProgramaAsignatura is not null)
         {
+            if (duplicate.MimeType != PdfMimeType)
+            {
+                duplicate.MimeType = PdfMimeType;
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
             result.ProgramaAsignaturaPublicId = duplicate.ProgramaAsignatura.PublicId;
             result.Asignatura = duplicate.ProgramaAsignatura.NombreAsignatura;
             result.Clave = duplicate.ProgramaAsignatura.ClaveAsignatura;
@@ -72,7 +78,7 @@ public sealed class ProgramaAsignaturaImportService(
             NombreOriginal = nombreArchivo,
             NombreGuardado = savedName,
             Extension = ".pdf",
-            MimeType = string.IsNullOrWhiteSpace(mimeType) ? "application/pdf" : mimeType,
+            MimeType = PdfMimeType,
             TamanoBytes = tamanoBytes,
             RutaStorage = fullPath,
             HashSha256 = hash,

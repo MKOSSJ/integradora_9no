@@ -19,7 +19,7 @@ namespace Plandi.Dto
     // Create DTO (Input)
     public class CreatePlaneacionObservacionDto
     {
-        public long RevisorId { get; set; }
+        // El actor debe obtenerse del JWT si este flujo heredado vuelve a habilitarse.
         public string Comentario { get; set; } = string.Empty;
         public long? PlaneacionUnidadId { get; set; }
     }

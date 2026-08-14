@@ -81,7 +81,7 @@ public sealed class AutorizacionMultirrolTests
         PrepararUsuarioConRol(contexto, 10, "Revisor");
         PrepararContextoAcademico(contexto);
         contexto.PlaneacionesDidacticas.AddRange(
-            new PlaneacionDidactica { Id = 1, PublicId = Guid.NewGuid(), PeriodoId = 1, AsignaturaId = 1, RevisorId = 10 },
+            new PlaneacionDidactica { Id = 1, PublicId = Guid.NewGuid(), PeriodoId = 1, AsignaturaId = 1, RevisorId = 10, Estado = EstadoPlaneacion.EnRevision },
             new PlaneacionDidactica { Id = 2, PublicId = Guid.NewGuid(), PeriodoId = 1, AsignaturaId = 2, RevisorId = 99 });
         await contexto.SaveChangesAsync();
 
@@ -101,7 +101,7 @@ public sealed class AutorizacionMultirrolTests
         PrepararContextoAcademico(contexto);
         contexto.CargasAcademicas.Add(new CargaAcademica { Id = 1, PeriodoId = 1, GrupoId = 1, AsignaturaId = 1, DocenteId = 10 });
         var planeacionDocente = new PlaneacionDidactica { Id = 1, PublicId = Guid.NewGuid(), PeriodoId = 1, AsignaturaId = 1 };
-        var planeacionRevision = new PlaneacionDidactica { Id = 2, PublicId = Guid.NewGuid(), PeriodoId = 1, AsignaturaId = 2, RevisorId = 10 };
+        var planeacionRevision = new PlaneacionDidactica { Id = 2, PublicId = Guid.NewGuid(), PeriodoId = 1, AsignaturaId = 2, RevisorId = 10, Estado = EstadoPlaneacion.EnRevision };
         contexto.PlaneacionesDidacticas.AddRange(planeacionDocente, planeacionRevision);
         await contexto.SaveChangesAsync();
         var autorizacion = new AutorizacionService(contexto);
@@ -112,6 +112,50 @@ public sealed class AutorizacionMultirrolTests
         Assert.Contains(comoDocente, p => p.PublicId == planeacionDocente.PublicId);
         Assert.DoesNotContain(comoDocente, p => p.PublicId == planeacionRevision.PublicId);
         Assert.Contains(comoRevisor, p => p.PublicId == planeacionRevision.PublicId);
+    }
+
+    [Fact]
+    public async Task Revisor_no_ve_detalle_ni_lista_de_borradores_asignados()
+    {
+        await using var contexto = CrearContexto();
+        PrepararUsuarioConRol(contexto, 10, "Revisor");
+        PrepararContextoAcademico(contexto);
+        var borrador = new PlaneacionDidactica
+        {
+            Id = 1, PublicId = Guid.NewGuid(), PeriodoId = 1, AsignaturaId = 1,
+            RevisorId = 10, Estado = EstadoPlaneacion.Borrador
+        };
+        contexto.PlaneacionesDidacticas.Add(borrador);
+        await contexto.SaveChangesAsync();
+        var servicio = new PlaneacionesRevisorService(contexto, new AutorizacionService(contexto));
+
+        Assert.Empty(await servicio.ObtenerAsync(10));
+        await Assert.ThrowsAsync<Plandi.Dto.Common.AppException>(() => servicio.ObtenerDetalleAsync(borrador.PublicId, 10));
+    }
+
+    [Fact]
+    public async Task Detalle_moderno_expone_PublicId_en_entidades_anidadas()
+    {
+        await using var contexto = CrearContexto();
+        PrepararUsuarioConRol(contexto, 10, "Revisor");
+        PrepararContextoAcademico(contexto);
+        var planeacion = new PlaneacionDidactica
+        {
+            Id = 1, PublicId = Guid.NewGuid(), PeriodoId = 1, AsignaturaId = 1,
+            RevisorId = 10, Estado = EstadoPlaneacion.EnRevision
+        };
+        var unidad = new PlaneacionUnidad { Id = 2, PublicId = Guid.NewGuid(), PlaneacionDidactica = planeacion, NumeroUnidad = 1, NombreUnidad = "Unidad", Orden = 1 };
+        var tema = new PlaneacionTema { Id = 3, PublicId = Guid.NewGuid(), PlaneacionUnidad = unidad, Tema = "Tema", Orden = 1 };
+        unidad.Temas.Add(tema);
+        planeacion.Unidades.Add(unidad);
+        contexto.PlaneacionesDidacticas.Add(planeacion);
+        await contexto.SaveChangesAsync();
+
+        var detalle = await new PlaneacionesRevisorService(contexto, new AutorizacionService(contexto))
+            .ObtenerDetalleAsync(planeacion.PublicId, 10);
+
+        Assert.Equal(unidad.PublicId, detalle.Unidades.Single().PublicId);
+        Assert.Equal(tema.PublicId, detalle.Unidades.Single().Temas.Single().PublicId);
     }
 
     [Fact]

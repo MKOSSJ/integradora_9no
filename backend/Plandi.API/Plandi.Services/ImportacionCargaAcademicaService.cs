@@ -101,6 +101,9 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
     {
         var partes = SepararNombreDocente(nombre);
         if (partes is null) return null;
+        ValidarLongitud(partes.Nombre, 100, "El nombre del docente no puede exceder 100 caracteres.");
+        ValidarLongitud(partes.ApellidoPaterno, 100, "El apellido paterno del docente no puede exceder 100 caracteres.");
+        ValidarLongitud(partes.ApellidoMaterno, 100, "El apellido materno del docente no puede exceder 100 caracteres.");
 
         var candidatos = (await _dbContext.Usuarios.Where(u => u.Activo && u.DeletedAt == null).ToListAsync(cancellationToken))
             .Concat(_dbContext.Usuarios.Local.Where(u => u.Activo && u.DeletedAt == null))
@@ -130,11 +133,14 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
 
     private async Task<Carrera> BuscarOCrearCarrera(string clave, long actorId, CancellationToken cancellationToken)
     {
+        var valor = clave.Trim();
+        ValidarLongitud(valor, 50, "La clave de la carrera no puede exceder 50 caracteres.");
+        ValidarLongitud(valor, 200, "El nombre de la carrera no puede exceder 200 caracteres.");
         var normalizada = Normalizar(clave);
         var existente = await _dbContext.Carreras.FirstOrDefaultAsync(c => c.Activo && c.DeletedAt == null && c.Clave.ToUpper() == normalizada, cancellationToken);
         if (existente is not null) return existente;
 
-        var carrera = new Carrera { Clave = Limitar(clave.Trim(), 50), Nombre = clave.Trim(), CreatedBy = actorId };
+        var carrera = new Carrera { Clave = valor, Nombre = valor, CreatedBy = actorId };
         _dbContext.Carreras.Add(carrera);
         return carrera;
     }
@@ -143,6 +149,7 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
     {
         // La carrera se relaciona directamente por Grupo.CarreraId; el nombre sólo representa cuatrimestre y letra (p. ej. 3A).
         var nombre = grupo.Codigo;
+        ValidarLongitud(nombre, 50, "El nombre del grupo no puede exceder 50 caracteres.");
         var existente = await _dbContext.Grupos.FirstOrDefaultAsync(g => g.Activo && g.DeletedAt == null && g.PeriodoId == periodo.Id && g.Nombre.ToUpper() == nombre.ToUpper(), cancellationToken);
         if (existente is not null) return existente;
 
@@ -206,6 +213,11 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
     }
 
     private static string Limitar(string valor, int longitud) => valor.Length <= longitud ? valor : valor[..longitud];
+
+    private static void ValidarLongitud(string valor, int longitud, string mensaje)
+    {
+        if (valor.Length > longitud) throw new AppException(mensaje);
+    }
 
     private static DatosDocente? SepararNombreDocente(string valor)
     {
