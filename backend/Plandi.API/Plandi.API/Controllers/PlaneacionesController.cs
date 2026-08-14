@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Plandi.Dto;
+using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
 using Plandi.Services.Interfaces;
 using System;
@@ -9,6 +11,9 @@ using System.Threading.Tasks;
 namespace Plandi.API.Controllers
 {
     [ApiController]
+    // La edición de docentes se concentra en /api/planeaciones-flujo, que valida su carga académica.
+    // Estos endpoints heredados quedan reservados para administración para evitar saltar esa validación.
+    [Authorize(Roles = "Director")]
     [Route("api/[controller]")]
     public class PlaneacionesController : ControllerBase
     {
@@ -17,19 +22,29 @@ namespace Plandi.API.Controllers
         private readonly IPlaneacionEvaluacionService _evaluacionService;
         private readonly IPlaneacionSecuenciaService _secuenciaService;
         private readonly IPlaneacionReferenciaService _referenciaService;
+        private readonly IGeneracionPlaneacionesService _generacionPlaneacionesService;
 
         public PlaneacionesController(
             IPlaneacionCaratulaService caratulaService,
             IPlaneacionTemaService temaService,
             IPlaneacionEvaluacionService evaluacionService,
             IPlaneacionSecuenciaService secuenciaService,
-            IPlaneacionReferenciaService referenciaService)
+            IPlaneacionReferenciaService referenciaService,
+            IGeneracionPlaneacionesService generacionPlaneacionesService)
         {
             _caratulaService = caratulaService;
             _temaService = temaService;
             _evaluacionService = evaluacionService;
             _secuenciaService = secuenciaService;
             _referenciaService = referenciaService;
+            _generacionPlaneacionesService = generacionPlaneacionesService;
+        }
+
+        [HttpPost("generar")]
+        public async Task<ActionResult<ApiResponse<GeneracionPlaneacionesResultadoDto>>> Generar(CancellationToken cancellationToken)
+        {
+            var resultado = await _generacionPlaneacionesService.GenerarAsync(cancellationToken);
+            return Ok(ApiResponse<GeneracionPlaneacionesResultadoDto>.Ok(resultado, "Generación de planeaciones finalizada."));
         }
 
         // ========== CARÁTULA ENDPOINTS ==========

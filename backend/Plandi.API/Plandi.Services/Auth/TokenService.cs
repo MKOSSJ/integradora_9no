@@ -27,12 +27,15 @@ namespace Plandi.Services
             var claims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
-                new(JwtRegisteredClaimNames.Email, usuario.Email),
+                new(JwtRegisteredClaimNames.Email, usuario.Email ?? string.Empty),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) 
             };
 
-            claims.AddRange(usuario.UsuarioRoles.Select(ur =>
-                new Claim(ClaimTypes.Role, ur.Rol.Nombre)));
+            // One role claim per membership: JWT and ASP.NET Core preserve all of them.
+            claims.AddRange(usuario.UsuarioRoles
+                .Select(ur => ur.Rol.Nombre)
+                .Distinct(StringComparer.Ordinal)
+                .Select(rol => new Claim(ClaimTypes.Role, rol)));
 
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_config["Jwt:SecretKey"]!));
@@ -116,7 +119,8 @@ namespace Plandi.Services
                 Message = "Nuevo token generado exitosamente.",
                 AccessToken = newAccessToken,
                 AccessTokenExpiresAt = newExpiresAt,    
-                RefreshToken = newRefreshToken
+                RefreshToken = newRefreshToken,
+                Roles = usuario.UsuarioRoles.Select(ur => ur.Rol.Nombre).Distinct().OrderBy(rol => rol).ToList()
             };
         }
     }

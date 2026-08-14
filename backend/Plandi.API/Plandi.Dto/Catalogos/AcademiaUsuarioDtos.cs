@@ -1,6 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using Plandi.Dto.Enums;
+using RolAcademia = Plandi.Dto.Enums.Rol;
 
 namespace Plandi.Dto.Catalogos
 {
@@ -10,7 +10,7 @@ namespace Plandi.Dto.Catalogos
         public Guid UsuarioPublicId { get; set; }
 
         [Required]
-        public RolAcademia RolEnAcademia { get; set; }
+        public RolAcademia Rol { get; set; }
     }
 
     public class AcademiaUsuarioResponseDto
@@ -19,7 +19,7 @@ namespace Plandi.Dto.Catalogos
 
         public string? UsuarioNombre { get; set; }
 
-        public RolAcademia RolEnAcademia { get; set; }
+        public RolAcademia Rol { get; set; }
 
         public bool Activo { get; set; }
     }

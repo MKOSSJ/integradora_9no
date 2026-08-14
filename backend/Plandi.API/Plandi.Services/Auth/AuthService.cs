@@ -25,7 +25,7 @@ namespace Plandi.Services
         {
             string emailCleaned = registerDto.Email.Trim().ToLower();
 
-            bool existingUser = await _dBContext.Usuarios.AnyAsync(u => u.Email.ToLower() == emailCleaned);
+            bool existingUser = await _dBContext.Usuarios.AnyAsync(u => u.Email != null && u.Email.ToLower() == emailCleaned);
             if (existingUser)
             {
                 throw new InvalidOperationException("El correo electrónico ya está registrado.");
@@ -42,11 +42,8 @@ namespace Plandi.Services
                 PasswordHash = passwordHash,
                 Telefono = registerDto.Telefono?.Trim()
             };
-            var usuarioRol = new UsuarioRol
-            {
-                Usuario = newUsuario,
-                RolId = 2
-            };
+            var rolDocente = await _dBContext.Roles.SingleAsync(rol => rol.Nombre == "Docente");
+            var usuarioRol = new UsuarioRol { Usuario = newUsuario, RolId = rolDocente.Id };
 
             _dBContext.Usuarios.Add(newUsuario);
             _dBContext.UsuarioRoles.Add(usuarioRol);
@@ -66,7 +63,7 @@ namespace Plandi.Services
             var usuario = await _dBContext.Usuarios
                 .Include(u => u.UsuarioRoles)
                     .ThenInclude(ur => ur.Rol)
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == emailCleaned);
+                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == emailCleaned);
 
             if (usuario == null)
             {
@@ -83,7 +80,7 @@ namespace Plandi.Services
                 };
             }
 
-            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginDto.Password, usuario.PasswordHash);
+            bool isPasswordValid = usuario.PasswordHash is not null && BCrypt.Net.BCrypt.Verify(loginDto.Password, usuario.PasswordHash);
 
             if (!isPasswordValid)
             {
@@ -135,7 +132,8 @@ namespace Plandi.Services
                 AccessToken = token,
                 AccessTokenExpiresAt = expiresAt,
                 RefreshToken = refreshToken,
-                RequiresTwoFactor = usuario.TwoFactorEnabled
+                RequiresTwoFactor = usuario.TwoFactorEnabled,
+                Roles = usuario.UsuarioRoles.Select(ur => ur.Rol.Nombre).Distinct().OrderBy(rol => rol).ToList()
             };
         }
 
@@ -147,7 +145,7 @@ namespace Plandi.Services
         public async Task ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto)
         {
             var emailCleaned = forgotPasswordDto.Email.Trim().ToLower();
-            var usuario = await _dBContext.Usuarios.FirstOrDefaultAsync(u => u.Email.ToLower() == emailCleaned);
+            var usuario = await _dBContext.Usuarios.FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == emailCleaned);
 
             if (usuario == null)
             {

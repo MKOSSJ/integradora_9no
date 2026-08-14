@@ -12,9 +12,9 @@ namespace Plandi.Library.Models
 
         public string? ApellidoMaterno { get; set; }
 
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; }
 
-        public string PasswordHash { get; set; } = string.Empty;
+        public string? PasswordHash { get; set; }
 
         public string? Telefono { get; set; }
 

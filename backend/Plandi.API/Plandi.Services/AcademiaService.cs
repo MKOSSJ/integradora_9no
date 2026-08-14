@@ -107,7 +107,7 @@ namespace Plandi.Services
                 {
                     AcademiaId = academia.Id,
                     UsuarioId = usuario.Id,
-                    RolEnAcademia = request.RolEnAcademia
+                    Rol = request.Rol
                 };
                 _dbContext.AcademiaUsuarios.Add(vinculo);
             }
@@ -119,7 +119,7 @@ namespace Plandi.Services
                 }
 
                 vinculo.Activo = true;
-                vinculo.RolEnAcademia = request.RolEnAcademia;
+                vinculo.Rol = request.Rol;
                 vinculo.CreatedAt = DateTime.UtcNow;
             }
 
@@ -190,7 +190,7 @@ namespace Plandi.Services
                 UsuarioNombre = vinculo.Usuario == null
                     ? null
                     : $"{vinculo.Usuario.Nombre} {vinculo.Usuario.ApellidoPaterno}".Trim(),
-                RolEnAcademia = vinculo.RolEnAcademia,
+                Rol = vinculo.Rol,
                 Activo = vinculo.Activo
             };
         }
