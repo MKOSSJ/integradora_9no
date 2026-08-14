@@ -130,7 +130,7 @@ public sealed class AutorizacionMultirrolTests
         var servicio = new PlaneacionesRevisorService(contexto, new AutorizacionService(contexto));
 
         Assert.Empty(await servicio.ObtenerAsync(10));
-        await Assert.ThrowsAsync<Plandi.Dto.Common.AppException>(() => servicio.ObtenerDetalleAsync(borrador.PublicId, 10));
+        await Assert.ThrowsAsync<Plandi.Dto.Common.ForbiddenException>(() => servicio.ObtenerDetalleAsync(borrador.PublicId, 10));
     }
 
     [Fact]

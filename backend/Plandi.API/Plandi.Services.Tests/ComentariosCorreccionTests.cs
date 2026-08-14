@@ -74,11 +74,11 @@ public sealed class ComentariosCorreccionTests
         await escenario.Contexto.SaveChangesAsync();
         var servicio = new ComentariosCorreccionService(escenario.Contexto);
 
-        await Assert.ThrowsAsync<AppException>(() => servicio.CrearAsync(
+        await Assert.ThrowsAsync<ForbiddenException>(() => servicio.CrearAsync(
             escenario.Planeacion.PublicId,
             new CrearComentarioCorreccionDto { Mensaje = "Sin acceso" },
             noAsignado.Id));
-        await Assert.ThrowsAsync<AppException>(() => servicio.ListarAsync(escenario.Planeacion.PublicId, noAsignado.Id));
+        await Assert.ThrowsAsync<ForbiddenException>(() => servicio.ListarAsync(escenario.Planeacion.PublicId, noAsignado.Id));
     }
 
     [Theory]
@@ -132,7 +132,7 @@ public sealed class ComentariosCorreccionTests
         await using var escenario = await CrearEscenarioAsync(EstadoPlaneacion.Borrador);
         var servicio = new ComentariosCorreccionService(escenario.Contexto);
 
-        await Assert.ThrowsAsync<AppException>(() => servicio.ListarAsync(escenario.Planeacion.PublicId, escenario.Revisor.Id));
+        await Assert.ThrowsAsync<ForbiddenException>(() => servicio.ListarAsync(escenario.Planeacion.PublicId, escenario.Revisor.Id));
         var comoDirector = await servicio.ListarAsync(escenario.Planeacion.PublicId, escenario.Director.Id);
         Assert.Empty(comoDirector.Comentarios);
     }
