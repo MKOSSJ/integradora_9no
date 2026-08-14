@@ -19,6 +19,8 @@ public sealed class ProgramaAsignaturaImportService(
     IPdfTextExtractor pdfTextExtractor,
     ProgramaAsignaturaExtractor programaExtractor) : IProgramaAsignaturaImportService
 {
+    public const long MaxPdfBytes = 25 * 1024 * 1024;
+
     public async Task<string> ExtraerTextoAsync(Stream archivo, string nombreArchivo, CancellationToken cancellationToken = default)
     {
         var bytes = await ReadAndValidatePdfAsync(archivo, nombreArchivo, cancellationToken);
@@ -26,10 +28,10 @@ public sealed class ProgramaAsignaturaImportService(
     }
 
     public async Task<ProgramaAsignaturaImportacionResultadoDto> ImportarAsync(Stream archivo, string nombreArchivo,
-        long tamanoBytes, string? mimeType, Guid subidoPorPublicId, string directorioStorage, CancellationToken cancellationToken = default)
+        long tamanoBytes, string? mimeType, long subidoPorId, string directorioStorage, CancellationToken cancellationToken = default)
     {
         var result = new ProgramaAsignaturaImportacionResultadoDto { Archivo = nombreArchivo };
-        var user = await dbContext.Usuarios.SingleOrDefaultAsync(user => user.PublicId == subidoPorPublicId && user.Activo && user.DeletedAt == null, cancellationToken)
+        var user = await dbContext.Usuarios.SingleOrDefaultAsync(user => user.Id == subidoPorId && user.Activo && user.DeletedAt == null, cancellationToken)
             ?? throw new AppException("El usuario que realiza la carga no existe.");
         var bytes = await ReadAndValidatePdfAsync(archivo, nombreArchivo, cancellationToken);
         var hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
@@ -133,9 +135,13 @@ public sealed class ProgramaAsignaturaImportService(
     {
         if (!string.Equals(Path.GetExtension(fileName), ".pdf", StringComparison.OrdinalIgnoreCase))
             throw new AppException("Solo se admiten programas de asignatura en formato PDF.");
+        if (file.CanSeek && file.Length > MaxPdfBytes)
+            throw new AppException("El PDF no puede exceder 25 MB.");
         await using var memory = new MemoryStream();
         await file.CopyToAsync(memory, cancellationToken);
         var bytes = memory.ToArray();
+        if (bytes.Length > MaxPdfBytes)
+            throw new AppException("El PDF no puede exceder 25 MB.");
         if (bytes.Length == 0 || !Encoding.ASCII.GetString(bytes, 0, Math.Min(bytes.Length, 5)).StartsWith("%PDF-"))
             throw new AppException("El archivo no es un PDF valido.");
         return bytes;
