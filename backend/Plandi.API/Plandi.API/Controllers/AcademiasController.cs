@@ -12,10 +12,12 @@ namespace Plandi.API.Controllers
     public class AcademiasController : ControllerBase
     {
         private readonly IAcademiaService _academiaService;
+        private readonly IAutorizacionService _autorizacionService;
 
-        public AcademiasController(IAcademiaService academiaService)
+        public AcademiasController(IAcademiaService academiaService, IAutorizacionService autorizacionService)
         {
             _academiaService = academiaService;
+            _autorizacionService = autorizacionService;
         }
 
         [HttpGet]
@@ -60,7 +62,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _academiaService.Create(request);
+                var result = await _academiaService.Create(request, UsuarioId);
                 return Ok(ApiResponse<AcademiaResponseDto>.Ok(result, "Academia creada correctamente."));
             }
             catch (AppException ex)
@@ -79,7 +81,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _academiaService.Update(publicId, request);
+                var result = await _academiaService.Update(publicId, request, UsuarioId);
                 return Ok(ApiResponse<AcademiaResponseDto>.Ok(result, "Academia actualizada correctamente."));
             }
             catch (AppException ex)
@@ -98,7 +100,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _academiaService.Delete(publicId);
+                var result = await _academiaService.Delete(publicId, UsuarioId);
                 return Ok(ApiResponse<bool>.Ok(result, "Academia eliminada correctamente."));
             }
             catch (AppException ex)
@@ -166,5 +168,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(500, ApiResponse<bool>.Fail("Ocurrió un error interno al desasignar el usuario de la academia."));
             }
         }
+
+        private long UsuarioId => _autorizacionService.ObtenerUsuarioId(User);
     }
 }

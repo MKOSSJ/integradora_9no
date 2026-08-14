@@ -12,10 +12,12 @@ namespace Plandi.API.Controllers
     public class PeriodosController : ControllerBase
     {
         private readonly IPeriodoService _periodoService;
+        private readonly IAutorizacionService _autorizacionService;
 
-        public PeriodosController(IPeriodoService periodoService)
+        public PeriodosController(IPeriodoService periodoService, IAutorizacionService autorizacionService)
         {
             _periodoService = periodoService;
+            _autorizacionService = autorizacionService;
         }
 
         [HttpGet]
@@ -60,7 +62,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _periodoService.Create(request);
+                var result = await _periodoService.Create(request, UsuarioId);
                 return Ok(ApiResponse<PeriodoResponseDto>.Ok(result, "Periodo creado correctamente."));
             }
             catch (AppException ex)
@@ -79,7 +81,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _periodoService.Update(publicId, request);
+                var result = await _periodoService.Update(publicId, request, UsuarioId);
                 return Ok(ApiResponse<PeriodoResponseDto>.Ok(result, "Periodo actualizado correctamente."));
             }
             catch (AppException ex)
@@ -98,7 +100,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _periodoService.Delete(publicId);
+                var result = await _periodoService.Delete(publicId, UsuarioId);
                 return Ok(ApiResponse<bool>.Ok(result, "Periodo eliminado correctamente."));
             }
             catch (AppException ex)
@@ -110,5 +112,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(500, ApiResponse<bool>.Fail("Ocurrió un error interno al eliminar el periodo."));
             }
         }
+
+        private long UsuarioId => _autorizacionService.ObtenerUsuarioId(User);
     }
 }

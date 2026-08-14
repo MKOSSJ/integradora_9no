@@ -33,7 +33,7 @@ namespace Plandi.Services
             return ToDto(asignatura);
         }
 
-        public async Task<AsignaturaResponseDto> Create(AsignaturaRequestDto request)
+        public async Task<AsignaturaResponseDto> Create(AsignaturaRequestDto request, long actorId)
         {
             await ValidateClaveUnica(request.Clave, null);
 
@@ -51,7 +51,8 @@ namespace Plandi.Services
                 HorasTotales = request.HorasTotales,
                 HorasSemana = request.HorasSemana,
                 Creditos = request.Creditos,
-                AcademiaId = academiaId
+                AcademiaId = academiaId,
+                CreatedBy = actorId
             };
 
             _dbContext.Asignaturas.Add(asignatura);
@@ -61,7 +62,7 @@ namespace Plandi.Services
             return ToDto(asignatura);
         }
 
-        public async Task<AsignaturaResponseDto> Update(Guid publicId, AsignaturaRequestDto request)
+        public async Task<AsignaturaResponseDto> Update(Guid publicId, AsignaturaRequestDto request, long actorId)
         {
             var asignatura = await GetEntity(publicId);
 
@@ -81,6 +82,7 @@ namespace Plandi.Services
             asignatura.Creditos = request.Creditos;
             asignatura.AcademiaId = academiaId;
             asignatura.UpdatedAt = DateTime.UtcNow;
+            asignatura.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
             await _dbContext.Entry(asignatura).Reference(a => a.Academia).LoadAsync();
@@ -88,13 +90,14 @@ namespace Plandi.Services
             return ToDto(asignatura);
         }
 
-        public async Task<bool> Delete(Guid publicId)
+        public async Task<bool> Delete(Guid publicId, long actorId)
         {
             var asignatura = await GetEntity(publicId);
 
             asignatura.Activo = false;
             asignatura.DeletedAt = DateTime.UtcNow;
             asignatura.UpdatedAt = DateTime.UtcNow;
+            asignatura.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
 

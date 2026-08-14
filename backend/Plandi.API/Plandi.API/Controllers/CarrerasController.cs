@@ -12,10 +12,12 @@ namespace Plandi.API.Controllers
     public class CarrerasController : ControllerBase
     {
         private readonly ICarreraService _carreraService;
+        private readonly IAutorizacionService _autorizacionService;
 
-        public CarrerasController(ICarreraService carreraService)
+        public CarrerasController(ICarreraService carreraService, IAutorizacionService autorizacionService)
         {
             _carreraService = carreraService;
+            _autorizacionService = autorizacionService;
         }
 
         [HttpGet]
@@ -60,7 +62,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _carreraService.Create(request);
+                var result = await _carreraService.Create(request, UsuarioId);
                 return Ok(ApiResponse<CarreraResponseDto>.Ok(result, "Carrera creada correctamente."));
             }
             catch (AppException ex)
@@ -79,7 +81,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _carreraService.Update(publicId, request);
+                var result = await _carreraService.Update(publicId, request, UsuarioId);
                 return Ok(ApiResponse<CarreraResponseDto>.Ok(result, "Carrera actualizada correctamente."));
             }
             catch (AppException ex)
@@ -98,7 +100,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _carreraService.Delete(publicId);
+                var result = await _carreraService.Delete(publicId, UsuarioId);
                 return Ok(ApiResponse<bool>.Ok(result, "Carrera eliminada correctamente."));
             }
             catch (AppException ex)
@@ -110,5 +112,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(500, ApiResponse<bool>.Fail("Ocurrió un error interno al eliminar la carrera."));
             }
         }
+
+        private long UsuarioId => _autorizacionService.ObtenerUsuarioId(User);
     }
 }

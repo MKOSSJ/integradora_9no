@@ -6,6 +6,9 @@ namespace Plandi.Library.Models
 {
     public class Periodo : BaseEntity
     {
+        public long? CreatedBy { get; set; }
+        public long? UpdatedBy { get; set; }
+
         public long CicloEscolarId { get; set; }
         public CicloEscolar CicloEscolar { get; set; } = null!;
 

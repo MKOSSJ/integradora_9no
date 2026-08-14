@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using Plandi.Services.Interfaces;
 using Plandi.Dto.Auth;
+using Plandi.API.Security;
 
 namespace Plandi.API.Controllers
 {
@@ -13,11 +14,13 @@ namespace Plandi.API.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ILogger<AuthController> _logger;
+        private readonly PasswordRecoveryRateLimiter _passwordRecoveryRateLimiter;
 
-        public AuthController(IAuthService authService, ILogger<AuthController> logger)
+        public AuthController(IAuthService authService, ILogger<AuthController> logger, PasswordRecoveryRateLimiter passwordRecoveryRateLimiter)
         {
             _authService = authService;
             _logger = logger;
+            _passwordRecoveryRateLimiter = passwordRecoveryRateLimiter;
         }
 
         [HttpPost("register")]
@@ -154,6 +157,9 @@ namespace Plandi.API.Controllers
                 return BadRequest(ModelState);
             }
 
+            if (!_passwordRecoveryRateLimiter.TryAcquire(RemoteIp, forgotPasswordDto.Email))
+                return StatusCode(StatusCodes.Status429TooManyRequests, new { message = "Demasiadas solicitudes. Intente más tarde." });
+
             try
             {
                 await _authService.ForgotPasswordAsync(forgotPasswordDto);
@@ -183,6 +189,9 @@ namespace Plandi.API.Controllers
                 return BadRequest(ModelState);
             }
 
+            if (!_passwordRecoveryRateLimiter.TryAcquire(RemoteIp, resetPasswordDto.PasswordResetToken))
+                return StatusCode(StatusCodes.Status429TooManyRequests, new { message = "Demasiados intentos. Intente más tarde." });
+
             try
             {
                 var result = await _authService.ResetPasswordAsync(resetPasswordDto);
@@ -199,5 +208,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Ocurrió un error interno en el servidor." });
             }
         }
+
+        private string RemoteIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     }
 }

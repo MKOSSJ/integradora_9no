@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using Plandi.Dto.Common;
+using Plandi.API.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +60,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddSingleton<PasswordRecoveryRateLimiter>();
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IAuthService, AuthService>();

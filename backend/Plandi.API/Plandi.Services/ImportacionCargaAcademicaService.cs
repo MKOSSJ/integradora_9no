@@ -13,6 +13,11 @@ namespace Plandi.Services;
 
 public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademicaService
 {
+    public const long MaxFileBytes = 10 * 1024 * 1024;
+    private const int MaxRows = 5000;
+    private const int MaxColumns = 50;
+    private const int MaxCellLength = 500;
+    private static readonly TimeSpan ProcessingTimeout = TimeSpan.FromMinutes(2);
     private readonly AppDbContext _dbContext;
 
     public ImportacionCargaAcademicaService(AppDbContext dbContext) => _dbContext = dbContext;
@@ -20,6 +25,11 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
     public async Task<ImportacionCargaAcademicaResultadoDto> Importar(
         Stream archivo, string nombreArchivo, Guid periodoPublicId, long importadoPorId, CancellationToken cancellationToken = default)
     {
+        if (archivo.CanSeek && archivo.Length > MaxFileBytes)
+            throw new AppException("El archivo de carga académica no puede exceder 10 MB.");
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(ProcessingTimeout);
+        cancellationToken = timeout.Token;
         var periodo = await _dbContext.Periodos.SingleOrDefaultAsync(p => p.PublicId == periodoPublicId && p.Activo && p.DeletedAt == null, cancellationToken)
             ?? throw new AppException("El periodo especificado no existe o no está activo.");
 
@@ -49,9 +59,9 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
                     continue;
                 }
 
-                var carrera = await BuscarOCrearCarrera(fila.ProgramaEducativo!, cancellationToken);
-                var entidadGrupo = await BuscarOCrearGrupo(periodo, carrera, grupo, cancellationToken);
-                var asignatura = await BuscarOCrearAsignatura(fila.Asignatura!, grupo.Cuatrimestre, cancellationToken);
+                var carrera = await BuscarOCrearCarrera(fila.ProgramaEducativo!, importadoPorId, cancellationToken);
+                var entidadGrupo = await BuscarOCrearGrupo(periodo, carrera, grupo, importadoPorId, cancellationToken);
+                var asignatura = await BuscarOCrearAsignatura(fila.Asignatura!, grupo.Cuatrimestre, importadoPorId, cancellationToken);
                 // Se persisten primero los catálogos para disponer de sus FK y poder comprobar la relación compuesta.
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 var claveRelacion = $"{periodo.Id}|{entidadGrupo.Id}|{asignatura.Id}|{docente.Id}";
@@ -118,30 +128,30 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
         return docente;
     }
 
-    private async Task<Carrera> BuscarOCrearCarrera(string clave, CancellationToken cancellationToken)
+    private async Task<Carrera> BuscarOCrearCarrera(string clave, long actorId, CancellationToken cancellationToken)
     {
         var normalizada = Normalizar(clave);
         var existente = await _dbContext.Carreras.FirstOrDefaultAsync(c => c.Activo && c.DeletedAt == null && c.Clave.ToUpper() == normalizada, cancellationToken);
         if (existente is not null) return existente;
 
-        var carrera = new Carrera { Clave = Limitar(clave.Trim(), 50), Nombre = clave.Trim() };
+        var carrera = new Carrera { Clave = Limitar(clave.Trim(), 50), Nombre = clave.Trim(), CreatedBy = actorId };
         _dbContext.Carreras.Add(carrera);
         return carrera;
     }
 
-    private async Task<Grupo> BuscarOCrearGrupo(Periodo periodo, Carrera carrera, GrupoImportado grupo, CancellationToken cancellationToken)
+    private async Task<Grupo> BuscarOCrearGrupo(Periodo periodo, Carrera carrera, GrupoImportado grupo, long actorId, CancellationToken cancellationToken)
     {
         // La carrera se relaciona directamente por Grupo.CarreraId; el nombre sólo representa cuatrimestre y letra (p. ej. 3A).
         var nombre = grupo.Codigo;
         var existente = await _dbContext.Grupos.FirstOrDefaultAsync(g => g.Activo && g.DeletedAt == null && g.PeriodoId == periodo.Id && g.Nombre.ToUpper() == nombre.ToUpper(), cancellationToken);
         if (existente is not null) return existente;
 
-        var entidad = new Grupo { Nombre = nombre, Cuatrimestre = grupo.Cuatrimestre, Carrera = carrera, PeriodoId = periodo.Id };
+        var entidad = new Grupo { Nombre = nombre, Cuatrimestre = grupo.Cuatrimestre, Carrera = carrera, PeriodoId = periodo.Id, CreatedBy = actorId };
         _dbContext.Grupos.Add(entidad);
         return entidad;
     }
 
-    private async Task<Asignatura> BuscarOCrearAsignatura(string nombre, int cuatrimestre, CancellationToken cancellationToken)
+    private async Task<Asignatura> BuscarOCrearAsignatura(string nombre, int cuatrimestre, long actorId, CancellationToken cancellationToken)
     {
         var normalizado = Normalizar(nombre);
         var candidatas = await _dbContext.Asignaturas.Where(a => a.Activo && a.DeletedAt == null).ToListAsync(cancellationToken);
@@ -156,7 +166,8 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
             Cuatrimestre = cuatrimestre,
             HorasTotales = 0,
             HorasSemana = 0,
-            Creditos = 0
+            Creditos = 0,
+            CreatedBy = actorId
         };
         _dbContext.Asignaturas.Add(asignatura);
         return asignatura;
@@ -217,6 +228,7 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
             ".xlsx" => LeerXlsx(archivo),
             _ => throw new AppException("Sólo se aceptan archivos .csv o .xlsx.")
         };
+        ValidarLimites(tabla);
         return ConvertirTabla(tabla);
     }
 
@@ -244,6 +256,8 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
     private static List<List<string>> LeerXlsx(Stream archivo)
     {
         using var zip = new ZipArchive(archivo, ZipArchiveMode.Read, leaveOpen: true);
+        if (zip.Entries.Sum(entry => entry.Length) > MaxFileBytes * 5)
+            throw new AppException("El contenido descomprimido del XLSX excede el límite permitido.");
         var sharedStrings = zip.GetEntry("xl/sharedStrings.xml") is { } shared ? XDocument.Load(shared.Open()).Descendants().Where(x => x.Name.LocalName == "si").Select(x => string.Concat(x.Descendants().Where(n => n.Name.LocalName == "t").Select(n => n.Value))).ToList() : [];
         var hoja = zip.Entries.FirstOrDefault(e => e.FullName.Equals("xl/worksheets/sheet1.xml", StringComparison.OrdinalIgnoreCase)) ?? zip.Entries.FirstOrDefault(e => e.FullName.StartsWith("xl/worksheets/", StringComparison.OrdinalIgnoreCase));
         if (hoja is null) throw new AppException("El libro no contiene una hoja de trabajo.");
@@ -262,6 +276,14 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
             }
             return Enumerable.Range(0, celdas.Count == 0 ? 0 : celdas.Keys.Max() + 1).Select(i => celdas.GetValueOrDefault(i, string.Empty)).ToList();
         }).ToList();
+    }
+
+    private static void ValidarLimites(List<List<string>> tabla)
+    {
+        if (tabla.Count > MaxRows + 1) throw new AppException($"El archivo no puede contener más de {MaxRows} filas de datos.");
+        if (tabla.Any(fila => fila.Count > MaxColumns)) throw new AppException($"El archivo no puede contener más de {MaxColumns} columnas.");
+        if (tabla.SelectMany(fila => fila).Any(valor => valor.Length > MaxCellLength))
+            throw new AppException($"Cada celda debe contener como máximo {MaxCellLength} caracteres.");
     }
 
     private static List<FilaImportada> ConvertirTabla(List<List<string>> tabla)

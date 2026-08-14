@@ -11,10 +11,10 @@ namespace Plandi.Services.Interfaces
 
         Task<PeriodoResponseDto> GetById(Guid publicId);
 
-        Task<PeriodoResponseDto> Create(PeriodoRequestDto request);
+        Task<PeriodoResponseDto> Create(PeriodoRequestDto request, long actorId);
 
-        Task<PeriodoResponseDto> Update(Guid publicId, PeriodoRequestDto request);
+        Task<PeriodoResponseDto> Update(Guid publicId, PeriodoRequestDto request, long actorId);
 
-        Task<bool> Delete(Guid publicId);
+        Task<bool> Delete(Guid publicId, long actorId);
     }
 }

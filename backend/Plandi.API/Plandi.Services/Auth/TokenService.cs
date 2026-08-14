@@ -33,6 +33,7 @@ namespace Plandi.Services
 
             // One role claim per membership: JWT and ASP.NET Core preserve all of them.
             claims.AddRange(usuario.UsuarioRoles
+                .Where(ur => ur.Rol.Activo && ur.Rol.DeletedAt == null)
                 .Select(ur => ur.Rol.Nombre)
                 .Distinct(StringComparer.Ordinal)
                 .Select(rol => new Claim(ClaimTypes.Role, rol)));
@@ -87,7 +88,7 @@ namespace Plandi.Services
                         .ThenInclude(ur => ur.Rol)
                 .FirstOrDefaultAsync(rt => rt.TokenHash == tokenHashCalculado);
 
-            if (tokenExist == null || !tokenExist.isActive)
+            if (tokenExist == null || !tokenExist.isActive || !tokenExist.Usuario.Activo || tokenExist.Usuario.DeletedAt != null)
             {
                 return new RequestTokenResponse
                 {
@@ -121,7 +122,8 @@ namespace Plandi.Services
                 AccessToken = newAccessToken,
                 AccessTokenExpiresAt = newExpiresAt,    
                 RefreshToken = newRefreshToken,
-                Roles = usuario.UsuarioRoles.Select(ur => ur.Rol.Nombre).Distinct().OrderBy(rol => rol).ToList()
+                Roles = usuario.UsuarioRoles.Where(ur => ur.Rol.Activo && ur.Rol.DeletedAt == null)
+                    .Select(ur => ur.Rol.Nombre).Distinct().OrderBy(rol => rol).ToList()
             };
         }
     }

@@ -4,6 +4,7 @@ using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
 using Plandi.Services.Interfaces;
 using Plandi.API.Models;
+using Plandi.Services;
 
 namespace Plandi.API.Controllers
 {
@@ -31,6 +32,8 @@ namespace Plandi.API.Controllers
         {
             if (request.File is null || request.File.Length == 0)
                 return BadRequest(ApiResponse<ImportacionCargaAcademicaResultadoDto>.Fail("Debe adjuntar un archivo CSV o XLSX no vacío."));
+            if (request.File.Length > ImportacionCargaAcademicaService.MaxFileBytes)
+                return BadRequest(ApiResponse<ImportacionCargaAcademicaResultadoDto>.Fail("El archivo no puede exceder 10 MB."));
 
             try
             {
@@ -89,7 +92,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _cargaAcademicaService.Create(request);
+                var result = await _cargaAcademicaService.Create(request, UsuarioId);
                 return Ok(ApiResponse<CargaAcademicaResponseDto>.Ok(result, "Carga académica creada correctamente."));
             }
             catch (AppException ex)
@@ -107,7 +110,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _cargaAcademicaService.Update(publicId, request);
+                var result = await _cargaAcademicaService.Update(publicId, request, UsuarioId);
                 return Ok(ApiResponse<CargaAcademicaResponseDto>.Ok(result, "Carga académica actualizada correctamente."));
             }
             catch (AppException ex)
@@ -125,7 +128,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _cargaAcademicaService.Delete(publicId);
+                var result = await _cargaAcademicaService.Delete(publicId, UsuarioId);
                 return Ok(ApiResponse<bool>.Ok(result, "Carga académica eliminada correctamente."));
             }
             catch (AppException ex)

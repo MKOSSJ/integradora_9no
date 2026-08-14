@@ -32,7 +32,7 @@ namespace Plandi.Services
             return ToDto(carrera);
         }
 
-        public async Task<CarreraResponseDto> Create(CarreraRequestDto request)
+        public async Task<CarreraResponseDto> Create(CarreraRequestDto request, long actorId)
         {
             await ValidateClaveUnica(request.Clave, null);
 
@@ -40,7 +40,8 @@ namespace Plandi.Services
             {
                 Nombre = request.Nombre,
                 Clave = request.Clave,
-                Nivel = request.Nivel
+                Nivel = request.Nivel,
+                CreatedBy = actorId
             };
 
             _dbContext.Carreras.Add(carrera);
@@ -49,7 +50,7 @@ namespace Plandi.Services
             return ToDto(carrera);
         }
 
-        public async Task<CarreraResponseDto> Update(Guid publicId, CarreraRequestDto request)
+        public async Task<CarreraResponseDto> Update(Guid publicId, CarreraRequestDto request, long actorId)
         {
             var carrera = await GetEntity(publicId);
 
@@ -59,19 +60,21 @@ namespace Plandi.Services
             carrera.Clave = request.Clave;
             carrera.Nivel = request.Nivel;
             carrera.UpdatedAt = DateTime.UtcNow;
+            carrera.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
 
             return ToDto(carrera);
         }
 
-        public async Task<bool> Delete(Guid publicId)
+        public async Task<bool> Delete(Guid publicId, long actorId)
         {
             var carrera = await GetEntity(publicId);
 
             carrera.Activo = false;
             carrera.DeletedAt = DateTime.UtcNow;
             carrera.UpdatedAt = DateTime.UtcNow;
+            carrera.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
 

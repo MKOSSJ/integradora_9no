@@ -38,7 +38,7 @@ namespace Plandi.Services
             return ToDto(carga);
         }
 
-        public async Task<CargaAcademicaResponseDto> Create(CargaAcademicaRequestDto request)
+        public async Task<CargaAcademicaResponseDto> Create(CargaAcademicaRequestDto request, long actorId)
         {
             var periodoId = await ResolvePeriodoId(request.PeriodoPublicId);
             var grupoId = await ResolveGrupoId(request.GrupoPublicId);
@@ -52,6 +52,7 @@ namespace Plandi.Services
                 : null;
 
             await ValidateNoDuplicada(periodoId, grupoId, asignaturaId, docenteId, null);
+            await ValidateCoherencia(periodoId, grupoId, asignaturaId, academiaId);
 
             var carga = new CargaAcademica
             {
@@ -60,7 +61,8 @@ namespace Plandi.Services
                 AsignaturaId = asignaturaId,
                 DocenteId = docenteId,
                 RevisorId = revisorId,
-                AcademiaId = academiaId
+                AcademiaId = academiaId,
+                CreatedBy = actorId
             };
 
             _dbContext.CargasAcademicas.Add(carga);
@@ -70,7 +72,7 @@ namespace Plandi.Services
             return ToDto(carga);
         }
 
-        public async Task<CargaAcademicaResponseDto> Update(Guid publicId, CargaAcademicaRequestDto request)
+        public async Task<CargaAcademicaResponseDto> Update(Guid publicId, CargaAcademicaRequestDto request, long actorId)
         {
             var carga = await GetEntity(publicId);
 
@@ -86,6 +88,7 @@ namespace Plandi.Services
                 : null;
 
             await ValidateNoDuplicada(periodoId, grupoId, asignaturaId, docenteId, publicId);
+            await ValidateCoherencia(periodoId, grupoId, asignaturaId, academiaId);
 
             carga.PeriodoId = periodoId;
             carga.GrupoId = grupoId;
@@ -94,6 +97,7 @@ namespace Plandi.Services
             carga.RevisorId = revisorId;
             carga.AcademiaId = academiaId;
             carga.UpdatedAt = DateTime.UtcNow;
+            carga.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
             await LoadReferences(carga);
@@ -101,13 +105,14 @@ namespace Plandi.Services
             return ToDto(carga);
         }
 
-        public async Task<bool> Delete(Guid publicId)
+        public async Task<bool> Delete(Guid publicId, long actorId)
         {
             var carga = await GetEntity(publicId);
 
             carga.Activo = false;
             carga.DeletedAt = DateTime.UtcNow;
             carga.UpdatedAt = DateTime.UtcNow;
+            carga.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
 
@@ -147,6 +152,14 @@ namespace Plandi.Services
             {
                 throw new AppException("Ya existe una carga académica con el mismo periodo, grupo, asignatura y docente.");
             }
+        }
+
+        private async Task ValidateCoherencia(long periodoId, long grupoId, long asignaturaId, long? academiaId)
+        {
+            if (!await _dbContext.Grupos.AnyAsync(g => g.Id == grupoId && g.PeriodoId == periodoId))
+                throw new AppException("El grupo no pertenece al periodo especificado.");
+            if (academiaId.HasValue && !await _dbContext.Asignaturas.AnyAsync(a => a.Id == asignaturaId && (!a.AcademiaId.HasValue || a.AcademiaId == academiaId)))
+                throw new AppException("La asignatura no pertenece a la academia especificada.");
         }
 
         private async Task<long> ResolvePeriodoId(Guid publicId)
@@ -189,10 +202,11 @@ namespace Plandi.Services
         {
             var entidad = await _dbContext.Usuarios
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.PublicId == publicId && u.Activo && u.DeletedAt == null);
+                .FirstOrDefaultAsync(u => u.PublicId == publicId && u.Activo && u.DeletedAt == null &&
+                    u.UsuarioRoles.Any(ur => ur.Rol.Nombre == "Docente" && ur.Rol.Activo && ur.Rol.DeletedAt == null));
             if (entidad == null)
             {
-                throw new AppException("El docente especificado no existe.");
+                throw new AppException("El docente especificado no existe o no tiene el rol Docente.");
             }
             return entidad.Id;
         }
@@ -201,10 +215,11 @@ namespace Plandi.Services
         {
             var entidad = await _dbContext.Usuarios
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.PublicId == publicId && u.Activo && u.DeletedAt == null);
+                .FirstOrDefaultAsync(u => u.PublicId == publicId && u.Activo && u.DeletedAt == null &&
+                    u.UsuarioRoles.Any(ur => ur.Rol.Nombre == "Revisor" && ur.Rol.Activo && ur.Rol.DeletedAt == null));
             if (entidad == null)
             {
-                throw new AppException("El revisor especificado no existe.");
+                throw new AppException("El revisor especificado no existe o no tiene el rol Revisor.");
             }
             return entidad.Id;
         }

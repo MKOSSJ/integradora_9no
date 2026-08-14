@@ -32,14 +32,15 @@ namespace Plandi.Services
             return ToDto(academia);
         }
 
-        public async Task<AcademiaResponseDto> Create(AcademiaRequestDto request)
+        public async Task<AcademiaResponseDto> Create(AcademiaRequestDto request, long actorId)
         {
             await ValidateNombreUnico(request.Nombre, null);
 
             var academia = new Academia
             {
                 Nombre = request.Nombre,
-                Descripcion = request.Descripcion
+                Descripcion = request.Descripcion,
+                CreatedBy = actorId
             };
 
             _dbContext.Academias.Add(academia);
@@ -48,7 +49,7 @@ namespace Plandi.Services
             return ToDto(academia);
         }
 
-        public async Task<AcademiaResponseDto> Update(Guid publicId, AcademiaRequestDto request)
+        public async Task<AcademiaResponseDto> Update(Guid publicId, AcademiaRequestDto request, long actorId)
         {
             var academia = await GetEntity(publicId);
 
@@ -57,19 +58,21 @@ namespace Plandi.Services
             academia.Nombre = request.Nombre;
             academia.Descripcion = request.Descripcion;
             academia.UpdatedAt = DateTime.UtcNow;
+            academia.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
 
             return ToDto(academia);
         }
 
-        public async Task<bool> Delete(Guid publicId)
+        public async Task<bool> Delete(Guid publicId, long actorId)
         {
             var academia = await GetEntity(publicId);
 
             academia.Activo = false;
             academia.DeletedAt = DateTime.UtcNow;
             academia.UpdatedAt = DateTime.UtcNow;
+            academia.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
 

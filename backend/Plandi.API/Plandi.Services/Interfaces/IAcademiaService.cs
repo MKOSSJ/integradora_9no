@@ -11,11 +11,11 @@ namespace Plandi.Services.Interfaces
 
         Task<AcademiaResponseDto> GetById(Guid publicId);
 
-        Task<AcademiaResponseDto> Create(AcademiaRequestDto request);
+        Task<AcademiaResponseDto> Create(AcademiaRequestDto request, long actorId);
 
-        Task<AcademiaResponseDto> Update(Guid publicId, AcademiaRequestDto request);
+        Task<AcademiaResponseDto> Update(Guid publicId, AcademiaRequestDto request, long actorId);
 
-        Task<bool> Delete(Guid publicId);
+        Task<bool> Delete(Guid publicId, long actorId);
 
         Task<IEnumerable<AcademiaUsuarioResponseDto>> GetUsuarios(Guid academiaPublicId);
 

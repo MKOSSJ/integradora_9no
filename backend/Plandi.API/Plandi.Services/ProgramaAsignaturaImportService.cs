@@ -20,9 +20,13 @@ public sealed class ProgramaAsignaturaImportService(
     ProgramaAsignaturaExtractor programaExtractor) : IProgramaAsignaturaImportService
 {
     public const long MaxPdfBytes = 25 * 1024 * 1024;
+    private static readonly TimeSpan ProcessingTimeout = TimeSpan.FromMinutes(2);
 
     public async Task<string> ExtraerTextoAsync(Stream archivo, string nombreArchivo, CancellationToken cancellationToken = default)
     {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(ProcessingTimeout);
+        cancellationToken = timeout.Token;
         var bytes = await ReadAndValidatePdfAsync(archivo, nombreArchivo, cancellationToken);
         return ExtractRawText(bytes, nombreArchivo);
     }
@@ -30,6 +34,9 @@ public sealed class ProgramaAsignaturaImportService(
     public async Task<ProgramaAsignaturaImportacionResultadoDto> ImportarAsync(Stream archivo, string nombreArchivo,
         long tamanoBytes, string? mimeType, long subidoPorId, string directorioStorage, CancellationToken cancellationToken = default)
     {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(ProcessingTimeout);
+        cancellationToken = timeout.Token;
         var result = new ProgramaAsignaturaImportacionResultadoDto { Archivo = nombreArchivo };
         var user = await dbContext.Usuarios.SingleOrDefaultAsync(user => user.Id == subidoPorId && user.Activo && user.DeletedAt == null, cancellationToken)
             ?? throw new AppException("El usuario que realiza la carga no existe.");

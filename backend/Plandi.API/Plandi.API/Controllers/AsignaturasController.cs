@@ -12,10 +12,12 @@ namespace Plandi.API.Controllers
     public class AsignaturasController : ControllerBase
     {
         private readonly IAsignaturaService _asignaturaService;
+        private readonly IAutorizacionService _autorizacionService;
 
-        public AsignaturasController(IAsignaturaService asignaturaService)
+        public AsignaturasController(IAsignaturaService asignaturaService, IAutorizacionService autorizacionService)
         {
             _asignaturaService = asignaturaService;
+            _autorizacionService = autorizacionService;
         }
 
         [HttpGet]
@@ -60,7 +62,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _asignaturaService.Create(request);
+                var result = await _asignaturaService.Create(request, UsuarioId);
                 return Ok(ApiResponse<AsignaturaResponseDto>.Ok(result, "Asignatura creada correctamente."));
             }
             catch (AppException ex)
@@ -79,7 +81,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _asignaturaService.Update(publicId, request);
+                var result = await _asignaturaService.Update(publicId, request, UsuarioId);
                 return Ok(ApiResponse<AsignaturaResponseDto>.Ok(result, "Asignatura actualizada correctamente."));
             }
             catch (AppException ex)
@@ -98,7 +100,7 @@ namespace Plandi.API.Controllers
         {
             try
             {
-                var result = await _asignaturaService.Delete(publicId);
+                var result = await _asignaturaService.Delete(publicId, UsuarioId);
                 return Ok(ApiResponse<bool>.Ok(result, "Asignatura eliminada correctamente."));
             }
             catch (AppException ex)
@@ -110,5 +112,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(500, ApiResponse<bool>.Fail("Ocurrió un error interno al eliminar la asignatura."));
             }
         }
+
+        private long UsuarioId => _autorizacionService.ObtenerUsuarioId(User);
     }
 }

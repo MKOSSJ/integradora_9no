@@ -32,7 +32,7 @@ namespace Plandi.Services
             return ToDto(cicloEscolar);
         }
 
-        public async Task<CicloEscolarResponseDto> Create(CicloEscolarRequestDto request)
+        public async Task<CicloEscolarResponseDto> Create(CicloEscolarRequestDto request, long actorId)
         {
             ValidateFechas(request);
             await ValidateNombreUnico(request.Nombre, null);
@@ -41,7 +41,8 @@ namespace Plandi.Services
             {
                 Nombre = request.Nombre,
                 FechaInicio = request.FechaInicio,
-                FechaFin = request.FechaFin
+                FechaFin = request.FechaFin,
+                CreatedBy = actorId
             };
 
             _dbContext.CiclosEscolares.Add(cicloEscolar);
@@ -50,7 +51,7 @@ namespace Plandi.Services
             return ToDto(cicloEscolar);
         }
 
-        public async Task<CicloEscolarResponseDto> Update(Guid publicId, CicloEscolarRequestDto request)
+        public async Task<CicloEscolarResponseDto> Update(Guid publicId, CicloEscolarRequestDto request, long actorId)
         {
             var cicloEscolar = await GetEntity(publicId);
 
@@ -61,19 +62,21 @@ namespace Plandi.Services
             cicloEscolar.FechaInicio = request.FechaInicio;
             cicloEscolar.FechaFin = request.FechaFin;
             cicloEscolar.UpdatedAt = DateTime.UtcNow;
+            cicloEscolar.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
 
             return ToDto(cicloEscolar);
         }
 
-        public async Task<bool> Delete(Guid publicId)
+        public async Task<bool> Delete(Guid publicId, long actorId)
         {
             var cicloEscolar = await GetEntity(publicId);
 
             cicloEscolar.Activo = false;
             cicloEscolar.DeletedAt = DateTime.UtcNow;
             cicloEscolar.UpdatedAt = DateTime.UtcNow;
+            cicloEscolar.UpdatedBy = actorId;
 
             await _dbContext.SaveChangesAsync();
 
