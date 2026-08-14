@@ -37,8 +37,8 @@ public sealed class EdicionPlaneacionService(AppDbContext context, IAutorizacion
         await autorizacion.ExigirRolAsync(docenteId, RolAutorizacion.Docente, cancellationToken);
         var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
         await PlaneacionFlujoSupport.ExigirDocenteAsignadoAsync(context, planeacion, docenteId, cancellationToken);
-        if (planeacion.Estado is not (EstadoPlaneacion.Borrador or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.EnProceso))
-            throw new AppException("Solo pueden editarse planeaciones en borrador o con correcciones solicitadas.");
+        if (planeacion.Estado is not (EstadoPlaneacion.Borrador or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.EnProceso or EstadoPlaneacion.Reabierta))
+            throw new AppException("Solo pueden editarse planeaciones en borrador, en proceso, con correcciones solicitadas o reabiertas.");
 
         await using var transaccion = await context.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -114,7 +114,7 @@ public sealed class EstadoPlaneacionService(AppDbContext context, IAutorizacionS
         await autorizacion.ExigirRolAsync(docenteId, RolAutorizacion.Docente, cancellationToken);
         var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
         await PlaneacionFlujoSupport.ExigirDocenteAsignadoAsync(context, planeacion, docenteId, cancellationToken);
-        if (planeacion.Estado is not (EstadoPlaneacion.Borrador or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.EnProceso))
+        if (planeacion.Estado is not (EstadoPlaneacion.Borrador or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.EnProceso or EstadoPlaneacion.Reabierta))
             throw new AppException("La planeación no está disponible para enviarse a revisión.");
         if (!planeacion.RevisorId.HasValue)
             throw new AppException("Debe asignarse un revisor antes de enviar la planeación a revisión.");
@@ -124,10 +124,18 @@ public sealed class EstadoPlaneacionService(AppDbContext context, IAutorizacionS
     public async Task<PlaneacionResumenDto> ResolverRevisionAsync(Guid planeacionPublicId, long revisorId, EstadoPlaneacion estado, CancellationToken cancellationToken = default)
     {
         await autorizacion.ExigirRolAsync(revisorId, RolAutorizacion.Revisor, cancellationToken);
-        if (estado is not (EstadoPlaneacion.Aprobada or EstadoPlaneacion.Rechazada))
-            throw new AppException("El revisor solo puede aprobar o rechazar una planeación.");
         var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
         PlaneacionFlujoSupport.ExigirRevisorAsignado(planeacion, revisorId);
+
+        if (estado == EstadoPlaneacion.Reabierta)
+        {
+            if (planeacion.Estado != EstadoPlaneacion.Aprobada)
+                throw new AppException("Solo una planeación aprobada puede reabrirse.");
+            return await CambiarAsync(planeacion, revisorId, estado, cancellationToken);
+        }
+
+        if (estado is not (EstadoPlaneacion.Aprobada or EstadoPlaneacion.Rechazada))
+            throw new AppException("El revisor solo puede aprobar, rechazar o reabrir una planeación.");
         if (planeacion.Estado != EstadoPlaneacion.EnRevision)
             throw new AppException("Solo se pueden resolver planeaciones que están en revisión.");
         return await CambiarAsync(planeacion, revisorId, estado, cancellationToken);

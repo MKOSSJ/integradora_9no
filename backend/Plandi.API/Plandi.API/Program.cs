@@ -96,6 +96,7 @@ builder.Services.AddScoped<IEdicionPlaneacionService, EdicionPlaneacionService>(
 builder.Services.AddScoped<IAsignacionRevisorPlaneacionService, AsignacionRevisorPlaneacionService>();
 builder.Services.AddScoped<IPlaneacionesRevisorService, PlaneacionesRevisorService>();
 builder.Services.AddScoped<IEstadoPlaneacionService, EstadoPlaneacionService>();
+builder.Services.AddScoped<IComentariosCorreccionService, ComentariosCorreccionService>();
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<PlaneacionesProfile>());
 
 builder.Services.AddEndpointsApiExplorer();

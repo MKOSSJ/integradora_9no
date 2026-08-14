@@ -12,7 +12,8 @@ namespace Plandi.Dto.Enums
         CorreccionSolicitada = 4,
         Aprobada = 5,
         Rechazada = 6,
-        Finalizada = 7
+        Finalizada = 7,
+        Reabierta = 8
     }
 
     public enum TipoDocumento
