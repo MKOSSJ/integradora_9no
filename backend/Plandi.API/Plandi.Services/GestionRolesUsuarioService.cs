@@ -33,6 +33,8 @@ public sealed class GestionRolesUsuarioService(AppDbContext context, IAutorizaci
         var rol = await RolActivo(rolPublicId, cancellationToken);
         if (usuario.UsuarioRoles.Any(enlace => enlace.RolId == rol.Id))
             throw new AppException("El usuario ya tiene asignado ese rol.");
+        if (rol.Nombre == "Revisor" && !usuario.UsuarioRoles.Any(enlace => enlace.Rol.Nombre == "Docente" && enlace.Rol.Activo && enlace.Rol.DeletedAt == null))
+            throw new AppException("Solo un usuario con rol Docente puede recibir el rol Revisor.");
 
         usuario.UsuarioRoles.Add(new UsuarioRol { UsuarioId = usuario.Id, RolId = rol.Id, Rol = rol });
         await context.SaveChangesAsync(cancellationToken);

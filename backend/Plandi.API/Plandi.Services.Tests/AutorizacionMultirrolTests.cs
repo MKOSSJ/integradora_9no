@@ -135,6 +135,25 @@ public sealed class AutorizacionMultirrolTests
         Assert.Equal(new[] { "Docente" }, sinSegundoRol.Roles.Select(rol => rol.Nombre));
     }
 
+    [Fact]
+    public async Task No_asigna_Revisor_a_usuario_sin_rol_Docente()
+    {
+        await using var contexto = CrearContexto();
+        var director = new Usuario { Id = 1, Nombre = "Directora", ApellidoPaterno = "Prueba" };
+        var usuario = new Usuario { Id = 2, PublicId = Guid.NewGuid(), Nombre = "Usuario", ApellidoPaterno = "Prueba" };
+        var rolRevisor = new RolEntidad { Id = 2, PublicId = Guid.NewGuid(), Nombre = "Revisor" };
+        var rolDirector = new RolEntidad { Id = 3, Nombre = "Director" };
+        contexto.AddRange(director, usuario, rolRevisor, rolDirector);
+        contexto.UsuarioRoles.Add(new UsuarioRol { UsuarioId = director.Id, RolId = rolDirector.Id });
+        await contexto.SaveChangesAsync();
+        IGestionRolesUsuarioService gestion = new GestionRolesUsuarioService(contexto, new AutorizacionService(contexto));
+
+        await Assert.ThrowsAsync<Plandi.Dto.Common.AppException>(() =>
+            gestion.AsignarAsync(usuario.PublicId, rolRevisor.PublicId, director.Id));
+
+        Assert.Empty(usuario.UsuarioRoles);
+    }
+
     private static AutorizacionService CrearAutorizacion() => new(CrearContexto());
     private static AppDbContext CrearContexto() => new(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
     private static ClaimsPrincipal Principal(long usuarioId, params string[] roles) => new(new ClaimsIdentity(
