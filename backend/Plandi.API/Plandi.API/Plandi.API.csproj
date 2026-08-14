@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>Plandi.API-Local-Development</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

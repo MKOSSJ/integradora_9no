@@ -8,5 +8,6 @@ public interface IImportacionCargaAcademicaService
         Stream archivo,
         string nombreArchivo,
         Guid periodoPublicId,
+        long importadoPorId,
         CancellationToken cancellationToken = default);
 }

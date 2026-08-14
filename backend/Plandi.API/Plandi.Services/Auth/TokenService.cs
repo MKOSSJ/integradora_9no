@@ -38,7 +38,8 @@ namespace Plandi.Services
                 .Select(rol => new Claim(ClaimTypes.Role, rol)));
 
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:SecretKey"]!));
+                Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SIGNING_KEY") ?? _config["Jwt:Key"]
+                    ?? throw new InvalidOperationException("No se configuró la clave de firma JWT.")));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var expirationMinutes = int.Parse(_config["Jwt:AccessTokenExpirationMinutes"]!);

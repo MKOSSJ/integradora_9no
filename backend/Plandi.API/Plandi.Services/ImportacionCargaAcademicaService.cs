@@ -18,7 +18,7 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
     public ImportacionCargaAcademicaService(AppDbContext dbContext) => _dbContext = dbContext;
 
     public async Task<ImportacionCargaAcademicaResultadoDto> Importar(
-        Stream archivo, string nombreArchivo, Guid periodoPublicId, CancellationToken cancellationToken = default)
+        Stream archivo, string nombreArchivo, Guid periodoPublicId, long importadoPorId, CancellationToken cancellationToken = default)
     {
         var periodo = await _dbContext.Periodos.SingleOrDefaultAsync(p => p.PublicId == periodoPublicId && p.Activo && p.DeletedAt == null, cancellationToken)
             ?? throw new AppException("El periodo especificado no existe o no está activo.");
@@ -69,7 +69,8 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
                     PeriodoId = periodo.Id,
                     GrupoId = entidadGrupo.Id,
                     AsignaturaId = asignatura.Id,
-                    DocenteId = docente.Id
+                    DocenteId = docente.Id,
+                    CreatedBy = importadoPorId
                 });
                 resultado.Insertadas++;
                 resultado.Procesadas++;

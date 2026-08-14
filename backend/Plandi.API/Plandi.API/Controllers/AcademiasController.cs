@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
@@ -6,6 +7,7 @@ using Plandi.Services.Interfaces;
 namespace Plandi.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class AcademiasController : ControllerBase
     {
@@ -53,6 +55,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Create([FromBody] AcademiaRequestDto request)
         {
             try
@@ -71,6 +74,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPut("{publicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Update(Guid publicId, [FromBody] AcademiaRequestDto request)
         {
             try
@@ -89,6 +93,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("{publicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Delete(Guid publicId)
         {
             try
@@ -125,6 +130,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost("{publicId:guid}/usuarios")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> AsignarUsuario(Guid publicId, [FromBody] AcademiaUsuarioRequestDto request)
         {
             try
@@ -143,6 +149,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("{publicId:guid}/usuarios/{usuarioPublicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> DesasignarUsuario(Guid publicId, Guid usuarioPublicId)
         {
             try

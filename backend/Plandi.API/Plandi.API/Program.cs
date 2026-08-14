@@ -15,7 +15,9 @@ using Plandi.Dto.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var jwtKey = builder.Configuration["Jwt:SecretKey"]!;
+var jwtKey = Environment.GetEnvironmentVariable("JWT_SIGNING_KEY") ?? builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.StartsWith("CAMBIAR_", StringComparison.Ordinal))
+    throw new InvalidOperationException("Configure Jwt:Key mediante User Secrets o la variable JWT_SIGNING_KEY.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

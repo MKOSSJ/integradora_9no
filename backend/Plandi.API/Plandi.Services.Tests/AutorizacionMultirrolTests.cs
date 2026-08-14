@@ -181,7 +181,7 @@ public sealed class AutorizacionMultirrolTests
     }
     private static IConfiguration ConfiguracionJwt() => new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
     {
-        ["Jwt:SecretKey"] = "clave-de-pruebas-con-longitud-suficiente-para-hs256",
+        ["Jwt:Key"] = "clave-de-pruebas-con-longitud-suficiente-para-hs256",
         ["Jwt:Issuer"] = "Plandi.Tests", ["Jwt:Audience"] = "Plandi.Tests",
         ["Jwt:AccessTokenExpirationMinutes"] = "60", ["Jwt:RefreshTokenExpirationDays"] = "7"
     }).Build();

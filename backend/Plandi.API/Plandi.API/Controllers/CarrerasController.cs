@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
@@ -6,6 +7,7 @@ using Plandi.Services.Interfaces;
 namespace Plandi.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class CarrerasController : ControllerBase
     {
@@ -53,6 +55,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Create([FromBody] CarreraRequestDto request)
         {
             try
@@ -71,6 +74,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpPut("{publicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Update(Guid publicId, [FromBody] CarreraRequestDto request)
         {
             try
@@ -89,6 +93,7 @@ namespace Plandi.API.Controllers
         }
 
         [HttpDelete("{publicId:guid}")]
+        [Authorize(Roles = "Director")]
         public async Task<IActionResult> Delete(Guid publicId)
         {
             try

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
@@ -7,16 +8,19 @@ using Plandi.API.Models;
 namespace Plandi.API.Controllers
 {
     [ApiController]
+    [Authorize(Roles = "Director")]
     [Route("api/[controller]")]
     public class CargasAcademicasController : ControllerBase
     {
         private readonly ICargaAcademicaService _cargaAcademicaService;
         private readonly IImportacionCargaAcademicaService _importacionCargaAcademicaService;
+        private readonly IAutorizacionService _autorizacionService;
 
-        public CargasAcademicasController(ICargaAcademicaService cargaAcademicaService, IImportacionCargaAcademicaService importacionCargaAcademicaService)
+        public CargasAcademicasController(ICargaAcademicaService cargaAcademicaService, IImportacionCargaAcademicaService importacionCargaAcademicaService, IAutorizacionService autorizacionService)
         {
             _cargaAcademicaService = cargaAcademicaService;
             _importacionCargaAcademicaService = importacionCargaAcademicaService;
+            _autorizacionService = autorizacionService;
         }
 
         /// <summary>Importa asignaciones desde un CSV o XLSX con Asignatura, Cuatrimestre, P.E. y Docente.</summary>
@@ -31,7 +35,7 @@ namespace Plandi.API.Controllers
             try
             {
                 await using var stream = request.File.OpenReadStream();
-                var result = await _importacionCargaAcademicaService.Importar(stream, request.File.FileName, request.PeriodoPublicId, cancellationToken);
+                var result = await _importacionCargaAcademicaService.Importar(stream, request.File.FileName, request.PeriodoPublicId, UsuarioId, cancellationToken);
                 return Ok(ApiResponse<ImportacionCargaAcademicaResultadoDto>.Ok(result, "Importación finalizada."));
             }
             catch (AppException ex)
@@ -133,5 +137,7 @@ namespace Plandi.API.Controllers
                 return StatusCode(500, ApiResponse<bool>.Fail("Ocurrió un error interno al eliminar la carga académica."));
             }
         }
+
+        private long UsuarioId => _autorizacionService.ObtenerUsuarioId(User);
     }
 }
