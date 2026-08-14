@@ -62,6 +62,7 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAutorizacionService, AutorizacionService>();
 builder.Services.AddScoped<IGestionRolesUsuarioService, GestionRolesUsuarioService>();
+builder.Services.AddScoped<IGestionDocentesPlantillaService, GestionDocentesPlantillaService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICarreraService, CarreraService>();
