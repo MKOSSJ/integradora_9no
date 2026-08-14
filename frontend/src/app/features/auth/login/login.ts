@@ -8,22 +8,17 @@ import {
   LucideGraduationCap,
   LucideMail,
   LucideLockKeyhole,
-  LucideLoaderCircle
+  LucideLoaderCircle,
 } from '@lucide/angular';
 
 import { AuthService } from '../../../core/services/auth.service';
-
+import { LoginRequestDto } from '../../../core/dto/auth/login-request.dto';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [
-    NgClass,
-    FormsModule,
-    RouterLink,
-    LucideDynamicIcon
-  ],
+  imports: [NgClass, FormsModule, RouterLink, LucideDynamicIcon],
   templateUrl: './login.html',
-  styleUrl: './login.css'
+  styleUrl: './login.css',
 })
 export class Login implements OnInit {
   private readonly authService = inject(AuthService);
@@ -43,42 +38,77 @@ export class Login implements OnInit {
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
       this.router.navigateByUrl('/dashboard', {
-        replaceUrl: true
+        replaceUrl: true,
       });
     }
   }
 
-  login(): void {
-    if (this.loading()) return;
+ login(): void {
+  if (this.loading()) {
+    return;
+  }
 
-    this.errorMessage.set('');
+  this.errorMessage.set('');
 
-    const email = this.email.trim();
-    const password = this.password.trim();
+  const email = this.email.trim();
+  const password = this.password.trim();
 
-    if (!email || !password) {
-      this.errorMessage.set('Ingresa correo y contraseña.');
-      return;
-    }
+  if (!email || !password) {
+    this.errorMessage.set(
+      'Ingresa correo y contraseña.'
+    );
+    return;
+  }
 
-    this.loading.set(true);
+  this.loading.set(true);
 
-    setTimeout(() => {
-      const success = this.authService.login(email, password);
-
-      if (!success) {
-        this.loading.set(false);
-        this.errorMessage.set('Correo o contraseña incorrectos.');
-        return;
-      }
+  this.authService.login(email, password).subscribe({
+    next: response => {
 
       this.loading.set(false);
 
-      this.router.navigateByUrl('/dashboard', {
-        replaceUrl: true
-      });
-    }, 600);
-  }
+      if (!response.success) {
+        this.errorMessage.set(
+          response.message || 'No fue posible iniciar sesión.'
+        );
+        return;
+      }
+
+      if (response.requiresTwoFactor) {
+        this.router.navigateByUrl(
+          '/auth/verificar-codigo',
+          {
+            replaceUrl: true
+          }
+        );
+
+        return;
+      }
+
+      this.router.navigateByUrl(
+        '/dashboard',
+        {
+          replaceUrl: true
+        }
+      );
+    },
+
+    error: error => {
+
+      this.loading.set(false);
+
+      console.error(
+        'Error de login:',
+        error
+      );
+
+      this.errorMessage.set(
+        error?.error?.message ||
+        'No fue posible conectar con el servidor.'
+      );
+    }
+  });
+}
 
   onSubmit(): void {
     this.login();
@@ -86,7 +116,9 @@ export class Login implements OnInit {
 
   setDemoUser(email: string): void {
     this.email = email;
+
     this.password = '1234';
+
     this.errorMessage.set('');
   }
 }

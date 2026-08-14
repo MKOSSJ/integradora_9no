@@ -1,6 +1,16 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+
+import {
+  ActivatedRoute,
+  Router
+} from '@angular/router';
 
 import {
   LucideDynamicIcon,
@@ -17,7 +27,6 @@ import { AuthService } from '../../../core/services/auth.service';
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     LucideDynamicIcon
   ],
   templateUrl: './new-password.html',
@@ -25,105 +34,232 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class NewPassword {
 
-  private readonly router = inject(Router);
-  private readonly authService = inject(AuthService);
+  private readonly router =
+    inject(Router);
+
+  private readonly route =
+    inject(ActivatedRoute);
+
+  private readonly authService =
+    inject(AuthService);
 
   lockIcon = LucideLock;
+
   eyeIcon = LucideEye;
+
   eyeOffIcon = LucideEyeOff;
+
   successIcon = LucideCheckCircle;
 
-  email = signal('docente@utc.edu.mx');
+  passwordResetToken =
+    signal('');
 
-  code = signal('123456');
+  password =
+    signal('');
 
-  password = signal('');
+  confirmPassword =
+    signal('');
 
-  confirmPassword = signal('');
+  showPassword =
+    signal(false);
 
-  showPassword = signal(false);
+  showConfirm =
+    signal(false);
 
-  showConfirm = signal(false);
+  loading =
+    signal(false);
 
-  loading = signal(false);
+  success =
+    signal(false);
 
-  success = signal(false);
+  errorMessage =
+    signal('');
 
-  hasUppercase = computed(() =>
-    /[A-Z]/.test(this.password())
-  );
+  hasUppercase =
+    computed(() =>
+      /[A-Z]/.test(this.password())
+    );
 
-  hasLowercase = computed(() =>
-    /[a-z]/.test(this.password())
-  );
+  hasLowercase =
+    computed(() =>
+      /[a-z]/.test(this.password())
+    );
 
-  hasNumber = computed(() =>
-    /\d/.test(this.password())
-  );
+  hasNumber =
+    computed(() =>
+      /\d/.test(this.password())
+    );
 
-  hasSpecial = computed(() =>
-    /[!@#$%^&*(),.?":{}|<>]/.test(this.password())
-  );
+  hasSpecial =
+    computed(() =>
+      /[!@#$%^&*(),.?":{}|<>]/.test(
+        this.password()
+      )
+    );
 
-  hasLength = computed(() =>
-    this.password().length >= 8
-  );
+  hasLength =
+    computed(() =>
+      this.password().length >= 8
+    );
 
-  strength = computed(() => {
+  strength =
+    computed(() => {
 
-    let score = 0;
+      let score = 0;
 
-    if (this.hasUppercase()) score++;
-    if (this.hasLowercase()) score++;
-    if (this.hasNumber()) score++;
-    if (this.hasSpecial()) score++;
-    if (this.hasLength()) score++;
+      if (this.hasUppercase()) {
+        score++;
+      }
 
-    return score;
+      if (this.hasLowercase()) {
+        score++;
+      }
 
-  });
+      if (this.hasNumber()) {
+        score++;
+      }
+
+      if (this.hasSpecial()) {
+        score++;
+      }
+
+      if (this.hasLength()) {
+        score++;
+      }
+
+      return score;
+
+    });
+
+  constructor() {
+
+    this.route.queryParamMap
+      .subscribe(params => {
+
+        const token =
+          params.get('token');
+
+        this.passwordResetToken.set(
+          token ?? ''
+        );
+
+        if (!token) {
+
+          this.errorMessage.set(
+            'El enlace de recuperación no es válido.'
+          );
+
+        }
+
+      });
+
+  }
 
   updatePassword(): void {
 
-    if (this.password() !== this.confirmPassword()) {
+    if (this.loading()) {
+      return;
+    }
 
-      alert('Las contraseñas no coinciden.');
+    this.errorMessage.set('');
+
+    if (!this.passwordResetToken()) {
+
+      this.errorMessage.set(
+        'El enlace de recuperación no es válido o ha expirado.'
+      );
 
       return;
+    }
 
+    if (!this.password()) {
+
+      this.errorMessage.set(
+        'Ingresa una nueva contraseña.'
+      );
+
+      return;
+    }
+
+    if (
+      this.password() !==
+      this.confirmPassword()
+    ) {
+
+      this.errorMessage.set(
+        'Las contraseñas no coinciden.'
+      );
+
+      return;
     }
 
     if (this.strength() < 5) {
 
-      alert('La contraseña es demasiado débil.');
+      this.errorMessage.set(
+        'La contraseña no cumple con todos los requisitos.'
+      );
 
       return;
-
     }
 
     this.loading.set(true);
 
-    this.authService.resetPassword({
+    this.authService
+      .resetPassword({
 
-      email: this.email(),
+        passwordResetToken:
+          this.passwordResetToken(),
 
-      code: this.code(),
+        newPassword:
+          this.password(),
 
-      password: this.password()
+        confirmPassword:
+          this.confirmPassword()
 
-    }).subscribe(() => {
+      })
+      .subscribe({
 
-      this.loading.set(false);
+        next: (response: any) => {
 
-      this.success.set(true);
+          console.log(
+            'Contraseña actualizada:',
+            response
+          );
 
-      setTimeout(() => {
+          this.loading.set(false);
 
-        this.router.navigate(['/auth/login']);
+          this.success.set(true);
 
-      }, 2000);
+          setTimeout(() => {
 
-    });
+            this.router.navigate(
+              ['/auth/login'],
+              {
+                replaceUrl: true
+              }
+            );
+
+          }, 2000);
+
+        },
+
+        error: (error) => {
+
+          this.loading.set(false);
+
+          console.error(
+            'Error al actualizar contraseña:',
+            error
+          );
+
+          this.errorMessage.set(
+            error?.error?.message ??
+            'No fue posible actualizar la contraseña. El enlace puede ser inválido o haber expirado.'
+          );
+
+        }
+
+      });
 
   }
 
