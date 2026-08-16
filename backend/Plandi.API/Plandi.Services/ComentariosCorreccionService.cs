@@ -7,8 +7,9 @@ using Plandi.Services.Interfaces;
 
 namespace Plandi.Services;
 
-public sealed class ComentariosCorreccionService(AppDbContext context) : IComentariosCorreccionService
+public sealed class ComentariosCorreccionService(AppDbContext context, IPeriodoLifecycleService lifecycle) : IComentariosCorreccionService
 {
+    public ComentariosCorreccionService(AppDbContext context) : this(context, PeriodoLifecycleService.ForContext(context)) { }
     private const string TituloChat = "Comentarios de corrección";
 
     public async Task<ComentarioCorreccionDto> CrearAsync(
@@ -24,6 +25,7 @@ public sealed class ComentariosCorreccionService(AppDbContext context) : IComent
             throw new AppException("El comentario no puede exceder 4000 caracteres.");
 
         var planeacion = await BuscarPlaneacionAsync(planeacionPublicId, cancellationToken);
+        await lifecycle.ExigirEditableAsync(planeacion.PeriodoId, cancellationToken);
         var usuario = await BuscarUsuarioConRolesAsync(usuarioId, cancellationToken);
         if (TieneRol(usuario, RolAutorizacion.Director))
             throw new AppException("El Director solo puede consultar los comentarios de corrección.");

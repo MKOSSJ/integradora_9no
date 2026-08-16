@@ -35,6 +35,13 @@ namespace Plandi.Library.Models
 
         public ICollection<PlaneacionEvaluacion> Evaluaciones { get; set; } = new List<PlaneacionEvaluacion>();
 
+        /// <summary>
+        /// Estructura base de la secuencia didáctica. Toda unidad activa debe
+        /// conservar exactamente una etapa de Apertura, Desarrollo y Cierre,
+        /// aun cuando todavía no contengan elementos de secuencia.
+        /// </summary>
+        public ICollection<PlaneacionEtapaSecuencia> EtapasSecuencia { get; set; } = new List<PlaneacionEtapaSecuencia>();
+
         public ICollection<PlaneacionSecuencia> Secuencias { get; set; } = new List<PlaneacionSecuencia>();
     }
 }

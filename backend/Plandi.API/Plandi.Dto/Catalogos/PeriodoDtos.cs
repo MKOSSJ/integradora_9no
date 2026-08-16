@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Plandi.Dto.Enums;
 
 namespace Plandi.Dto.Catalogos
 {
@@ -32,5 +33,13 @@ namespace Plandi.Dto.Catalogos
         public DateTime FechaFin { get; set; }
 
         public bool Activo { get; set; }
+
+        public EstadoPeriodo Estado { get; set; }
+
+        public EstadoPeriodo EstadoEfectivo { get; set; }
+
+        public DateTime? FechaCierre { get; set; }
+
+        public bool PermiteModificaciones { get; set; }
     }
 }

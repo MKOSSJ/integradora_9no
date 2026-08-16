@@ -19,8 +19,14 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
     private const int MaxCellLength = 500;
     private static readonly TimeSpan ProcessingTimeout = TimeSpan.FromMinutes(2);
     private readonly AppDbContext _dbContext;
+    private readonly IPeriodoLifecycleService _lifecycle;
 
-    public ImportacionCargaAcademicaService(AppDbContext dbContext) => _dbContext = dbContext;
+    public ImportacionCargaAcademicaService(AppDbContext dbContext, IPeriodoLifecycleService lifecycle)
+    {
+        _dbContext = dbContext;
+        _lifecycle = lifecycle;
+    }
+    public ImportacionCargaAcademicaService(AppDbContext dbContext) : this(dbContext, PeriodoLifecycleService.ForContext(dbContext)) { }
 
     public async Task<ImportacionCargaAcademicaResultadoDto> Importar(
         Stream archivo, string nombreArchivo, Guid periodoPublicId, long importadoPorId, CancellationToken cancellationToken = default)
@@ -32,6 +38,7 @@ public sealed class ImportacionCargaAcademicaService : IImportacionCargaAcademic
         cancellationToken = timeout.Token;
         var periodo = await _dbContext.Periodos.SingleOrDefaultAsync(p => p.PublicId == periodoPublicId && p.Activo && p.DeletedAt == null, cancellationToken)
             ?? throw new AppException("El periodo especificado no existe o no está activo.");
+        await _lifecycle.ExigirEditableAsync(periodo.Id, cancellationToken);
 
         var filas = await LeerFilas(archivo, nombreArchivo, cancellationToken);
         var resultado = new ImportacionCargaAcademicaResultadoDto { TotalFilas = filas.Count };

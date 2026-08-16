@@ -15,12 +15,15 @@ namespace Plandi.Services
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IPeriodoLifecycleService _lifecycle;
 
-        public PlaneacionCaratulaService(AppDbContext context, IMapper mapper)
+        public PlaneacionCaratulaService(AppDbContext context, IMapper mapper, IPeriodoLifecycleService lifecycle)
         {
             _context = context;
             _mapper = mapper;
+            _lifecycle = lifecycle;
         }
+        public PlaneacionCaratulaService(AppDbContext context, IMapper mapper) : this(context, mapper, PeriodoLifecycleService.ForContext(context)) { }
 
         public async Task<PlaneacionCaratulaDto?> GetByPlaneacionIdAsync(Guid planeacionPublicId)
         {
@@ -35,7 +38,7 @@ namespace Plandi.Services
         public async Task<PlaneacionCaratulaDto> CreateAsync(Guid planeacionPublicId, CreatePlaneacionCaratulaDto dto)
         {
             var planeacion = await PlaneacionLegacySupport.BuscarPlaneacionAsync(_context, planeacionPublicId);
-            PlaneacionLegacySupport.ExigirMutable(planeacion);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, planeacion);
 
             var caratula = _mapper.Map<PlaneacionCaratula>(dto);
             caratula.PlaneacionDidactica = planeacion;
@@ -56,7 +59,7 @@ namespace Plandi.Services
                 .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (caratula == null)
                 throw new InvalidOperationException("Carátula no encontrada.");
-            PlaneacionLegacySupport.ExigirMutable(caratula.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, caratula.PlaneacionDidactica);
 
             _mapper.Map(dto, caratula);
             if (dto.ProgramaAsignaturaPublicId.HasValue)
@@ -74,7 +77,7 @@ namespace Plandi.Services
                 .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (caratula == null)
                 throw new InvalidOperationException("Carátula no encontrada.");
-            PlaneacionLegacySupport.ExigirMutable(caratula.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, caratula.PlaneacionDidactica);
 
             caratula.Activo = false;
             caratula.DeletedAt = DateTime.UtcNow;
@@ -87,12 +90,15 @@ namespace Plandi.Services
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IPeriodoLifecycleService _lifecycle;
 
-        public PlaneacionTemaService(AppDbContext context, IMapper mapper)
+        public PlaneacionTemaService(AppDbContext context, IMapper mapper, IPeriodoLifecycleService lifecycle)
         {
             _context = context;
             _mapper = mapper;
+            _lifecycle = lifecycle;
         }
+        public PlaneacionTemaService(AppDbContext context, IMapper mapper) : this(context, mapper, PeriodoLifecycleService.ForContext(context)) { }
 
         public async Task<PlaneacionTemaDto> GetByIdAsync(Guid publicId)
         {
@@ -121,7 +127,7 @@ namespace Plandi.Services
         public async Task<PlaneacionTemaDto> CreateAsync(Guid unidadPublicId, CreatePlaneacionTemaDtos dto)
         {
             var unidad = await PlaneacionLegacySupport.BuscarUnidadAsync(_context, unidadPublicId);
-            PlaneacionLegacySupport.ExigirMutable(unidad.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, unidad.PlaneacionDidactica);
 
             var tema = _mapper.Map<PlaneacionTema>(dto);
             tema.PlaneacionUnidad = unidad;
@@ -138,7 +144,7 @@ namespace Plandi.Services
                 .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (tema == null)
                 throw new InvalidOperationException("Tema no encontrado.");
-            PlaneacionLegacySupport.ExigirMutable(tema.PlaneacionUnidad.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, tema.PlaneacionUnidad.PlaneacionDidactica);
 
             _mapper.Map(dto, tema);
             tema.FechaUltimaModificacion = DateTime.UtcNow;
@@ -154,7 +160,7 @@ namespace Plandi.Services
                 .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (tema == null)
                 throw new InvalidOperationException("Tema no encontrado.");
-            PlaneacionLegacySupport.ExigirMutable(tema.PlaneacionUnidad.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, tema.PlaneacionUnidad.PlaneacionDidactica);
 
             tema.Activo = false;
             tema.DeletedAt = DateTime.UtcNow;
@@ -167,12 +173,15 @@ namespace Plandi.Services
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IPeriodoLifecycleService _lifecycle;
 
-        public PlaneacionEvaluacionService(AppDbContext context, IMapper mapper)
+        public PlaneacionEvaluacionService(AppDbContext context, IMapper mapper, IPeriodoLifecycleService lifecycle)
         {
             _context = context;
             _mapper = mapper;
+            _lifecycle = lifecycle;
         }
+        public PlaneacionEvaluacionService(AppDbContext context, IMapper mapper) : this(context, mapper, PeriodoLifecycleService.ForContext(context)) { }
 
         public async Task<PlaneacionEvaluacionDto> GetByIdAsync(Guid publicId)
         {
@@ -201,7 +210,7 @@ namespace Plandi.Services
         public async Task<PlaneacionEvaluacionDto> CreateAsync(Guid unidadPublicId, CreatePlaneacionEvaluacionDto dto)
         {
             var unidad = await PlaneacionLegacySupport.BuscarUnidadAsync(_context, unidadPublicId);
-            PlaneacionLegacySupport.ExigirMutable(unidad.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, unidad.PlaneacionDidactica);
 
             var evaluacion = _mapper.Map<PlaneacionEvaluacion>(dto);
             evaluacion.PlaneacionUnidad = unidad;
@@ -218,7 +227,7 @@ namespace Plandi.Services
                 .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (evaluacion == null)
                 throw new InvalidOperationException("Evaluación no encontrada.");
-            PlaneacionLegacySupport.ExigirMutable(evaluacion.PlaneacionUnidad.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, evaluacion.PlaneacionUnidad.PlaneacionDidactica);
 
             _mapper.Map(dto, evaluacion);
             evaluacion.FechaUltimaModificacion = DateTime.UtcNow;
@@ -234,7 +243,7 @@ namespace Plandi.Services
                 .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (evaluacion == null)
                 throw new InvalidOperationException("Evaluación no encontrada.");
-            PlaneacionLegacySupport.ExigirMutable(evaluacion.PlaneacionUnidad.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, evaluacion.PlaneacionUnidad.PlaneacionDidactica);
 
             evaluacion.Activo = false;
             evaluacion.DeletedAt = DateTime.UtcNow;
@@ -247,12 +256,15 @@ namespace Plandi.Services
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IPeriodoLifecycleService _lifecycle;
 
-        public PlaneacionSecuenciaService(AppDbContext context, IMapper mapper)
+        public PlaneacionSecuenciaService(AppDbContext context, IMapper mapper, IPeriodoLifecycleService lifecycle)
         {
             _context = context;
             _mapper = mapper;
+            _lifecycle = lifecycle;
         }
+        public PlaneacionSecuenciaService(AppDbContext context, IMapper mapper) : this(context, mapper, PeriodoLifecycleService.ForContext(context)) { }
 
         public async Task<PlaneacionSecuenciaDto> GetByIdAsync(Guid publicId)
         {
@@ -281,7 +293,7 @@ namespace Plandi.Services
         public async Task<PlaneacionSecuenciaDto> CreateAsync(Guid unidadPublicId, CreatePlaneacionSecuenciaDto dto)
         {
             var unidad = await PlaneacionLegacySupport.BuscarUnidadAsync(_context, unidadPublicId);
-            PlaneacionLegacySupport.ExigirMutable(unidad.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, unidad.PlaneacionDidactica);
 
             // Validar que la estrategia sea válida para la fase seleccionada
             if (!EConverter.IsValidStrategyForPhase(dto.Fase, dto.Estrategia))
@@ -291,6 +303,7 @@ namespace Plandi.Services
 
             var secuencia = _mapper.Map<PlaneacionSecuencia>(dto);
             secuencia.PlaneacionUnidad = unidad;
+            secuencia.EtapaSecuencia = await ObtenerEtapaAsync(unidad.Id, dto.Fase);
 
             _context.PlaneacionSecuencias.Add(secuencia);
             await _context.SaveChangesAsync();
@@ -304,7 +317,7 @@ namespace Plandi.Services
                 .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (secuencia == null)
                 throw new InvalidOperationException("Secuencia no encontrada.");
-            PlaneacionLegacySupport.ExigirMutable(secuencia.PlaneacionUnidad.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, secuencia.PlaneacionUnidad.PlaneacionDidactica);
 
             // Si se está actualizando la fase y/o estrategia, validar que sean compatibles
             if (dto.Fase.HasValue && dto.Estrategia.HasValue)
@@ -332,6 +345,7 @@ namespace Plandi.Services
             }
 
             _mapper.Map(dto, secuencia);
+            secuencia.EtapaSecuencia = await ObtenerEtapaAsync(secuencia.PlaneacionUnidadId, secuencia.Fase);
             secuencia.FechaUltimaModificacion = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -345,12 +359,28 @@ namespace Plandi.Services
                 .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (secuencia == null)
                 throw new InvalidOperationException("Secuencia no encontrada.");
-            PlaneacionLegacySupport.ExigirMutable(secuencia.PlaneacionUnidad.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, secuencia.PlaneacionUnidad.PlaneacionDidactica);
 
             secuencia.Activo = false;
             secuencia.DeletedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+        }
+
+        private async Task<PlaneacionEtapaSecuencia> ObtenerEtapaAsync(long unidadId, FaseSecuencia fase)
+        {
+            var etapa = await _context.PlaneacionEtapasSecuencia
+                .FirstOrDefaultAsync(e => e.PlaneacionUnidadId == unidadId && e.Fase == fase);
+            if (etapa is not null)
+            {
+                etapa.Activo = true;
+                etapa.DeletedAt = null;
+                return etapa;
+            }
+
+            etapa = new PlaneacionEtapaSecuencia { PlaneacionUnidadId = unidadId, Fase = fase };
+            _context.PlaneacionEtapasSecuencia.Add(etapa);
+            return etapa;
         }
     }
 
@@ -358,12 +388,15 @@ namespace Plandi.Services
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IPeriodoLifecycleService _lifecycle;
 
-        public PlaneacionReferenciaService(AppDbContext context, IMapper mapper)
+        public PlaneacionReferenciaService(AppDbContext context, IMapper mapper, IPeriodoLifecycleService lifecycle)
         {
             _context = context;
             _mapper = mapper;
+            _lifecycle = lifecycle;
         }
+        public PlaneacionReferenciaService(AppDbContext context, IMapper mapper) : this(context, mapper, PeriodoLifecycleService.ForContext(context)) { }
 
         public async Task<PlaneacionReferenciaDto> GetByIdAsync(Guid publicId)
         {
@@ -392,7 +425,7 @@ namespace Plandi.Services
         public async Task<PlaneacionReferenciaDto> CreateAsync(Guid planeacionPublicId, CreatePlaneacionReferenciaDto dto)
         {
             var planeacion = await PlaneacionLegacySupport.BuscarPlaneacionAsync(_context, planeacionPublicId);
-            PlaneacionLegacySupport.ExigirMutable(planeacion);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, planeacion);
 
             var referencia = _mapper.Map<PlaneacionReferencia>(dto);
             referencia.PlaneacionDidactica = planeacion;
@@ -409,7 +442,7 @@ namespace Plandi.Services
                 .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (referencia == null)
                 throw new InvalidOperationException("Referencia no encontrada.");
-            PlaneacionLegacySupport.ExigirMutable(referencia.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, referencia.PlaneacionDidactica);
 
             _mapper.Map(dto, referencia);
             referencia.FechaUltimaModificacion = DateTime.UtcNow;
@@ -425,7 +458,7 @@ namespace Plandi.Services
                 .FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo);
             if (referencia == null)
                 throw new InvalidOperationException("Referencia no encontrada.");
-            PlaneacionLegacySupport.ExigirMutable(referencia.PlaneacionDidactica);
+            await PlaneacionLegacySupport.ExigirMutableAsync(_lifecycle, referencia.PlaneacionDidactica);
 
             referencia.Activo = false;
             referencia.DeletedAt = DateTime.UtcNow;
@@ -449,8 +482,9 @@ namespace Plandi.Services
             await context.ProgramasAsignatura.FirstOrDefaultAsync(x => x.PublicId == publicId && x.Activo && x.DeletedAt == null)
             ?? throw new InvalidOperationException("Programa de asignatura no encontrado.");
 
-        internal static void ExigirMutable(PlaneacionDidactica planeacion)
+        internal static async Task ExigirMutableAsync(IPeriodoLifecycleService lifecycle, PlaneacionDidactica planeacion)
         {
+            await lifecycle.ExigirEditableAsync(planeacion.PeriodoId);
             if (planeacion.Estado is EstadoPlaneacion.Aprobada or EstadoPlaneacion.Rechazada or EstadoPlaneacion.Finalizada)
                 throw new InvalidOperationException("No se puede modificar una planeación aprobada, rechazada o finalizada.");
         }

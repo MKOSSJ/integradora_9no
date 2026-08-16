@@ -167,6 +167,18 @@ public sealed class ComentariosCorreccionTests
     }
 
     [Fact]
+    public async Task Revisor_puede_devolver_planeacion_a_correcciones()
+    {
+        await using var escenario = await CrearEscenarioAsync(EstadoPlaneacion.EnRevision);
+        var estados = new EstadoPlaneacionService(escenario.Contexto, new AutorizacionService(escenario.Contexto));
+
+        var resultado = await estados.ResolverRevisionAsync(
+            escenario.Planeacion.PublicId, escenario.Revisor.Id, EstadoPlaneacion.CorreccionSolicitada);
+
+        Assert.Equal(EstadoPlaneacion.CorreccionSolicitada, resultado.Estado);
+    }
+
+    [Fact]
     public async Task Docente_Revisor_puede_comentar_y_resolver_su_misma_planeacion()
     {
         await using var escenario = await CrearEscenarioAsync(EstadoPlaneacion.EnRevision, autorrevisor: true);

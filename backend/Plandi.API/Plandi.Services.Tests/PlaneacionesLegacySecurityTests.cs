@@ -24,6 +24,7 @@ public sealed class PlaneacionesLegacySecurityTests
             AsignaturaId = 1,
             Estado = estado
         };
+        contexto.Periodos.Add(new Periodo { Id = 1, Nombre = "Periodo de prueba", CicloEscolarId = 1 });
         contexto.PlaneacionesDidacticas.Add(planeacion);
         await contexto.SaveChangesAsync();
         var servicio = new PlaneacionReferenciaService(contexto, null!);

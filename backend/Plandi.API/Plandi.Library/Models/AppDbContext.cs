@@ -37,7 +37,9 @@ public class AppDbContext : DbContext
     public DbSet<PlaneacionUnidad> PlaneacionUnidades => Set<PlaneacionUnidad>();
     public DbSet<PlaneacionTema> PlaneacionTemas => Set<PlaneacionTema>();
     public DbSet<PlaneacionEvaluacion> PlaneacionEvaluaciones => Set<PlaneacionEvaluacion>();
+    public DbSet<PlaneacionEtapaSecuencia> PlaneacionEtapasSecuencia => Set<PlaneacionEtapaSecuencia>();
     public DbSet<PlaneacionSecuencia> PlaneacionSecuencias => Set<PlaneacionSecuencia>();
+    public DbSet<PlaneacionSecuenciaRecurso> PlaneacionSecuenciaRecursos => Set<PlaneacionSecuenciaRecurso>();
     public DbSet<PlaneacionReferencia> PlaneacionReferencias => Set<PlaneacionReferencia>();
     public DbSet<PlaneacionObservacion> PlaneacionObservaciones => Set<PlaneacionObservacion>();
 
@@ -165,8 +167,12 @@ public class AppDbContext : DbContext
             entity.ToTable("periodos");
 
             entity.HasIndex(x => new { x.CicloEscolarId, x.Nombre }).IsUnique().HasFilter("[DeletedAt] IS NULL");
+            entity.HasIndex(x => x.FechaInicio);
+            entity.HasIndex(x => x.FechaFin);
+            entity.HasIndex(x => x.Estado);
 
             entity.Property(x => x.Nombre).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Estado).HasConversion<int>().HasDefaultValue(EstadoPeriodo.Activo).HasSentinel((EstadoPeriodo)0);
 
             entity.HasOne(x => x.CicloEscolar)
                 .WithMany(x => x.Periodos)
@@ -238,6 +244,9 @@ public class AppDbContext : DbContext
                 x.AsignaturaId,
                 x.DocenteId
             }).IsUnique().HasFilter("[DeletedAt] IS NULL");
+            entity.HasIndex(x => x.GrupoId);
+            entity.HasIndex(x => x.AsignaturaId);
+            entity.HasIndex(x => x.DocenteId);
 
             entity.HasOne(x => x.Periodo)
                 .WithMany()
@@ -511,10 +520,11 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("planeacion_secuencias");
 
-            entity.HasIndex(x => new { x.PlaneacionUnidadId, x.Orden });
+            entity.HasIndex(x => new { x.PlaneacionEtapaSecuenciaId, x.Orden }).IsUnique();
 
             entity.Property(x => x.Fase).HasConversion<int>();
             entity.Property(x => x.Estrategia);
+            entity.Property(x => x.MetodoTecnica).HasConversion<int?>();
             entity.Property(x => x.ActividadDocente).HasColumnType("nvarchar(max)");
             entity.Property(x => x.ActividadEstudiante).HasColumnType("nvarchar(max)");
             entity.Property(x => x.EvidenciaAprendizaje).HasColumnType("nvarchar(max)");
@@ -525,9 +535,38 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.PlaneacionUnidadId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(x => x.EtapaSecuencia)
+                .WithMany(x => x.Elementos)
+                .HasForeignKey(x => x.PlaneacionEtapaSecuenciaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasOne(x => x.UltimaModificacionPor)
                 .WithMany()
                 .HasForeignKey(x => x.UltimaModificacionPorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PlaneacionEtapaSecuencia>(entity =>
+        {
+            entity.ToTable("planeacion_etapas_secuencia");
+            entity.HasIndex(x => new { x.PlaneacionUnidadId, x.Fase }).IsUnique();
+            entity.Property(x => x.Fase).HasConversion<int>();
+
+            entity.HasOne(x => x.PlaneacionUnidad)
+                .WithMany(x => x.EtapasSecuencia)
+                .HasForeignKey(x => x.PlaneacionUnidadId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PlaneacionSecuenciaRecurso>(entity =>
+        {
+            entity.ToTable("planeacion_secuencia_recursos");
+            entity.HasIndex(x => new { x.PlaneacionSecuenciaId, x.Orden }).IsUnique();
+            entity.Property(x => x.Nombre).HasMaxLength(500).IsRequired();
+
+            entity.HasOne(x => x.PlaneacionSecuencia)
+                .WithMany(x => x.Recursos)
+                .HasForeignKey(x => x.PlaneacionSecuenciaId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

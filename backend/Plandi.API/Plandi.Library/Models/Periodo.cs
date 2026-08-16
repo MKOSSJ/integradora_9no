@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Plandi.Dto.Enums;
 
 namespace Plandi.Library.Models
 {
@@ -17,6 +18,10 @@ namespace Plandi.Library.Models
         public DateTime FechaInicio { get; set; }
 
         public DateTime FechaFin { get; set; }
+
+        public EstadoPeriodo Estado { get; set; } = EstadoPeriodo.Activo;
+
+        public DateTime? FechaCierre { get; set; }
 
         public ICollection<Grupo> Grupos { get; set; } = new List<Grupo>();
     }

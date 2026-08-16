@@ -1,5 +1,6 @@
 using Plandi.Dto.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Plandi.Dto.Catalogos;
 
@@ -78,7 +79,15 @@ public sealed class UnidadPlaneacionEdicionDto
     public int Orden { get; set; }
     public List<TemaPlaneacionEdicionDto> Temas { get; set; } = [];
     public List<EvaluacionPlaneacionEdicionDto> Evaluaciones { get; set; } = [];
-    public List<SecuenciaPlaneacionEdicionDto> Secuencias { get; set; } = [];
+    /// <summary>Compatibilidad temporal para clientes que enviaban la lista plana.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<SecuenciaPlaneacionEdicionDto>? Secuencias { get; set; }
+
+    // Las tres listas se devuelven siempre, incluso vacías. En una actualización
+    // se distinguen de null para no borrar contenido por una sección omitida.
+    public List<SecuenciaPlaneacionEdicionDto>? Apertura { get; set; }
+    public List<SecuenciaPlaneacionEdicionDto>? Desarrollo { get; set; }
+    public List<SecuenciaPlaneacionEdicionDto>? Cierre { get; set; }
 }
 
 public sealed class TemaPlaneacionEdicionDto
@@ -117,13 +126,26 @@ public sealed class SecuenciaPlaneacionEdicionDto
 {
     public Guid? PublicId { get; set; }
     [EnumDataType(typeof(FaseSecuencia))]
-    public FaseSecuencia Fase { get; set; }
-    [Range(1, int.MaxValue)]
-    public int Estrategia { get; set; }
+    public FaseSecuencia? Fase { get; set; }
+    [EnumDataType(typeof(MetodoTecnicaEnsenanzaAprendizaje))]
+    public MetodoTecnicaEnsenanzaAprendizaje? MetodoTecnica { get; set; }
+    /// <summary>Campo heredado; no usar para nuevos elementos.</summary>
+    public int? Estrategia { get; set; }
     public string? ActividadDocente { get; set; }
     public string? ActividadEstudiante { get; set; }
     public string? EvidenciaAprendizaje { get; set; }
     public string? MediosMateriales { get; set; }
+    public List<RecursoSecuenciaPlaneacionEdicionDto>? Recursos { get; set; }
+    [Range(0, int.MaxValue)]
+    public int Orden { get; set; }
+}
+
+public sealed class RecursoSecuenciaPlaneacionEdicionDto
+{
+    public Guid? PublicId { get; set; }
+    [Required]
+    [MaxLength(500)]
+    public string Nombre { get; set; } = string.Empty;
     [Range(0, int.MaxValue)]
     public int Orden { get; set; }
 }

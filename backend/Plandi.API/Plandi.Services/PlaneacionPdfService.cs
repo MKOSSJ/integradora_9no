@@ -61,13 +61,28 @@ public sealed class PlaneacionPdfService(IPlaneacionDocumentosService documentos
             foreach (var phase in new[] { FaseSecuencia.Apertura, FaseSecuencia.Desarrollo, FaseSecuencia.Cierre })
             {
                 body.Append(Parrafo(phase.ToString().ToUpperInvariant()));
-                body.Append(Tabla(new[] { new[] { "Estrategia", "Actividad docente", "Actividad estudiante", "Evidencia", "Medios/materiales" } }.Concat(unit.Secuencias.Where(x => x.Fase == phase).OrderBy(x => x.Orden).Select(x => new[] { x.Estrategia.ToString(), x.ActividadDocente ?? "", x.ActividadEstudiante ?? "", x.EvidenciaAprendizaje ?? "", x.MediosMateriales ?? "" }))));
+                body.Append(Tabla(new[] { new[] { "Método o técnica", "Actividad docente", "Actividad estudiante", "Evidencia", "Medios/materiales" } }
+                    .Concat(ElementosDeFase(unit, phase).OrderBy(x => x.Orden).Select(x => new[]
+                    {
+                        x.MetodoTecnica?.ToString() ?? x.Estrategia?.ToString() ?? string.Empty,
+                        x.ActividadDocente ?? string.Empty, x.ActividadEstudiante ?? string.Empty,
+                        x.EvidenciaAprendizaje ?? string.Empty,
+                        x.Recursos is { Count: > 0 } ? string.Join(", ", x.Recursos.OrderBy(r => r.Orden).Select(r => r.Nombre)) : x.MediosMateriales ?? string.Empty
+                    }))));
             }
         }
         body.Append(Titulo("REFERENCIAS BIBLIOGRÁFICAS Y DIGITALES"));
         foreach (var reference in data.Referencias.OrderBy(x => x.Orden)) body.Append(Parrafo(reference.ReferenciaAPA));
         document.MainDocumentPart!.Document.Save();
     }
+
+    private static IEnumerable<Plandi.Dto.Catalogos.SecuenciaPlaneacionEdicionDto> ElementosDeFase(Plandi.Dto.Catalogos.UnidadPlaneacionEdicionDto unidad, FaseSecuencia fase) => fase switch
+    {
+        FaseSecuencia.Apertura => unidad.Apertura ?? [],
+        FaseSecuencia.Desarrollo => unidad.Desarrollo ?? [],
+        FaseSecuencia.Cierre => unidad.Cierre ?? [],
+        _ => []
+    };
 
     private async Task<string> ConvertirAPdfAsync(string docx, string output, CancellationToken ct)
     {

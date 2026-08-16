@@ -9,10 +9,12 @@ namespace Plandi.Services
     public class GrupoService : IGrupoService
     {
         private readonly AppDbContext _dbContext;
+        private readonly IPeriodoLifecycleService _lifecycle;
 
-        public GrupoService(AppDbContext dbContext)
+        public GrupoService(AppDbContext dbContext, IPeriodoLifecycleService lifecycle)
         {
             _dbContext = dbContext;
+            _lifecycle = lifecycle;
         }
 
         public async Task<IEnumerable<GrupoResponseDto>> GetAll()
@@ -38,6 +40,7 @@ namespace Plandi.Services
         {
             var carreraId = await ResolveCarreraId(request.CarreraPublicId);
             var periodoId = await ResolvePeriodoId(request.PeriodoPublicId);
+            await _lifecycle.ExigirEditableAsync(periodoId);
 
             await ValidateNombreUnico(periodoId, request.Nombre, null);
 
@@ -61,9 +64,11 @@ namespace Plandi.Services
         public async Task<GrupoResponseDto> Update(Guid publicId, GrupoRequestDto request, long actorId)
         {
             var grupo = await GetEntity(publicId);
+            await _lifecycle.ExigirEditableAsync(grupo.PeriodoId);
 
             var carreraId = await ResolveCarreraId(request.CarreraPublicId);
             var periodoId = await ResolvePeriodoId(request.PeriodoPublicId);
+            if (periodoId != grupo.PeriodoId) await _lifecycle.ExigirEditableAsync(periodoId);
 
             await ValidateNombreUnico(periodoId, request.Nombre, publicId);
 
@@ -84,6 +89,7 @@ namespace Plandi.Services
         public async Task<bool> Delete(Guid publicId, long actorId)
         {
             var grupo = await GetEntity(publicId);
+            await _lifecycle.ExigirEditableAsync(grupo.PeriodoId);
 
             grupo.Activo = false;
             grupo.DeletedAt = DateTime.UtcNow;
