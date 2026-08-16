@@ -40,6 +40,7 @@ public class AppDbContext : DbContext
     public DbSet<Chat> Chats => Set<Chat>();
     public DbSet<ChatParticipante> ChatParticipantes => Set<ChatParticipante>();
     public DbSet<ChatMensaje> ChatMensajes => Set<ChatMensaje>();
+    public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,6 +52,7 @@ public class AppDbContext : DbContext
         ConfigureDocumentos(modelBuilder);
         ConfigurePlaneaciones(modelBuilder);
         ConfigureChat(modelBuilder);
+        ConfigureNotificaciones(modelBuilder);
         SeedData(modelBuilder);
     }
 
@@ -486,6 +488,8 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("chats");
 
+            entity.HasIndex(x => x.PlaneacionDidacticaId).IsUnique();
+
             entity.Property(x => x.Titulo).HasMaxLength(250).IsRequired();
 
             entity.HasOne(x => x.PlaneacionDidactica)
@@ -531,6 +535,32 @@ public class AppDbContext : DbContext
             entity.HasOne(x => x.Usuario)
                 .WithMany()
                 .HasForeignKey(x => x.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    private static void ConfigureNotificaciones(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Notificacion>(entity =>
+        {
+            entity.ToTable("notificaciones");
+
+            entity.HasIndex(x => new { x.UsuarioId, x.Leida, x.CreatedAt });
+            entity.HasIndex(x => x.PlaneacionDidacticaId);
+
+            entity.Property(x => x.Titulo).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Mensaje).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.Tipo).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.Leida).HasDefaultValue(false);
+
+            entity.HasOne(x => x.Usuario)
+                .WithMany()
+                .HasForeignKey(x => x.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.PlaneacionDidactica)
+                .WithMany()
+                .HasForeignKey(x => x.PlaneacionDidacticaId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
