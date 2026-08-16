@@ -8,7 +8,7 @@ using Plandi.Services.Interfaces;
 
 namespace Plandi.Services;
 
-public sealed class GeneracionPlaneacionesService(AppDbContext dbContext, ILogger<GeneracionPlaneacionesService> logger) : IGeneracionPlaneacionesService
+public sealed class GeneracionPlaneacionesService(AppDbContext dbContext, ILogger<GeneracionPlaneacionesService> logger, IPeriodoLifecycleService lifecycle) : IGeneracionPlaneacionesService
 {
     public async Task<GeneracionPlaneacionesResultadoDto> GenerarAsync(CancellationToken cancellationToken = default)
     {
@@ -40,6 +40,12 @@ public sealed class GeneracionPlaneacionesService(AppDbContext dbContext, ILogge
                 foreach (var grupoPeriodo in porPeriodo)
                 {
                     var carga = grupoPeriodo.First();
+                    if (!lifecycle.PermiteModificaciones(carga.Periodo))
+                    {
+                        resultado.Omitidas++;
+                        Agregar(resultado, programa, "omitida", "El periodo no está vigente; no se generó ni modificó información histórica.");
+                        continue;
+                    }
                     var existente = await dbContext.PlaneacionesDidacticas.FirstOrDefaultAsync(p => p.Activo && p.DeletedAt == null && p.PeriodoId == carga.PeriodoId && p.AsignaturaId == carga.AsignaturaId, cancellationToken);
                     if (existente is not null) { resultado.YaExistentes++; Agregar(resultado, programa, "existente", null, existente.PublicId); continue; }
 

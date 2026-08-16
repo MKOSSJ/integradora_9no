@@ -30,12 +30,14 @@ public sealed class MisPlaneacionesDocenteService(AppDbContext context, IAutoriz
     }
 }
 
-public sealed class EdicionPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : IEdicionPlaneacionService
+public sealed class EdicionPlaneacionService(AppDbContext context, IAutorizacionService autorizacion, IPeriodoLifecycleService lifecycle) : IEdicionPlaneacionService
 {
+    public EdicionPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : this(context, autorizacion, PeriodoLifecycleService.ForContext(context)) { }
     public async Task<PlaneacionEdicionDto> ActualizarAsync(Guid planeacionPublicId, long docenteId, PlaneacionEdicionDto solicitud, CancellationToken cancellationToken = default)
     {
         await autorizacion.ExigirRolAsync(docenteId, RolAutorizacion.Docente, cancellationToken);
         var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
+        await lifecycle.ExigirEditableAsync(planeacion.PeriodoId, cancellationToken);
         await PlaneacionFlujoSupport.ExigirDocenteAsignadoAsync(context, planeacion, docenteId, cancellationToken);
         if (planeacion.Estado is not (EstadoPlaneacion.Borrador or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.EnProceso or EstadoPlaneacion.Reabierta))
             throw new AppException("Solo pueden editarse planeaciones en borrador, en proceso, con correcciones solicitadas o reabiertas.");
@@ -61,11 +63,13 @@ public sealed class EdicionPlaneacionService(AppDbContext context, IAutorizacion
     }
 }
 
-public sealed class AsignacionRevisorPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : IAsignacionRevisorPlaneacionService
+public sealed class AsignacionRevisorPlaneacionService(AppDbContext context, IAutorizacionService autorizacion, IPeriodoLifecycleService lifecycle) : IAsignacionRevisorPlaneacionService
 {
+    public AsignacionRevisorPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : this(context, autorizacion, PeriodoLifecycleService.ForContext(context)) { }
     public async Task<PlaneacionResumenDto> AsignarAsync(Guid planeacionPublicId, Guid revisorPublicId, long usuarioAutorizadoId, CancellationToken cancellationToken = default)
     {
         var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
+        await lifecycle.ExigirEditableAsync(planeacion.PeriodoId, cancellationToken);
         if (planeacion.Estado is EstadoPlaneacion.Aprobada or EstadoPlaneacion.Rechazada)
             throw new AppException("No se puede cambiar el revisor de una planeación resuelta.");
         await autorizacion.ExigirRolAsync(usuarioAutorizadoId, RolAutorizacion.Director, cancellationToken);
@@ -110,12 +114,14 @@ public sealed class PlaneacionesRevisorService(AppDbContext context, IAutorizaci
     }
 }
 
-public sealed class EstadoPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : IEstadoPlaneacionService
+public sealed class EstadoPlaneacionService(AppDbContext context, IAutorizacionService autorizacion, IPeriodoLifecycleService lifecycle) : IEstadoPlaneacionService
 {
+    public EstadoPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : this(context, autorizacion, PeriodoLifecycleService.ForContext(context)) { }
     public async Task<PlaneacionResumenDto> EnviarARevisionAsync(Guid planeacionPublicId, long docenteId, CancellationToken cancellationToken = default)
     {
         await autorizacion.ExigirRolAsync(docenteId, RolAutorizacion.Docente, cancellationToken);
         var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
+        await lifecycle.ExigirEditableAsync(planeacion.PeriodoId, cancellationToken);
         await PlaneacionFlujoSupport.ExigirDocenteAsignadoAsync(context, planeacion, docenteId, cancellationToken);
         if (planeacion.Estado is not (EstadoPlaneacion.Borrador or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.EnProceso or EstadoPlaneacion.Reabierta))
             throw new AppException("La planeación no está disponible para enviarse a revisión.");
@@ -128,6 +134,7 @@ public sealed class EstadoPlaneacionService(AppDbContext context, IAutorizacionS
     {
         await autorizacion.ExigirRolAsync(revisorId, RolAutorizacion.Revisor, cancellationToken);
         var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
+        await lifecycle.ExigirEditableAsync(planeacion.PeriodoId, cancellationToken);
         PlaneacionFlujoSupport.ExigirRevisorAsignado(planeacion, revisorId);
 
         if (estado == EstadoPlaneacion.Reabierta)

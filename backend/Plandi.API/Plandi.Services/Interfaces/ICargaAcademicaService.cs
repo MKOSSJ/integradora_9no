@@ -16,5 +16,7 @@ namespace Plandi.Services.Interfaces
         Task<CargaAcademicaResponseDto> Update(Guid publicId, CargaAcademicaRequestDto request, long actorId);
 
         Task<bool> Delete(Guid publicId, long actorId);
+
+        Task<CargaAcademicaResponseDto> UpdateGrupo(Guid publicId, ActualizarGrupoCargaAcademicaDto request, long actorId, CancellationToken cancellationToken = default);
     }
 }

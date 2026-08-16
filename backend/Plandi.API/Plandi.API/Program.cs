@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Plandi.Dto.Common;
 using Plandi.API.Security;
+using Plandi.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,9 +77,15 @@ builder.Services.AddScoped<ICarreraService, CarreraService>();
 builder.Services.AddScoped<IAsignaturaService, AsignaturaService>();
 builder.Services.AddScoped<ICicloEscolarService, CicloEscolarService>();
 builder.Services.AddScoped<IPeriodoService, PeriodoService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IRelojAcademico, RelojAcademico>();
+builder.Services.AddScoped<IPeriodoLifecycleService, PeriodoLifecycleService>();
+builder.Services.AddHostedService<PeriodoClosingHostedService>();
 builder.Services.AddScoped<IGrupoService, GrupoService>();
 builder.Services.AddScoped<IAcademiaService, AcademiaService>();
 builder.Services.AddScoped<ICargaAcademicaService, CargaAcademicaService>();
+builder.Services.AddScoped<IAdministracionAcademicaService, AdministracionAcademicaService>();
+builder.Services.AddScoped<IRepositorioService, RepositorioService>();
 builder.Services.AddScoped<IImportacionCargaAcademicaService, ImportacionCargaAcademicaService>();
 builder.Services.AddScoped<IProgramaAsignaturaImportService, ProgramaAsignaturaImportService>();
 builder.Services.AddScoped<IPlaneacionTemplateService, PlaneacionTemplateService>();
@@ -160,6 +167,11 @@ app.Use(async (httpContext, next) =>
     catch (ForbiddenException exception)
     {
         httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+        await httpContext.Response.WriteAsJsonAsync(ApiResponse<object>.Fail(exception.Message));
+    }
+    catch (ConflictException exception)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
         await httpContext.Response.WriteAsJsonAsync(ApiResponse<object>.Fail(exception.Message));
     }
     catch (AppException exception)

@@ -16,6 +16,13 @@ namespace Plandi.Dto.Enums
         Reabierta = 8
     }
 
+    public enum EstadoPeriodo
+    {
+        Programado = 1,
+        Activo = 2,
+        Cerrado = 3
+    }
+
     public enum TipoDocumento
     {
         ProgramaAsignatura = 1,

@@ -164,8 +164,12 @@ public class AppDbContext : DbContext
             entity.ToTable("periodos");
 
             entity.HasIndex(x => new { x.CicloEscolarId, x.Nombre }).IsUnique().HasFilter("[DeletedAt] IS NULL");
+            entity.HasIndex(x => x.FechaInicio);
+            entity.HasIndex(x => x.FechaFin);
+            entity.HasIndex(x => x.Estado);
 
             entity.Property(x => x.Nombre).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Estado).HasConversion<int>().HasDefaultValue(EstadoPeriodo.Activo).HasSentinel((EstadoPeriodo)0);
 
             entity.HasOne(x => x.CicloEscolar)
                 .WithMany(x => x.Periodos)
@@ -220,6 +224,9 @@ public class AppDbContext : DbContext
                 x.AsignaturaId,
                 x.DocenteId
             }).IsUnique().HasFilter("[DeletedAt] IS NULL");
+            entity.HasIndex(x => x.GrupoId);
+            entity.HasIndex(x => x.AsignaturaId);
+            entity.HasIndex(x => x.DocenteId);
 
             entity.HasOne(x => x.Periodo)
                 .WithMany()

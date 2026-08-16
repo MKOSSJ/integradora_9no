@@ -16,5 +16,7 @@ namespace Plandi.Services.Interfaces
         Task<PeriodoResponseDto> Update(Guid publicId, PeriodoRequestDto request, long actorId);
 
         Task<bool> Delete(Guid publicId, long actorId);
+
+        Task<PeriodoResponseDto> Cerrar(Guid publicId, long actorId, CancellationToken cancellationToken = default);
     }
 }

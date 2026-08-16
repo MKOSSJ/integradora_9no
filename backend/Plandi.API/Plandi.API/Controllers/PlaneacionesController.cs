@@ -79,6 +79,10 @@ namespace Plandi.API.Controllers
             {
                 return BadRequest(new ApiResponse<PlaneacionCaratulaDto> { Success = false, Message = ex.Message });
             }
+            catch (ConflictException ex)
+            {
+                return Conflict(new ApiResponse<PlaneacionCaratulaDto> { Success = false, Message = ex.Message });
+            }
             catch (Exception ex)
             {
                 return BadRequest(new ApiResponse<PlaneacionCaratulaDto> { Success = false, Message = ex.Message });
@@ -97,6 +101,10 @@ namespace Plandi.API.Controllers
             {
                 return NotFound(new ApiResponse<PlaneacionCaratulaDto> { Success = false, Message = ex.Message });
             }
+            catch (ConflictException ex)
+            {
+                return Conflict(new ApiResponse<PlaneacionCaratulaDto> { Success = false, Message = ex.Message });
+            }
             catch (Exception ex)
             {
                 return BadRequest(new ApiResponse<PlaneacionCaratulaDto> { Success = false, Message = ex.Message });
@@ -114,6 +122,10 @@ namespace Plandi.API.Controllers
             catch (InvalidOperationException ex)
             {
                 return NotFound(new ApiResponse<string> { Success = false, Message = ex.Message });
+            }
+            catch (ConflictException ex)
+            {
+                return Conflict(new ApiResponse<string> { Success = false, Message = ex.Message });
             }
             catch (Exception ex)
             {

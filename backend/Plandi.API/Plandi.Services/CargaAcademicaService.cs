@@ -9,10 +9,12 @@ namespace Plandi.Services
     public class CargaAcademicaService : ICargaAcademicaService
     {
         private readonly AppDbContext _dbContext;
+        private readonly IPeriodoLifecycleService _lifecycle;
 
-        public CargaAcademicaService(AppDbContext dbContext)
+        public CargaAcademicaService(AppDbContext dbContext, IPeriodoLifecycleService lifecycle)
         {
             _dbContext = dbContext;
+            _lifecycle = lifecycle;
         }
 
         public async Task<IEnumerable<CargaAcademicaResponseDto>> GetAll()
@@ -41,6 +43,7 @@ namespace Plandi.Services
         public async Task<CargaAcademicaResponseDto> Create(CargaAcademicaRequestDto request, long actorId)
         {
             var periodoId = await ResolvePeriodoId(request.PeriodoPublicId);
+            await _lifecycle.ExigirEditableAsync(periodoId);
             var grupoId = await ResolveGrupoId(request.GrupoPublicId);
             var asignaturaId = await ResolveAsignaturaId(request.AsignaturaPublicId);
             var docenteId = await ResolveDocenteId(request.DocentePublicId);
@@ -75,8 +78,10 @@ namespace Plandi.Services
         public async Task<CargaAcademicaResponseDto> Update(Guid publicId, CargaAcademicaRequestDto request, long actorId)
         {
             var carga = await GetEntity(publicId);
+            await _lifecycle.ExigirEditableAsync(carga.PeriodoId);
 
             var periodoId = await ResolvePeriodoId(request.PeriodoPublicId);
+            if (periodoId != carga.PeriodoId) await _lifecycle.ExigirEditableAsync(periodoId);
             var grupoId = await ResolveGrupoId(request.GrupoPublicId);
             var asignaturaId = await ResolveAsignaturaId(request.AsignaturaPublicId);
             var docenteId = await ResolveDocenteId(request.DocentePublicId);
@@ -86,6 +91,9 @@ namespace Plandi.Services
             long? academiaId = request.AcademiaPublicId.HasValue
                 ? await ResolveAcademiaId(request.AcademiaPublicId.Value)
                 : null;
+
+            if (periodoId != carga.PeriodoId || asignaturaId != carga.AsignaturaId || docenteId != carga.DocenteId)
+                throw new AppException("El periodo, la asignatura y el docente no pueden cambiarse mediante la actualización general. Utilice una operación administrativa específica.");
 
             await ValidateNoDuplicada(periodoId, grupoId, asignaturaId, docenteId, publicId);
             await ValidateCoherencia(periodoId, grupoId, asignaturaId, academiaId);
@@ -108,6 +116,7 @@ namespace Plandi.Services
         public async Task<bool> Delete(Guid publicId, long actorId)
         {
             var carga = await GetEntity(publicId);
+            await _lifecycle.ExigirEditableAsync(carga.PeriodoId);
 
             carga.Activo = false;
             carga.DeletedAt = DateTime.UtcNow;
@@ -117,6 +126,22 @@ namespace Plandi.Services
             await _dbContext.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<CargaAcademicaResponseDto> UpdateGrupo(Guid publicId, ActualizarGrupoCargaAcademicaDto request, long actorId, CancellationToken cancellationToken = default)
+        {
+            var carga = await GetEntity(publicId);
+            await _lifecycle.ExigirEditableAsync(carga.PeriodoId, cancellationToken);
+            var grupoId = await ResolveGrupoId(request.GrupoPublicId);
+            await ValidateNoDuplicada(carga.PeriodoId, grupoId, carga.AsignaturaId, carga.DocenteId, publicId);
+            await ValidateCoherencia(carga.PeriodoId, grupoId, carga.AsignaturaId, carga.AcademiaId);
+
+            carga.GrupoId = grupoId;
+            carga.UpdatedAt = DateTime.UtcNow;
+            carga.UpdatedBy = actorId;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await LoadReferences(carga);
+            return ToDto(carga);
         }
 
         private async Task<CargaAcademica> GetEntity(Guid publicId)
@@ -156,9 +181,13 @@ namespace Plandi.Services
 
         private async Task ValidateCoherencia(long periodoId, long grupoId, long asignaturaId, long? academiaId)
         {
-            if (!await _dbContext.Grupos.AnyAsync(g => g.Id == grupoId && g.PeriodoId == periodoId))
+            var grupo = await _dbContext.Grupos.AsNoTracking().SingleOrDefaultAsync(g => g.Id == grupoId && g.Activo && g.DeletedAt == null);
+            if (grupo is null || grupo.PeriodoId != periodoId)
                 throw new AppException("El grupo no pertenece al periodo especificado.");
-            if (academiaId.HasValue && !await _dbContext.Asignaturas.AnyAsync(a => a.Id == asignaturaId && (!a.AcademiaId.HasValue || a.AcademiaId == academiaId)))
+            var asignatura = await _dbContext.Asignaturas.AsNoTracking().SingleAsync(a => a.Id == asignaturaId);
+            if (asignatura.Cuatrimestre != grupo.Cuatrimestre)
+                throw new AppException("La asignatura no es compatible con el cuatrimestre del grupo especificado.");
+            if (academiaId.HasValue && asignatura.AcademiaId.HasValue && asignatura.AcademiaId != academiaId)
                 throw new AppException("La asignatura no pertenece a la academia especificada.");
         }
 
