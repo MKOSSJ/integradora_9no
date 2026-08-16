@@ -51,6 +51,40 @@ namespace Plandi.Dto.Enums
     }
 
     /// <summary>
+    /// Catálogo controlado de métodos y técnicas para los elementos de la
+    /// secuencia didáctica. Los valores son estables y no dependen de la fase;
+    /// las fases permitidas se validan en el servicio.
+    /// </summary>
+    public enum MetodoTecnicaEnsenanzaAprendizaje
+    {
+        WebQuest = 1,
+        TecnicaExpositiva = 2,
+        Conceptual = 3,
+        Taller = 4,
+        Ensayo = 5,
+        AnalisisDeDesempeno = 6,
+        EstudioDeCaso = 7,
+        LluviaDeIdeas = 8,
+        CuadroSinoptico = 9,
+        MapaMental = 10,
+        MapaConceptual = 11,
+        CuestionarioReflexion = 12,
+        Debate = 13,
+        Foro = 14,
+        Panel = 15,
+        Seminario = 16,
+        MesaRedonda = 17,
+        ProyectoDeInvestigacion = 18,
+        AprendizajeBasadoEnProblemas = 19,
+        AprendizajePorProyectos = 20,
+        AprendizajeCooperativo = 21,
+        PracticaGuiada = 22,
+        PracticaDeLaboratorio = 23,
+        Investigacion = 24,
+        LecturaComentada = 25
+    }
+
+    /// <summary>
     /// Tipos de Evaluación según UTH
     /// </summary>
     public enum TipoEvaluacion

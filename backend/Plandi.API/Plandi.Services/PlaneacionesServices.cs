@@ -291,6 +291,7 @@ namespace Plandi.Services
 
             var secuencia = _mapper.Map<PlaneacionSecuencia>(dto);
             secuencia.PlaneacionUnidad = unidad;
+            secuencia.EtapaSecuencia = await ObtenerEtapaAsync(unidad.Id, dto.Fase);
 
             _context.PlaneacionSecuencias.Add(secuencia);
             await _context.SaveChangesAsync();
@@ -332,6 +333,7 @@ namespace Plandi.Services
             }
 
             _mapper.Map(dto, secuencia);
+            secuencia.EtapaSecuencia = await ObtenerEtapaAsync(secuencia.PlaneacionUnidadId, secuencia.Fase);
             secuencia.FechaUltimaModificacion = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -351,6 +353,22 @@ namespace Plandi.Services
             secuencia.DeletedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+        }
+
+        private async Task<PlaneacionEtapaSecuencia> ObtenerEtapaAsync(long unidadId, FaseSecuencia fase)
+        {
+            var etapa = await _context.PlaneacionEtapasSecuencia
+                .FirstOrDefaultAsync(e => e.PlaneacionUnidadId == unidadId && e.Fase == fase);
+            if (etapa is not null)
+            {
+                etapa.Activo = true;
+                etapa.DeletedAt = null;
+                return etapa;
+            }
+
+            etapa = new PlaneacionEtapaSecuencia { PlaneacionUnidadId = unidadId, Fase = fase };
+            _context.PlaneacionEtapasSecuencia.Add(etapa);
+            return etapa;
         }
     }
 

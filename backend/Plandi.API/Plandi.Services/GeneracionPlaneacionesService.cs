@@ -96,6 +96,12 @@ public sealed class GeneracionPlaneacionesService(AppDbContext dbContext, ILogge
                 Orden = unidadFuente.Numero
             };
 
+            // Las etapas son estructura obligatoria, no contenido opcional del
+            // docente. Se crean aunque no existan todavía actividades.
+            unidad.EtapasSecuencia.Add(new PlaneacionEtapaSecuencia { Fase = FaseSecuencia.Apertura });
+            unidad.EtapasSecuencia.Add(new PlaneacionEtapaSecuencia { Fase = FaseSecuencia.Desarrollo });
+            unidad.EtapasSecuencia.Add(new PlaneacionEtapaSecuencia { Fase = FaseSecuencia.Cierre });
+
             foreach (var (temaFuente, indice) in unidadFuente.Temas.Select((tema, indice) => (tema, indice)))
             {
                 unidad.Temas.Add(new PlaneacionTema
