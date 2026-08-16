@@ -16,5 +16,7 @@ namespace Plandi.Library.Models
         public string? Nivel { get; set; }
 
         public ICollection<Grupo> Grupos { get; set; } = new List<Grupo>();
+
+        public ICollection<CarreraAcademia> CarreraAcademias { get; set; } = new List<CarreraAcademia>();
     }
 }

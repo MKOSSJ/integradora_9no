@@ -5,6 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Plandi.Library.Models;
 using Plandi.Services;
+
+using Plandi.Services.Hubs;
+
 using Plandi.Services.Interfaces;
 using Plandi.Services.ProgramaAsignaturaExtraction;
 using System.Net;
@@ -13,6 +16,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Plandi.Dto.Common;
 using Plandi.API.Security;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +70,10 @@ builder.Services.AddControllers();
 builder.Services.AddSingleton<PasswordRecoveryRateLimiter>();
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IPlaneacionDidacticaService, PlaneacionDidacticaService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<INotificacionService, NotificacionService>();
+builder.Services.AddSignalR();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAutorizacionService, AutorizacionService>();
 builder.Services.AddScoped<IGestionRolesUsuarioService, GestionRolesUsuarioService>();
@@ -173,5 +181,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();
