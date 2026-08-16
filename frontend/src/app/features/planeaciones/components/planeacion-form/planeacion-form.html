@@ -1,0 +1,1000 @@
+@if (form(); as currentForm) {
+  <div class="flex min-h-[820px] flex-col bg-slate-50">
+    <header class="shrink-0 border-b border-slate-200 bg-white px-5 py-4">
+      <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h2 class="text-2xl font-black text-slate-900">Formulario de planeación</h2>
+
+          <p class="mt-1 text-sm text-slate-500">
+            Completa la carátula y después llena cada unidad por secciones.
+          </p>
+        </div>
+
+        <div class="w-full max-w-xs">
+          <div class="mb-2 flex items-center justify-between text-sm">
+            <span class="font-black text-slate-600">Avance</span>
+
+            <span class="font-black text-teal-600">{{ completionPercentage() }}%</span>
+          </div>
+
+          <div class="h-2.5 overflow-hidden rounded-full bg-slate-200">
+            <div
+              class="h-full rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 transition-all duration-500"
+              [style.width.%]="completionPercentage()"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 overflow-x-auto pb-1">
+        <div class="flex min-w-max items-center gap-2">
+          <button
+            type="button"
+            class="rounded-2xl px-4 py-2.5 text-sm font-black transition"
+            [ngClass]="
+              isCaratula()
+                ? 'bg-teal-500 text-white shadow-lg shadow-teal-100'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            "
+            (click)="selectCaratula()"
+          >
+            Carátula
+          </button>
+
+          @for (unit of currentForm.unidades; track unit.id; let index = $index) {
+            <button
+              type="button"
+              class="rounded-2xl px-4 py-2.5 text-sm font-black transition"
+              [ngClass]="
+                !isCaratula() && selectedUnitIndex() === index
+                  ? 'bg-slate-900 text-white shadow-lg shadow-slate-200'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              "
+              (click)="selectUnit(index)"
+            >
+              Unidad {{ index + 1 }}
+            </button>
+          }
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 p-4">
+      <section class="mx-auto max-w-6xl space-y-4">
+        @if (isCaratula()) {
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="mb-5 flex items-center gap-3">
+              <div
+                class="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-100 text-teal-600"
+              >
+                <svg [lucideIcon]="caratulaIcon" class="h-6 w-6"></svg>
+              </div>
+
+              <div>
+                <h3 class="text-xl font-black text-slate-900">Carátula</h3>
+
+                <p class="text-sm text-slate-500">
+                  Datos generales de la planeación didáctica.
+                </p>
+              </div>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              @for (field of caratulaFields; track field.key) {
+                <label class="block" [ngClass]="field.span ?? ''">
+                  <span class="mb-2 block text-sm font-black text-slate-700">
+                    {{ field.label }}
+                  </span>
+
+                  @if (field.type === 'textarea') {
+                    <textarea
+                      rows="4"
+                      [ngModel]="getCaratulaValue(field.key)"
+                      (ngModelChange)="updateCaratulaField(field.key, $event)"
+                      class="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100"
+                    ></textarea>
+                  } @else if (field.type === 'select') {
+                    <select
+                      [ngModel]="getCaratulaValue(field.key)"
+                      (ngModelChange)="updateCaratulaField(field.key, $event)"
+                      class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-900 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100"
+                    >
+                      <option value="">Selecciona una opción</option>
+
+                      @for (option of field.options; track option) {
+                        <option [value]="option">
+                          {{ option }}
+                        </option>
+                      }
+                    </select>
+                  } @else {
+                    <input
+                      [type]="field.type"
+                      [ngModel]="getCaratulaValue(field.key)"
+                      (ngModelChange)="updateCaratulaField(field.key, $event)"
+                      class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-900 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100"
+                    />
+                  }
+
+                  <span class="mt-2 block text-xs leading-relaxed text-slate-400">
+                    {{ field.help }}
+                  </span>
+                </label>
+              }
+            </div>
+          </section>
+        }
+
+        @if (!isCaratula() && selectedUnit(); as unit) {
+          <div class="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p class="text-xs font-black uppercase tracking-wide text-slate-400">
+                  Unidad activa
+                </p>
+
+                <h3 class="mt-1 text-2xl font-black text-slate-900">
+                  {{ unit.nombre }}
+                </h3>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <span class="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-black text-slate-700">
+                  Horas: {{ unit.horasTotales }}
+                </span>
+
+                <span class="rounded-2xl bg-teal-100 px-4 py-2 text-sm font-black text-teal-700">
+                  {{ unit.porcentajeUnidad }}% de la asignatura
+                </span>
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+              @for (section of sections; track section.id) {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-black transition"
+                  [ngClass]="
+                    activeSection() === section.id
+                      ? 'bg-teal-500 text-white shadow-lg shadow-teal-100'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  "
+                  (click)="setSection(section.id)"
+                >
+                  <svg [lucideIcon]="section.icon" class="h-4 w-4"></svg>
+                  {{ section.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (activeSection() === 'unidad') {
+            <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+              <div class="mb-5 flex items-center gap-3">
+                <div
+                  class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100 text-blue-600"
+                >
+                  <svg [lucideIcon]="unidadIcon" class="h-6 w-6"></svg>
+                </div>
+
+                <div>
+                  <h3 class="text-xl font-black text-slate-900">Información de la unidad</h3>
+
+                  <p class="text-sm text-slate-500">
+                    Datos generales, horas y temas de aprendizaje.
+                  </p>
+                </div>
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-2">
+                @for (field of unidadFields; track field.key) {
+                  <label class="block" [ngClass]="field.span ?? ''">
+                    <span class="mb-2 block text-sm font-black text-slate-700">
+                      {{ field.label }}
+                    </span>
+
+                    @if (field.type === 'textarea') {
+                      <textarea
+                        rows="4"
+                        [ngModel]="getUnitValue(field.key)"
+                        (ngModelChange)="updateUnitField(field.key, $event)"
+                        class="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100"
+                      ></textarea>
+                    } @else {
+                      <input
+                        [type]="field.type"
+                        [ngModel]="getUnitValue(field.key)"
+                        (ngModelChange)="updateUnitField(field.key, $event)"
+                        class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-900 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100"
+                      />
+                    }
+
+                    <span class="mt-2 block text-xs leading-relaxed text-slate-400">
+                      {{ field.help }}
+                    </span>
+                  </label>
+                }
+              </div>
+
+              <div class="mt-7">
+                <div class="mb-4 flex items-center justify-between gap-4">
+                  <div>
+                    <h4 class="text-lg font-black text-slate-900">Temas y saberes</h4>
+
+                    <p class="mt-1 text-sm text-slate-500">
+                      Completa las dimensiones conceptual, actuacional y socioafectiva.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-black text-white transition hover:bg-slate-800"
+                    (click)="addTopic()"
+                  >
+                    <svg [lucideIcon]="plusIcon" class="h-4 w-4"></svg>
+                    Agregar tema
+                  </button>
+                </div>
+
+                <div class="space-y-4">
+                  @for (topic of unit.temas; track topic.id; let topicIndex = $index) {
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <h5 class="mb-4 font-black text-slate-900">
+                        Tema {{ topicIndex + 1 }}
+                      </h5>
+
+                      <div class="grid gap-4 md:grid-cols-2">
+                        <label class="block md:col-span-2">
+                          <span class="mb-2 block text-sm font-black text-slate-700">
+                            Tema
+                          </span>
+
+                          <input
+                            type="text"
+                            [ngModel]="topic.tema"
+                            (ngModelChange)="updateTopicField(topicIndex, 'tema', $event)"
+                            class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                          />
+
+                          <span class="mt-2 block text-xs leading-relaxed text-slate-400">
+                            Nombre del tema como aparece en el programa de asignatura.
+                          </span>
+                        </label>
+
+                        <label class="block">
+                          <span class="mb-2 block text-sm font-black text-slate-700">
+                            Saber · Dimensión conceptual
+                          </span>
+
+                          <div class="mb-3 rounded-2xl bg-slate-100 px-4 py-3 text-xs leading-relaxed text-slate-500">
+                            Describe los conceptos, datos, principios o conocimientos teóricos que el estudiante debe identificar o comprender.
+                          </div>
+
+                          <textarea
+                            rows="4"
+                            [ngModel]="topic.saber"
+                            (ngModelChange)="updateTopicField(topicIndex, 'saber', $event)"
+                            class="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                          ></textarea>
+                        </label>
+
+                        <label class="block">
+                          <span class="mb-2 block text-sm font-black text-slate-700">
+                            Saber hacer · Dimensión actuacional
+                          </span>
+
+                          <div class="mb-3 rounded-2xl bg-slate-100 px-4 py-3 text-xs leading-relaxed text-slate-500">
+                            Describe las acciones, procedimientos, prácticas o habilidades que el estudiante debe realizar.
+                          </div>
+
+                          <textarea
+                            rows="4"
+                            [ngModel]="topic.saberHacer"
+                            (ngModelChange)="updateTopicField(topicIndex, 'saberHacer', $event)"
+                            class="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                          ></textarea>
+                        </label>
+
+                        <label class="block md:col-span-2">
+                          <span class="mb-2 block text-sm font-black text-slate-700">
+                            Saber ser-convivir · Dimensión socioafectiva
+                          </span>
+
+                          <div class="mb-3 rounded-2xl bg-slate-100 px-4 py-3 text-xs leading-relaxed text-slate-500">
+                            Describe actitudes, valores, responsabilidad, colaboración, pensamiento crítico o convivencia esperada durante el aprendizaje.
+                          </div>
+
+                          <textarea
+                            rows="4"
+                            [ngModel]="topic.saberSerConvivir"
+                            (ngModelChange)="updateTopicField(topicIndex, 'saberSerConvivir', $event)"
+                            class="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                          ></textarea>
+                        </label>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </section>
+          }
+
+          @if (activeSection() === 'evaluacion') {
+            <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+              <div class="mb-5 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-600"
+                  >
+                    <svg [lucideIcon]="evaluacionIcon" class="h-6 w-6"></svg>
+                  </div>
+
+                  <div>
+                    <h3 class="text-xl font-black text-slate-900">Evaluación</h3>
+
+                    <p class="text-sm text-slate-500">
+                      Evidencias, tipos de evaluación por fase, ponderación e instrumentos.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-black text-white transition hover:bg-slate-800"
+                  (click)="addEvaluation()"
+                >
+                  <svg [lucideIcon]="plusIcon" class="h-4 w-4"></svg>
+                  Agregar evidencia
+                </button>
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-2">
+                <label class="block">
+                  <span class="mb-2 block text-sm font-black text-slate-700">
+                    Periodo en semanas
+                  </span>
+
+                  <input
+                    type="number"
+                    [ngModel]="unit.periodoSemanas"
+                    (ngModelChange)="updateUnitField('periodoSemanas', $event)"
+                    class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                  />
+
+                  <span class="mt-2 block text-xs leading-relaxed text-slate-400">
+                    Indica el periodo real en semanas que abarca la unidad.
+                  </span>
+                </label>
+
+                <label class="block md:col-span-2">
+                  <span class="mb-2 block text-sm font-black text-slate-700">
+                    Resultado de aprendizaje de la unidad
+                  </span>
+
+                  <textarea
+                    rows="4"
+                    [ngModel]="unit.resultadoAprendizaje"
+                    (ngModelChange)="updateUnitField('resultadoAprendizaje', $event)"
+                    class="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                  ></textarea>
+
+                  <span class="mt-2 block text-xs leading-relaxed text-slate-400">
+                    Debe copiarse del programa de asignatura tal como aparece.
+                  </span>
+                </label>
+              </div>
+
+              <div
+                class="mt-5 rounded-2xl border px-4 py-3"
+                [ngClass]="
+                  getEvaluationTotal(unit) === 100
+                    ? 'border-green-200 bg-green-50 text-green-700'
+                    : 'border-amber-200 bg-amber-50 text-amber-700'
+                "
+              >
+                <p class="text-sm font-black">
+                  Total de evidencias: {{ getEvaluationTotal(unit) }}%
+                </p>
+              </div>
+
+              <div class="mt-7 space-y-4">
+                @for (evaluation of unit.evaluaciones; track evaluation.id; let evalIndex = $index) {
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                      <h4 class="font-black text-slate-900">
+                        Evidencia {{ evalIndex + 1 }}
+                      </h4>
+
+                      <button
+                        type="button"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-100 bg-white text-red-500 transition hover:bg-red-50"
+                        (click)="removeEvaluation(evalIndex)"
+                      >
+                        <svg [lucideIcon]="trashIcon" class="h-4 w-4"></svg>
+                      </button>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                      <label class="block md:col-span-2">
+                        <span class="mb-2 block text-sm font-black text-slate-700">
+                          Evidencia de aprendizaje
+                        </span>
+
+                        <textarea
+                          rows="3"
+                          [ngModel]="evaluation.evidenciaAprendizaje"
+                          (ngModelChange)="updateEvaluationField(evalIndex, 'evidenciaAprendizaje', $event)"
+                          class="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                        ></textarea>
+                      </label>
+
+                      <label class="block">
+                        <span class="mb-2 block text-sm font-black text-slate-700">
+                          Ponderación %
+                        </span>
+
+                        <input
+                          type="number"
+                          [ngModel]="evaluation.ponderacion"
+                          (ngModelChange)="updateEvaluationField(evalIndex, 'ponderacion', $event)"
+                          class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                        />
+
+                        <span class="mt-2 block text-xs leading-relaxed text-slate-400">
+                          La suma de evidencias por unidad debe ser 100%.
+                        </span>
+                      </label>
+                    </div>
+
+                    <div class="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+                      <div class="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                          <h5 class="font-black text-slate-900">
+                            Tipo de evaluación en fase de apertura, desarrollo y cierre
+                          </h5>
+
+                          <p class="mt-1 text-xs leading-relaxed text-slate-500">
+                            Registra qué se evalúa en cada fase y quién evalúa: autoevaluación, coevaluación o heteroevaluación.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-800"
+                          (click)="addEvaluationType(evalIndex)"
+                        >
+                          <svg [lucideIcon]="plusIcon" class="h-4 w-4"></svg>
+                          Agregar tipo
+                        </button>
+                      </div>
+
+                      <div class="space-y-3">
+                        @for (type of evaluation.tiposEvaluacion; track type.id; let typeIndex = $index) {
+                          <div class="grid gap-3 rounded-2xl bg-slate-50 p-3 md:grid-cols-4">
+                            <label class="block">
+                              <span class="mb-2 block text-xs font-black uppercase text-slate-400">
+                                Fase
+                              </span>
+
+                              <select
+                                [ngModel]="type.fase"
+                                (ngModelChange)="updateEvaluationTypeField(evalIndex, typeIndex, 'fase', $event)"
+                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                              >
+                                @for (fase of faseOptions; track fase.value) {
+                                  <option [value]="fase.value">{{ fase.label }}</option>
+                                }
+                              </select>
+                            </label>
+
+                            <label class="block">
+                              <span class="mb-1 block text-xs font-black uppercase text-slate-400">
+                                Tipo de evaluación
+                              </span>
+
+                              <span class="mb-2 block text-[11px] font-semibold text-slate-400">
+                                En fase de {{ type.fase }}
+                              </span>
+
+                              <select
+                                [ngModel]="type.tipoEvaluacion"
+                                (ngModelChange)="updateEvaluationTypeField(evalIndex, typeIndex, 'tipoEvaluacion', $event)"
+                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                              >
+                                <option value="">Selecciona</option>
+
+                                @for (option of evaluationOptions; track option) {
+                                  <option [value]="option">{{ option }}</option>
+                                }
+                              </select>
+                            </label>
+
+                            <label class="block">
+                              <span class="mb-2 block text-xs font-black uppercase text-slate-400">
+                                Agente evaluador
+                              </span>
+
+                              <select
+                                [ngModel]="type.agenteEvaluacion"
+                                (ngModelChange)="updateEvaluationTypeField(evalIndex, typeIndex, 'agenteEvaluacion', $event)"
+                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                              >
+                                @for (agent of agenteOptions; track agent) {
+                                  <option [value]="agent">{{ agent }}</option>
+                                }
+                              </select>
+                            </label>
+
+                            <button
+                              type="button"
+                              class="mt-6 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-red-100 bg-white text-red-500 transition hover:bg-red-50"
+                              (click)="removeEvaluationType(evalIndex, typeIndex)"
+                            >
+                              <svg [lucideIcon]="trashIcon" class="h-4 w-4"></svg>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+                      <div class="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                          <h5 class="font-black text-slate-900">
+                            Instrumentos de evaluación con porcentaje
+                          </h5>
+
+                          <p class="mt-1 text-xs text-slate-500">
+                            Agrega instrumentos de conocimiento, producto o desempeño.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-800"
+                          (click)="addInstrument(evalIndex)"
+                        >
+                          <svg [lucideIcon]="plusIcon" class="h-4 w-4"></svg>
+                          Agregar instrumento
+                        </button>
+                      </div>
+
+                      <div
+                        class="mb-4 rounded-2xl border px-4 py-3"
+                        [ngClass]="
+                          getInstrumentTotal(evaluation) === 100
+                            ? 'border-green-200 bg-green-50 text-green-700'
+                            : 'border-amber-200 bg-amber-50 text-amber-700'
+                        "
+                      >
+                        <p class="text-sm font-black">
+                          Total de instrumentos: {{ getInstrumentTotal(evaluation) }}%
+                        </p>
+                      </div>
+
+                      <div class="space-y-3">
+                        @for (instrument of evaluation.instrumentos; track instrument.id; let instrumentIndex = $index) {
+                          <div class="grid gap-3 rounded-2xl bg-slate-50 p-3 md:grid-cols-5">
+                            <label class="block">
+                              <span class="mb-2 block text-xs font-black uppercase text-slate-400">
+                                Categoría
+                              </span>
+
+                              <select
+                                [ngModel]="instrument.categoria"
+                                (ngModelChange)="updateInstrumentField(evalIndex, instrumentIndex, 'categoria', $event)"
+                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                              >
+                                @for (category of categoriaInstrumentoOptions; track category) {
+                                  <option [value]="category">{{ category }}</option>
+                                }
+                              </select>
+                            </label>
+
+                            <label class="block">
+                              <span class="mb-2 block text-xs font-black uppercase text-slate-400">
+                                Nombre
+                              </span>
+
+                              <input
+                                type="text"
+                                [ngModel]="instrument.nombre"
+                                (ngModelChange)="updateInstrumentField(evalIndex, instrumentIndex, 'nombre', $event)"
+                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                              />
+                            </label>
+
+                            <label class="block">
+                              <span class="mb-2 block text-xs font-black uppercase text-slate-400">
+                                Instrumento
+                              </span>
+
+                              <select
+                                [ngModel]="instrument.instrumento"
+                                (ngModelChange)="updateInstrumentField(evalIndex, instrumentIndex, 'instrumento', $event)"
+                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                              >
+                                <option value="">Selecciona</option>
+
+                                @for (option of instrumentOptions; track option) {
+                                  <option [value]="option">{{ option }}</option>
+                                }
+                              </select>
+                            </label>
+
+                            <label class="block">
+                              <span class="mb-2 block text-xs font-black uppercase text-slate-400">
+                                Porcentaje %
+                              </span>
+
+                              <input
+                                type="number"
+                                [ngModel]="instrument.ponderacion"
+                                (ngModelChange)="updateInstrumentField(evalIndex, instrumentIndex, 'ponderacion', $event)"
+                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                              />
+
+                              <span class="mt-2 block text-xs leading-relaxed text-slate-400">
+                                Porcentaje que aporta este instrumento dentro de la evidencia.
+                              </span>
+                            </label>
+
+                            <button
+                              type="button"
+                              class="mt-6 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-red-100 bg-white text-red-500 transition hover:bg-red-50"
+                              (click)="removeInstrument(evalIndex, instrumentIndex)"
+                            >
+                              <svg [lucideIcon]="trashIcon" class="h-4 w-4"></svg>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+
+          @if (activeSection() === 'secuencia') {
+            <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+              <div class="mb-5 flex items-center gap-3">
+                <div
+                  class="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-100 text-purple-600"
+                >
+                  <svg [lucideIcon]="secuenciaIcon" class="h-6 w-6"></svg>
+                </div>
+
+                <div>
+                  <h3 class="text-xl font-black text-slate-900">Secuencia didáctica</h3>
+
+                  <p class="text-sm text-slate-500">
+                    Apertura, desarrollo y cierre de la unidad.
+                  </p>
+                </div>
+              </div>
+
+              @for (moment of moments; track moment.key) {
+                <div class="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="mb-4 flex items-start justify-between gap-3">
+                    <div>
+                      <h4 class="text-lg font-black text-slate-900">
+                        {{ moment.label }}
+                      </h4>
+
+                      <p class="mt-1 text-sm text-slate-500">
+                        {{ moment.help }}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-black text-white transition hover:bg-slate-800"
+                      (click)="addActivity(moment.key)"
+                    >
+                      <svg [lucideIcon]="plusIcon" class="h-4 w-4"></svg>
+                      Agregar actividad
+                    </button>
+                  </div>
+
+                  <div class="space-y-4">
+                    @for (activity of getMomentActivities(moment.key); track activity.id; let activityIndex = $index) {
+                      <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="mb-4 flex items-center justify-between gap-3">
+                          <div>
+                            <h5 class="font-black text-slate-900">
+                              Actividad {{ activity.consecutivo }}
+                            </h5>
+
+                            <p class="text-xs font-semibold text-slate-400">
+                              Consecutivo general de la planeación
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-100 bg-white text-red-500 transition hover:bg-red-50"
+                            (click)="removeActivity(moment.key, activityIndex)"
+                          >
+                            <svg [lucideIcon]="trashIcon" class="h-4 w-4"></svg>
+                          </button>
+                        </div>
+
+                        <div class="grid gap-4 md:grid-cols-2">
+                          <label class="block">
+                            <span class="mb-2 block text-sm font-black text-slate-700">
+                              Métodos y técnicas de enseñanza-aprendizaje
+                            </span>
+
+                            <select
+                              [ngModel]="activity.metodoTecnica"
+                              (ngModelChange)="updateActivityField(moment.key, activityIndex, 'metodoTecnica', $event)"
+                              class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                            >
+                              <option value="">Selecciona una opción</option>
+
+                              @for (option of getMethodsForMoment(moment.key); track option) {
+                                <option [value]="option">{{ option }}</option>
+                              }
+                            </select>
+                          </label>
+
+                          <label class="block">
+                            <span class="mb-2 block text-sm font-black text-slate-700">
+                              Evidencia de aprendizaje
+                            </span>
+
+                            <textarea
+                              rows="4"
+                              [ngModel]="activity.evidenciaAprendizaje"
+                              (ngModelChange)="updateActivityField(moment.key, activityIndex, 'evidenciaAprendizaje', $event)"
+                              class="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                            ></textarea>
+                          </label>
+
+                          <label class="block">
+                            <span class="mb-2 block text-sm font-black text-slate-700">
+                              Actividades docentes
+                            </span>
+
+                            <div class="mb-3 rounded-2xl bg-slate-100 px-4 py-3 text-xs leading-relaxed text-slate-500">
+                              Describe por pasos lo que hace el docente: instrucciones, explicación, guía, demostración, retroalimentación, seguimiento o evaluación.
+                            </div>
+
+                            <textarea
+                              rows="5"
+                              [ngModel]="activity.actividadesDocentes"
+                              (ngModelChange)="updateActivityField(moment.key, activityIndex, 'actividadesDocentes', $event)"
+                              class="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                            ></textarea>
+                          </label>
+
+                          <label class="block">
+                            <span class="mb-2 block text-sm font-black text-slate-700">
+                              Actividades de estudiantes
+                            </span>
+
+                            <div class="mb-3 rounded-2xl bg-slate-100 px-4 py-3 text-xs leading-relaxed text-slate-500">
+                              Describe qué realizan los estudiantes, qué producto o desempeño construyen y si trabajan de forma individual, en equipo o grupal.
+                            </div>
+
+                            <textarea
+                              rows="5"
+                              [ngModel]="activity.actividadesEstudiantes"
+                              (ngModelChange)="updateActivityField(moment.key, activityIndex, 'actividadesEstudiantes', $event)"
+                              class="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                            ></textarea>
+                          </label>
+
+                          <label class="block md:col-span-2">
+                            <span class="mb-2 block text-sm font-black text-slate-700">
+                              Medios y materiales didácticos
+                            </span>
+
+                            <textarea
+                              rows="4"
+                              [ngModel]="activity.recursos"
+                              (ngModelChange)="updateActivityField(moment.key, activityIndex, 'recursos', $event)"
+                              class="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                            ></textarea>
+
+                            <span class="mt-2 block text-xs leading-relaxed text-slate-400">
+                              Especifica documentos, bibliografía, medios audiovisuales, materiales didácticos, equipo, guías, enlaces o herramientas.
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </section>
+          }
+
+          @if (activeSection() === 'referencias') {
+            <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+              <div class="mb-5 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="flex h-11 w-11 items-center justify-center rounded-2xl bg-green-100 text-green-600"
+                  >
+                    <svg [lucideIcon]="referenciasIcon" class="h-6 w-6"></svg>
+                  </div>
+
+                  <div>
+                    <h3 class="text-xl font-black text-slate-900">
+                      Referencias bibliográficas y digitales
+                    </h3>
+
+                    <p class="text-sm text-slate-500">
+                      Fuentes utilizadas en esta unidad.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-black text-white transition hover:bg-slate-800"
+                  (click)="addReference()"
+                >
+                  <svg [lucideIcon]="plusIcon" class="h-4 w-4"></svg>
+                  Agregar referencia
+                </button>
+              </div>
+
+              <div class="space-y-4">
+                @for (reference of unit.referencias; track reference.id; let referenceIndex = $index) {
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <h4 class="font-black text-slate-900">
+                          Referencia {{ referenceIndex + 1 }}
+                        </h4>
+
+                        @if (reference.precargada) {
+                          <p class="text-xs font-black uppercase tracking-wide text-teal-600">
+                            Precargada desde la planeación
+                          </p>
+                        }
+                      </div>
+
+                      @if (!reference.precargada) {
+                        <button
+                          type="button"
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-100 bg-white text-red-500 transition hover:bg-red-50"
+                          (click)="removeReference(referenceIndex)"
+                        >
+                          <svg [lucideIcon]="trashIcon" class="h-4 w-4"></svg>
+                        </button>
+                      }
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                      <label class="block">
+                        <span class="mb-2 block text-sm font-black text-slate-700">
+                          Tipo
+                        </span>
+
+                        <select
+                          [ngModel]="reference.tipo"
+                          (ngModelChange)="updateReferenceField(referenceIndex, 'tipo', $event)"
+                          class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                        >
+                          @for (option of tipoReferenciaOptions; track option) {
+                            <option [value]="option">{{ option }}</option>
+                          }
+                        </select>
+                      </label>
+
+                      <label class="block">
+                        <span class="mb-2 block text-sm font-black text-slate-700">
+                          Autor
+                        </span>
+
+                        <input
+                          type="text"
+                          [ngModel]="reference.autor"
+                          (ngModelChange)="updateReferenceField(referenceIndex, 'autor', $event)"
+                          class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                        />
+                      </label>
+
+                      <label class="block">
+                        <span class="mb-2 block text-sm font-black text-slate-700">
+                          Año
+                        </span>
+
+                        <input
+                          type="text"
+                          [ngModel]="reference.anio"
+                          (ngModelChange)="updateReferenceField(referenceIndex, 'anio', $event)"
+                          class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                        />
+                      </label>
+
+                      <label class="block">
+                        <span class="mb-2 block text-sm font-black text-slate-700">
+                          Fuente
+                        </span>
+
+                        <input
+                          type="text"
+                          [ngModel]="reference.fuente"
+                          (ngModelChange)="updateReferenceField(referenceIndex, 'fuente', $event)"
+                          class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                        />
+                      </label>
+
+                      <label class="block md:col-span-2">
+                        <span class="mb-2 block text-sm font-black text-slate-700">
+                          Título
+                        </span>
+
+                        <input
+                          type="text"
+                          [ngModel]="reference.titulo"
+                          (ngModelChange)="updateReferenceField(referenceIndex, 'titulo', $event)"
+                          class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                        />
+                      </label>
+
+                      <label class="block md:col-span-2">
+                        <span class="mb-2 block text-sm font-black text-slate-700">
+                          URL
+                        </span>
+
+                        <input
+                          type="text"
+                          [ngModel]="reference.url"
+                          (ngModelChange)="updateReferenceField(referenceIndex, 'url', $event)"
+                          class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+        }
+
+        <div
+          class="sticky bottom-0 z-20 mt-4 rounded-[28px] border border-slate-200 bg-white/95 p-4 shadow-xl shadow-slate-200/70 backdrop-blur"
+        >
+          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p class="text-xs font-black uppercase tracking-wide text-slate-400">
+                Paso actual
+              </p>
+
+              <h4 class="mt-1 text-base font-black text-slate-900">
+                {{ getCurrentStepLabel() }}
+              </h4>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+              <button
+                type="button"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                [disabled]="isCaratula()"
+                (click)="goPrevious()"
+              >
+                <svg [lucideIcon]="prevIcon" class="h-4 w-4"></svg>
+                Anterior
+              </button>
+
+              <button
+                type="button"
+                class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-teal-500 px-5 text-sm font-black text-white shadow-lg shadow-teal-100 transition hover:bg-teal-600"
+                (click)="goNext()"
+              >
+                {{ getNextLabel() }}
+                <svg [lucideIcon]="nextIcon" class="h-4 w-4"></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+}

@@ -1,0 +1,132 @@
+<aside class="sidebar-shell" [class.is-collapsed]="collapsed()">
+  <!-- MENÚ CERRADO -->
+  <div class="sidebar-rail">
+    <div class="rail-header">
+      <button
+        type="button"
+        class="rail-button"
+        (click)="toggleSidebar()"
+        title="Abrir menú"
+      >
+        <svg [lucideIcon]="openIcon" class="icon"></svg>
+      </button>
+    </div>
+
+    @if (user(); as currentUser) {
+      <div class="rail-user">
+        <div class="rail-avatar" [title]="currentUser.name">
+          {{ currentUser.initials }}
+        </div>
+      </div>
+
+      <nav class="rail-nav">
+        @for (section of sections(); track section.title) {
+          <div class="rail-group">
+            <div class="rail-group-mark" [title]="section.title">
+              <svg [lucideIcon]="section.icon" class="icon-small"></svg>
+            </div>
+
+            @for (item of section.items; track item.route) {
+              <a
+                [routerLink]="item.route"
+                routerLinkActive
+                #rla="routerLinkActive"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="rail-link"
+                [class.rail-link-active]="rla.isActive"
+              >
+                <svg [lucideIcon]="item.icon" class="icon"></svg>
+
+                <span class="rail-tooltip">
+                  {{ item.label }} · {{ section.title }}
+                </span>
+              </a>
+            }
+          </div>
+        }
+      </nav>
+
+      <div class="rail-footer">
+        <button type="button" class="rail-link rail-logout" (click)="logout()">
+          <svg [lucideIcon]="logoutIcon" class="icon"></svg>
+
+          <span class="rail-tooltip">
+            Cerrar sesión
+          </span>
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- MENÚ ABIERTO -->
+  <div class="sidebar-panel">
+    <div class="panel-header">
+      <div class="panel-brand">
+        <h1>Sistema Académico</h1>
+        <p>Planeación didáctica</p>
+      </div>
+
+      <button
+        type="button"
+        class="panel-toggle"
+        (click)="toggleSidebar()"
+        title="Cerrar menú"
+      >
+        <svg [lucideIcon]="closeIcon" class="icon"></svg>
+      </button>
+    </div>
+
+    @if (user(); as currentUser) {
+      <div class="panel-user">
+        <div class="panel-avatar">
+          {{ currentUser.initials }}
+        </div>
+
+        <div class="panel-user-info">
+          <h2>{{ currentUser.name }}</h2>
+          <p>{{ roleLabel() }}</p>
+        </div>
+      </div>
+
+      <nav class="panel-nav">
+        @for (section of sections(); track section.title) {
+          <section class="panel-section">
+            <div class="panel-section-title">
+              <div class="section-icon">
+                <svg [lucideIcon]="section.icon" class="icon-small"></svg>
+              </div>
+
+              <span>{{ section.title }}</span>
+            </div>
+
+            <div class="panel-sublist">
+              @for (item of section.items; track item.route) {
+                <a
+                  [routerLink]="item.route"
+                  routerLinkActive
+                  #rla="routerLinkActive"
+                  [routerLinkActiveOptions]="{ exact: true }"
+                  class="panel-link"
+                  [class.panel-link-active]="rla.isActive"
+                >
+                  <span class="subitem-dot"></span>
+
+                  <svg [lucideIcon]="item.icon" class="icon"></svg>
+
+                  <span>{{ item.label }}</span>
+                </a>
+              }
+            </div>
+          </section>
+        }
+      </nav>
+
+      <div class="panel-footer">
+        <button type="button" class="panel-logout" (click)="logout()">
+          <svg [lucideIcon]="logoutIcon" class="icon"></svg>
+          <span>Cerrar sesión</span>
+        </button>
+      </div>
+    }
+  </div>
+</aside>

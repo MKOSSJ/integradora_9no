@@ -1,0 +1,29 @@
+.animate-dashboard-enter {
+  animation: dashboardEnter 360ms ease-out;
+}
+
+.animate-progress-fill {
+  animation: progressFill 700ms ease-out;
+}
+
+@keyframes dashboardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes progressFill {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 72%;
+  }
+}

@@ -23,7 +23,17 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+                  {
+      "glob": "**/*",
+      "input": "src/assets",
+      "output": "assets"
+    },
+    {
+  "glob": "pdf.worker.min.mjs",
+  "input": "node_modules/pdfjs-dist/build",
+  "output": "assets/pdf"
+}
             ],
             "styles": [
               "src/styles.css"
