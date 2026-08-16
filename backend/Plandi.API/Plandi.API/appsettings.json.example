@@ -1,0 +1,9 @@
+{
+  "Jwt": {
+    "Issuer": "PlandiApi",
+    "Audience": "PlandiClient",
+    "Key": "CAMBIAR_POR_VARIABLE_DE_ENTORNO_JWT_SIGNING_KEY",
+    "AccessTokenExpirationMinutes": 15,
+    "RefreshTokenExpirationDays": 30
+  }
+}

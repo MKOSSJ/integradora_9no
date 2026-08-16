@@ -1,0 +1,311 @@
+using Microsoft.EntityFrameworkCore;
+using Plandi.Dto.Catalogos;
+using Plandi.Dto.Common;
+using Plandi.Dto.Enums;
+using Plandi.Library.Models;
+using Plandi.Services.Interfaces;
+
+namespace Plandi.Services;
+
+public sealed class MisPlaneacionesDocenteService(AppDbContext context, IAutorizacionService autorizacion) : IMisPlaneacionesDocenteService
+{
+    public async Task<IReadOnlyList<PlaneacionResumenDto>> ObtenerAsync(long docenteId, CancellationToken cancellationToken = default)
+    {
+        await autorizacion.ExigirRolAsync(docenteId, RolAutorizacion.Docente, cancellationToken);
+        var planeaciones = await PlaneacionFlujoSupport.QueryDetalle(context)
+            .Where(p => p.Activo && p.DeletedAt == null && context.CargasAcademicas.Any(c =>
+                c.Activo && c.DeletedAt == null && c.DocenteId == docenteId &&
+                c.PeriodoId == p.PeriodoId && c.AsignaturaId == p.AsignaturaId))
+            .OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt)
+            .ToListAsync(cancellationToken);
+        return planeaciones.Select(PlaneacionFlujoSupport.Resumen).ToList();
+    }
+
+    public async Task<PlaneacionEdicionDto> ObtenerDetalleAsync(Guid planeacionPublicId, long docenteId, CancellationToken cancellationToken = default)
+    {
+        await autorizacion.ExigirRolAsync(docenteId, RolAutorizacion.Docente, cancellationToken);
+        var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
+        await PlaneacionFlujoSupport.ExigirDocenteAsignadoAsync(context, planeacion, docenteId, cancellationToken);
+        return PlaneacionFlujoSupport.Detalle(planeacion);
+    }
+}
+
+public sealed class EdicionPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : IEdicionPlaneacionService
+{
+    public async Task<PlaneacionEdicionDto> ActualizarAsync(Guid planeacionPublicId, long docenteId, PlaneacionEdicionDto solicitud, CancellationToken cancellationToken = default)
+    {
+        await autorizacion.ExigirRolAsync(docenteId, RolAutorizacion.Docente, cancellationToken);
+        var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
+        await PlaneacionFlujoSupport.ExigirDocenteAsignadoAsync(context, planeacion, docenteId, cancellationToken);
+        if (planeacion.Estado is not (EstadoPlaneacion.Borrador or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.EnProceso or EstadoPlaneacion.Reabierta))
+            throw new AppException("Solo pueden editarse planeaciones en borrador, en proceso, con correcciones solicitadas o reabiertas.");
+
+        await using var transaccion = await context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            PlaneacionFlujoSupport.ActualizarCaratula(planeacion, solicitud.Caratula, docenteId);
+            PlaneacionFlujoSupport.SincronizarUnidades(planeacion, solicitud.Unidades, docenteId);
+            PlaneacionFlujoSupport.SincronizarReferencias(planeacion, solicitud.Referencias, docenteId);
+            planeacion.UltimaModificacionPorId = docenteId;
+            planeacion.FechaUltimaModificacion = DateTime.UtcNow;
+            planeacion.UpdatedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync(cancellationToken);
+            await transaccion.CommitAsync(cancellationToken);
+            return PlaneacionFlujoSupport.Detalle(planeacion);
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+}
+
+public sealed class AsignacionRevisorPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : IAsignacionRevisorPlaneacionService
+{
+    public async Task<PlaneacionResumenDto> AsignarAsync(Guid planeacionPublicId, Guid revisorPublicId, long usuarioAutorizadoId, CancellationToken cancellationToken = default)
+    {
+        var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
+        if (planeacion.Estado is EstadoPlaneacion.Aprobada or EstadoPlaneacion.Rechazada)
+            throw new AppException("No se puede cambiar el revisor de una planeación resuelta.");
+        await autorizacion.ExigirRolAsync(usuarioAutorizadoId, RolAutorizacion.Director, cancellationToken);
+
+        var revisor = await context.Usuarios
+            .FirstOrDefaultAsync(u => u.PublicId == revisorPublicId && u.Activo && u.DeletedAt == null, cancellationToken)
+            ?? throw new AppException("El revisor indicado no existe o está inactivo.");
+        if (!await autorizacion.HasRoleAsync(revisor.Id, RolAutorizacion.Revisor, cancellationToken))
+            throw new AppException("El usuario seleccionado no tiene el rol de revisor para esta planeación.");
+
+        planeacion.RevisorId = revisor.Id;
+        planeacion.Revisor = revisor;
+        planeacion.UltimaModificacionPorId = usuarioAutorizadoId;
+        planeacion.FechaUltimaModificacion = DateTime.UtcNow;
+        planeacion.UpdatedAt = DateTime.UtcNow;
+        await context.SaveChangesAsync(cancellationToken);
+        return PlaneacionFlujoSupport.Resumen(planeacion);
+    }
+}
+
+public sealed class PlaneacionesRevisorService(AppDbContext context, IAutorizacionService autorizacion) : IPlaneacionesRevisorService
+{
+    public async Task<IReadOnlyList<PlaneacionResumenDto>> ObtenerAsync(long revisorId, CancellationToken cancellationToken = default)
+    {
+        await autorizacion.ExigirRolAsync(revisorId, RolAutorizacion.Revisor, cancellationToken);
+        // Las planeaciones privadas del docente no se exponen al revisor hasta enviarse a revisión.
+        var planeaciones = await PlaneacionFlujoSupport.QueryDetalle(context)
+            .Where(p => p.Activo && p.DeletedAt == null && p.RevisorId == revisorId &&
+                p.Estado != EstadoPlaneacion.Borrador && p.Estado != EstadoPlaneacion.EnProceso)
+            .OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt)
+            .ToListAsync(cancellationToken);
+        return planeaciones.Select(PlaneacionFlujoSupport.Resumen).ToList();
+    }
+
+    public async Task<PlaneacionEdicionDto> ObtenerDetalleAsync(Guid planeacionPublicId, long revisorId, CancellationToken cancellationToken = default)
+    {
+        await autorizacion.ExigirRolAsync(revisorId, RolAutorizacion.Revisor, cancellationToken);
+        var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
+        PlaneacionFlujoSupport.ExigirRevisorAsignado(planeacion, revisorId);
+        PlaneacionFlujoSupport.ExigirVisibleParaRevisor(planeacion);
+        return PlaneacionFlujoSupport.Detalle(planeacion);
+    }
+}
+
+public sealed class EstadoPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : IEstadoPlaneacionService
+{
+    public async Task<PlaneacionResumenDto> EnviarARevisionAsync(Guid planeacionPublicId, long docenteId, CancellationToken cancellationToken = default)
+    {
+        await autorizacion.ExigirRolAsync(docenteId, RolAutorizacion.Docente, cancellationToken);
+        var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
+        await PlaneacionFlujoSupport.ExigirDocenteAsignadoAsync(context, planeacion, docenteId, cancellationToken);
+        if (planeacion.Estado is not (EstadoPlaneacion.Borrador or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.EnProceso or EstadoPlaneacion.Reabierta))
+            throw new AppException("La planeación no está disponible para enviarse a revisión.");
+        if (!planeacion.RevisorId.HasValue)
+            throw new AppException("Debe asignarse un revisor antes de enviar la planeación a revisión.");
+        return await CambiarAsync(planeacion, docenteId, EstadoPlaneacion.EnRevision, cancellationToken);
+    }
+
+    public async Task<PlaneacionResumenDto> ResolverRevisionAsync(Guid planeacionPublicId, long revisorId, EstadoPlaneacion estado, CancellationToken cancellationToken = default)
+    {
+        await autorizacion.ExigirRolAsync(revisorId, RolAutorizacion.Revisor, cancellationToken);
+        var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
+        PlaneacionFlujoSupport.ExigirRevisorAsignado(planeacion, revisorId);
+
+        if (estado == EstadoPlaneacion.Reabierta)
+        {
+            if (planeacion.Estado != EstadoPlaneacion.Aprobada)
+                throw new AppException("Solo una planeación aprobada puede reabrirse.");
+            return await CambiarAsync(planeacion, revisorId, estado, cancellationToken);
+        }
+
+        if (estado is not (EstadoPlaneacion.Aprobada or EstadoPlaneacion.Rechazada))
+            throw new AppException("El revisor solo puede aprobar, rechazar o reabrir una planeación.");
+        if (planeacion.Estado != EstadoPlaneacion.EnRevision)
+            throw new AppException("Solo se pueden resolver planeaciones que están en revisión.");
+        return await CambiarAsync(planeacion, revisorId, estado, cancellationToken);
+    }
+
+    private async Task<PlaneacionResumenDto> CambiarAsync(PlaneacionDidactica planeacion, long usuarioId, EstadoPlaneacion estado, CancellationToken cancellationToken)
+    {
+        planeacion.Estado = estado;
+        planeacion.UltimaModificacionPorId = usuarioId;
+        planeacion.FechaUltimaModificacion = DateTime.UtcNow;
+        planeacion.UpdatedAt = DateTime.UtcNow;
+        await context.SaveChangesAsync(cancellationToken);
+        return PlaneacionFlujoSupport.Resumen(planeacion);
+    }
+}
+
+internal static class PlaneacionFlujoSupport
+{
+    internal static IQueryable<PlaneacionDidactica> QueryDetalle(AppDbContext context) => context.PlaneacionesDidacticas
+        .Include(p => p.Periodo)
+        .Include(p => p.Asignatura)
+        .Include(p => p.Revisor)
+        .Include(p => p.Caratula)
+        .Include(p => p.Unidades).ThenInclude(u => u.Temas)
+        .Include(p => p.Unidades).ThenInclude(u => u.Evaluaciones)
+        .Include(p => p.Unidades).ThenInclude(u => u.Secuencias)
+        .Include(p => p.Referencias);
+
+    internal static async Task<PlaneacionDidactica> BuscarDetalleAsync(AppDbContext context, Guid publicId, CancellationToken cancellationToken) =>
+        await QueryDetalle(context).FirstOrDefaultAsync(p => p.PublicId == publicId && p.Activo && p.DeletedAt == null, cancellationToken)
+        ?? throw new AppException("La planeación solicitada no existe.");
+
+    internal static async Task ExigirDocenteAsignadoAsync(AppDbContext context, PlaneacionDidactica planeacion, long docenteId, CancellationToken cancellationToken)
+    {
+        var asignado = await context.CargasAcademicas.AnyAsync(c => c.Activo && c.DeletedAt == null && c.DocenteId == docenteId &&
+            c.PeriodoId == planeacion.PeriodoId && c.AsignaturaId == planeacion.AsignaturaId, cancellationToken);
+        if (!asignado) throw new ForbiddenException("No tiene asignada esta planeación como docente.");
+    }
+
+    internal static void ExigirRevisorAsignado(PlaneacionDidactica planeacion, long revisorId)
+    {
+        if (planeacion.RevisorId != revisorId) throw new ForbiddenException("No tiene asignada esta planeación como revisor.");
+    }
+
+    internal static PlaneacionResumenDto Resumen(PlaneacionDidactica p) => new()
+    {
+        PublicId = p.PublicId,
+        Asignatura = p.Asignatura?.Nombre ?? p.Caratula?.NombreAsignatura ?? string.Empty,
+        Periodo = p.Periodo?.Nombre ?? p.Caratula?.PeriodoEscolar ?? string.Empty,
+        Grupos = p.Caratula?.Grupos ?? string.Empty,
+        Docentes = p.Caratula?.Docentes ?? string.Empty,
+        Estado = p.Estado,
+        RevisorPublicId = p.Revisor?.PublicId,
+        Revisor = p.Revisor is null ? null : NombreCompleto(p.Revisor),
+        UltimaModificacion = p.FechaUltimaModificacion ?? p.UpdatedAt
+    };
+
+    internal static PlaneacionEdicionDto Detalle(PlaneacionDidactica p) => new()
+    {
+        PublicId = p.PublicId,
+        Estado = p.Estado,
+        Caratula = Caratula(p.Caratula),
+        Unidades = p.Unidades.Where(u => u.Activo && u.DeletedAt == null).OrderBy(u => u.Orden).Select(Unidad).ToList(),
+        Referencias = p.Referencias.Where(r => r.Activo && r.DeletedAt == null).OrderBy(r => r.Orden).Select(Referencia).ToList()
+    };
+
+    private static CaratulaPlaneacionEdicionDto Caratula(PlaneacionCaratula? c) => c is null ? new() : new()
+    {
+        ProgramaEducativo = c.ProgramaEducativo, Cuatrimestre = c.Cuatrimestre, NombreAsignatura = c.NombreAsignatura,
+        Docentes = c.Docentes, PeriodoEscolar = c.PeriodoEscolar, Grupos = c.Grupos, PropositoAsignatura = c.PropositoAsignatura,
+        CompetenciaAsignatura = c.CompetenciaAsignatura, TipoCompetencia = c.TipoCompetencia, Creditos = c.Creditos,
+        Modalidad = c.Modalidad, HorasSaber = c.HorasSaber, HorasSaberHacer = c.HorasSaberHacer,
+        HorasTotales = c.HorasTotales, HorasSemana = c.HorasSemana
+    };
+
+    private static UnidadPlaneacionEdicionDto Unidad(PlaneacionUnidad u) => new()
+    {
+        PublicId = u.PublicId, NumeroUnidad = u.NumeroUnidad, NombreUnidad = u.NombreUnidad, PropositoEsperado = u.PropositoEsperado,
+        HorasSaber = u.HorasSaber, HorasSaberHacer = u.HorasSaberHacer, HorasTotales = u.HorasTotales,
+        PorcentajeUnidad = u.PorcentajeUnidad, Orden = u.Orden,
+        Temas = u.Temas.Where(t => t.Activo && t.DeletedAt == null).OrderBy(t => t.Orden).Select(Tema).ToList(),
+        Evaluaciones = u.Evaluaciones.Where(e => e.Activo && e.DeletedAt == null).OrderBy(e => e.Orden).Select(Evaluacion).ToList(),
+        Secuencias = u.Secuencias.Where(s => s.Activo && s.DeletedAt == null).OrderBy(s => s.Orden).Select(Secuencia).ToList()
+    };
+
+    private static TemaPlaneacionEdicionDto Tema(PlaneacionTema t) => new() { PublicId = t.PublicId, Tema = t.Tema, SaberConceptual = t.SaberConceptual, SaberHacer = t.SaberHacer, SaberSer = t.SaberSer, Orden = t.Orden };
+    private static EvaluacionPlaneacionEdicionDto Evaluacion(PlaneacionEvaluacion e) => new() { PublicId = e.PublicId, PeriodoSemanas = e.PeriodoSemanas, ResultadoAprendizaje = e.ResultadoAprendizaje, EvidenciaAprendizaje = e.EvidenciaAprendizaje, Fase = e.Fase, TipoEvaluacion = e.TipoEvaluacion, AgenteEvaluador = e.AgenteEvaluador, Ponderacion = e.Ponderacion, InstrumentoEvaluacion = e.InstrumentoEvaluacion, Orden = e.Orden };
+    private static SecuenciaPlaneacionEdicionDto Secuencia(PlaneacionSecuencia s) => new() { PublicId = s.PublicId, Fase = s.Fase, Estrategia = s.Estrategia, ActividadDocente = s.ActividadDocente, ActividadEstudiante = s.ActividadEstudiante, EvidenciaAprendizaje = s.EvidenciaAprendizaje, MediosMateriales = s.MediosMateriales, Orden = s.Orden };
+    private static ReferenciaPlaneacionEdicionDto Referencia(PlaneacionReferencia r) => new() { PublicId = r.PublicId, ReferenciaAPA = r.ReferenciaAPA, Orden = r.Orden };
+    private static string NombreCompleto(Usuario u) => string.Join(" ", new[] { u.Nombre, u.ApellidoPaterno, u.ApellidoMaterno }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+    internal static void ActualizarCaratula(PlaneacionDidactica p, CaratulaPlaneacionEdicionDto d, long usuarioId)
+    {
+        var c = p.Caratula ??= new PlaneacionCaratula { PlaneacionDidacticaId = p.Id };
+        c.ProgramaEducativo = d.ProgramaEducativo; c.Cuatrimestre = d.Cuatrimestre; c.NombreAsignatura = d.NombreAsignatura;
+        c.Docentes = d.Docentes; c.PeriodoEscolar = d.PeriodoEscolar; c.Grupos = d.Grupos; c.PropositoAsignatura = d.PropositoAsignatura;
+        c.CompetenciaAsignatura = d.CompetenciaAsignatura; c.TipoCompetencia = d.TipoCompetencia; c.Creditos = d.Creditos;
+        c.Modalidad = d.Modalidad; c.HorasSaber = d.HorasSaber; c.HorasSaberHacer = d.HorasSaberHacer; c.HorasTotales = d.HorasTotales; c.HorasSemana = d.HorasSemana;
+        c.UltimaModificacionPorId = usuarioId; c.UpdatedAt = DateTime.UtcNow; c.Version++;
+    }
+
+    internal static void SincronizarUnidades(PlaneacionDidactica p, IReadOnlyCollection<UnidadPlaneacionEdicionDto> datos, long usuarioId)
+    {
+        ValidarIds(datos.Select(x => x.PublicId), "unidades");
+        var existentes = p.Unidades.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.PublicId);
+        var idsRecibidos = datos.Where(x => x.PublicId.HasValue).Select(x => x.PublicId!.Value).ToHashSet();
+        foreach (var x in existentes.Values.Where(x => !idsRecibidos.Contains(x.PublicId))) Desactivar(x);
+        foreach (var d in datos)
+        {
+            var u = d.PublicId.HasValue
+                ? existentes.GetValueOrDefault(d.PublicId.Value) ?? throw new AppException("Una unidad no pertenece a la planeación.")
+                : AgregarUnidad(p);
+            u.NumeroUnidad = d.NumeroUnidad; u.NombreUnidad = d.NombreUnidad; u.PropositoEsperado = d.PropositoEsperado;
+            u.HorasSaber = d.HorasSaber; u.HorasSaberHacer = d.HorasSaberHacer; u.HorasTotales = d.HorasTotales; u.PorcentajeUnidad = d.PorcentajeUnidad; u.Orden = d.Orden;
+            u.UltimaModificacionPorId = usuarioId; u.FechaUltimaModificacion = DateTime.UtcNow; u.UpdatedAt = DateTime.UtcNow;
+            SincronizarTemas(u, d.Temas, usuarioId); SincronizarEvaluaciones(u, d.Evaluaciones, usuarioId); SincronizarSecuencias(u, d.Secuencias, usuarioId);
+        }
+    }
+
+    internal static void SincronizarReferencias(PlaneacionDidactica p, IReadOnlyCollection<ReferenciaPlaneacionEdicionDto> datos, long usuarioId)
+    {
+        ValidarIds(datos.Select(x => x.PublicId), "referencias");
+        var existentes = p.Referencias.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.PublicId);
+        var ids = datos.Where(x => x.PublicId.HasValue).Select(x => x.PublicId!.Value).ToHashSet();
+        foreach (var x in existentes.Values.Where(x => !ids.Contains(x.PublicId))) Desactivar(x);
+        foreach (var d in datos)
+        {
+            var r = d.PublicId.HasValue ? existentes.GetValueOrDefault(d.PublicId.Value) ?? throw new AppException("Una referencia no pertenece a la planeación.") : AgregarReferencia(p);
+            r.ReferenciaAPA = d.ReferenciaAPA; r.Orden = d.Orden; r.UltimaModificacionPorId = usuarioId; r.FechaUltimaModificacion = DateTime.UtcNow; r.UpdatedAt = DateTime.UtcNow;
+        }
+    }
+
+    private static void SincronizarTemas(PlaneacionUnidad u, IReadOnlyCollection<TemaPlaneacionEdicionDto> datos, long usuarioId)
+    {
+        ValidarIds(datos.Select(x => x.PublicId), "temas"); var e = u.Temas.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.PublicId); var ids = datos.Where(x => x.PublicId.HasValue).Select(x => x.PublicId!.Value).ToHashSet();
+        foreach (var x in e.Values.Where(x => !ids.Contains(x.PublicId))) Desactivar(x);
+        foreach (var d in datos) { var x = d.PublicId.HasValue ? e.GetValueOrDefault(d.PublicId.Value) ?? throw new AppException("Un tema no pertenece a la unidad.") : AgregarTema(u); x.Tema = d.Tema; x.SaberConceptual = d.SaberConceptual; x.SaberHacer = d.SaberHacer; x.SaberSer = d.SaberSer; x.Orden = d.Orden; Auditar(x, usuarioId); }
+    }
+
+    private static void SincronizarEvaluaciones(PlaneacionUnidad u, IReadOnlyCollection<EvaluacionPlaneacionEdicionDto> datos, long usuarioId)
+    {
+        ValidarIds(datos.Select(x => x.PublicId), "evaluaciones"); var e = u.Evaluaciones.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.PublicId); var ids = datos.Where(x => x.PublicId.HasValue).Select(x => x.PublicId!.Value).ToHashSet();
+        foreach (var x in e.Values.Where(x => !ids.Contains(x.PublicId))) Desactivar(x);
+        foreach (var d in datos) { var x = d.PublicId.HasValue ? e.GetValueOrDefault(d.PublicId.Value) ?? throw new AppException("Una evaluación no pertenece a la unidad.") : AgregarEvaluacion(u); x.PeriodoSemanas = d.PeriodoSemanas; x.ResultadoAprendizaje = d.ResultadoAprendizaje; x.EvidenciaAprendizaje = d.EvidenciaAprendizaje; x.Fase = d.Fase; x.TipoEvaluacion = d.TipoEvaluacion; x.AgenteEvaluador = d.AgenteEvaluador; x.Ponderacion = d.Ponderacion; x.InstrumentoEvaluacion = d.InstrumentoEvaluacion; x.Orden = d.Orden; Auditar(x, usuarioId); }
+    }
+
+    private static void SincronizarSecuencias(PlaneacionUnidad u, IReadOnlyCollection<SecuenciaPlaneacionEdicionDto> datos, long usuarioId)
+    {
+        ValidarIds(datos.Select(x => x.PublicId), "secuencias"); var e = u.Secuencias.Where(x => x.Activo && x.DeletedAt == null).ToDictionary(x => x.PublicId); var ids = datos.Where(x => x.PublicId.HasValue).Select(x => x.PublicId!.Value).ToHashSet();
+        foreach (var x in e.Values.Where(x => !ids.Contains(x.PublicId))) Desactivar(x);
+        foreach (var d in datos) { var x = d.PublicId.HasValue ? e.GetValueOrDefault(d.PublicId.Value) ?? throw new AppException("Una secuencia no pertenece a la unidad.") : AgregarSecuencia(u); x.Fase = d.Fase; x.Estrategia = d.Estrategia; x.ActividadDocente = d.ActividadDocente; x.ActividadEstudiante = d.ActividadEstudiante; x.EvidenciaAprendizaje = d.EvidenciaAprendizaje; x.MediosMateriales = d.MediosMateriales; x.Orden = d.Orden; Auditar(x, usuarioId); }
+    }
+
+    private static PlaneacionUnidad AgregarUnidad(PlaneacionDidactica p) { var x = new PlaneacionUnidad(); p.Unidades.Add(x); return x; }
+    private static PlaneacionTema AgregarTema(PlaneacionUnidad u) { var x = new PlaneacionTema(); u.Temas.Add(x); return x; }
+    private static PlaneacionEvaluacion AgregarEvaluacion(PlaneacionUnidad u) { var x = new PlaneacionEvaluacion(); u.Evaluaciones.Add(x); return x; }
+    private static PlaneacionSecuencia AgregarSecuencia(PlaneacionUnidad u) { var x = new PlaneacionSecuencia(); u.Secuencias.Add(x); return x; }
+    private static PlaneacionReferencia AgregarReferencia(PlaneacionDidactica p) { var x = new PlaneacionReferencia(); p.Referencias.Add(x); return x; }
+    private static void Auditar(PlaneacionTema x, long id) { x.UltimaModificacionPorId = id; x.FechaUltimaModificacion = DateTime.UtcNow; x.UpdatedAt = DateTime.UtcNow; }
+    private static void Auditar(PlaneacionEvaluacion x, long id) { x.UltimaModificacionPorId = id; x.FechaUltimaModificacion = DateTime.UtcNow; x.UpdatedAt = DateTime.UtcNow; }
+    private static void Auditar(PlaneacionSecuencia x, long id) { x.UltimaModificacionPorId = id; x.FechaUltimaModificacion = DateTime.UtcNow; x.UpdatedAt = DateTime.UtcNow; }
+    private static void Desactivar(BaseEntity x) { x.Activo = false; x.DeletedAt = DateTime.UtcNow; x.UpdatedAt = DateTime.UtcNow; }
+    private static void ValidarIds(IEnumerable<Guid?> ids, string seccion) { var recibidos = ids.Where(x => x.HasValue).Select(x => x!.Value).ToList(); if (recibidos.Count != recibidos.Distinct().Count()) throw new AppException($"Hay identificadores duplicados en {seccion}."); }
+
+    internal static void ExigirVisibleParaRevisor(PlaneacionDidactica planeacion)
+    {
+        if (planeacion.Estado is EstadoPlaneacion.Borrador or EstadoPlaneacion.EnProceso)
+            throw new ForbiddenException("La planeación aún no ha sido enviada a revisión.");
+    }
+}

@@ -1,4 +1,4 @@
-﻿using Plandi.Dto.Enums;
+using Plandi.Dto.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,15 +14,12 @@ namespace Plandi.Library.Models
         public Asignatura Asignatura { get; set; } = null!;
 
         public long? AcademiaId { get; set; }
-        public Academia? Academia { get; set; }
 
-        public long? ProgramaAsignaturaId { get; set; }
-        public ProgramaAsignatura? ProgramaAsignatura { get; set; }
+        public Academia? Academia { get; set; }
 
         public long? RevisorId { get; set; }
         public Usuario? Revisor { get; set; }
 
-        public string Titulo { get; set; } = string.Empty;
 
         public EstadoPlaneacion Estado { get; set; } = EstadoPlaneacion.Borrador;
 
@@ -33,11 +30,16 @@ namespace Plandi.Library.Models
 
         public long? CreatedBy { get; set; }
 
-        public ICollection<PlaneacionDocente> PlaneacionDocentes { get; set; } = new List<PlaneacionDocente>();
+        // Relationships
+        public PlaneacionCaratula? Caratula { get; set; }
 
-        public ICollection<PlaneacionGrupo> PlaneacionGrupos { get; set; } = new List<PlaneacionGrupo>();
+
 
         public ICollection<PlaneacionUnidad> Unidades { get; set; } = new List<PlaneacionUnidad>();
+
+        public ICollection<PlaneacionReferencia> Referencias { get; set; } = new List<PlaneacionReferencia>();
+
+        public ICollection<PlaneacionObservacion> Observaciones { get; set; } = new List<PlaneacionObservacion>();
 
         public ICollection<Chat> Chats { get; set; } = new List<Chat>();
     }

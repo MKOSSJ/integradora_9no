@@ -1,4 +1,4 @@
-﻿using Plandi.Dto.Enums;
+using Plandi.Dto.Enums;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -28,19 +28,24 @@ public class AppDbContext : DbContext
     public DbSet<CargaAcademica> CargasAcademicas => Set<CargaAcademica>();
 
     public DbSet<Documento> Documentos => Set<Documento>();
+    public DbSet<PlaneacionTemplate> PlaneacionTemplates => Set<PlaneacionTemplate>();
     public DbSet<ProgramaAsignatura> ProgramasAsignatura => Set<ProgramaAsignatura>();
 
     public DbSet<PlaneacionDidactica> PlaneacionesDidacticas => Set<PlaneacionDidactica>();
-    public DbSet<PlaneacionDocente> PlaneacionDocentes => Set<PlaneacionDocente>();
-    public DbSet<PlaneacionGrupo> PlaneacionGrupos => Set<PlaneacionGrupo>();
+    public DbSet<PlaneacionCaratula> PlaneacionCaratulas => Set<PlaneacionCaratula>();
+
     public DbSet<PlaneacionUnidad> PlaneacionUnidades => Set<PlaneacionUnidad>();
-    public DbSet<PlaneacionActividad> PlaneacionActividades => Set<PlaneacionActividad>();
+    public DbSet<PlaneacionTema> PlaneacionTemas => Set<PlaneacionTema>();
+    public DbSet<PlaneacionEvaluacion> PlaneacionEvaluaciones => Set<PlaneacionEvaluacion>();
+    public DbSet<PlaneacionSecuencia> PlaneacionSecuencias => Set<PlaneacionSecuencia>();
+    public DbSet<PlaneacionReferencia> PlaneacionReferencias => Set<PlaneacionReferencia>();
     public DbSet<PlaneacionObservacion> PlaneacionObservaciones => Set<PlaneacionObservacion>();
 
     public DbSet<Chat> Chats => Set<Chat>();
     public DbSet<ChatParticipante> ChatParticipantes => Set<ChatParticipante>();
     public DbSet<ChatMensaje> ChatMensajes => Set<ChatMensaje>();
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,8 +72,8 @@ public class AppDbContext : DbContext
             entity.Property(x => x.Nombre).HasMaxLength(100).IsRequired();
             entity.Property(x => x.ApellidoPaterno).HasMaxLength(100).IsRequired();
             entity.Property(x => x.ApellidoMaterno).HasMaxLength(100);
-            entity.Property(x => x.Email).HasMaxLength(150).IsRequired();
-            entity.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired();
+            entity.Property(x => x.Email).HasMaxLength(150);
+            entity.Property(x => x.PasswordHash).HasMaxLength(500);
             entity.Property(x => x.Telefono).HasMaxLength(30);
         });
 
@@ -76,7 +81,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("roles");
 
-            entity.HasIndex(x => x.Nombre).IsUnique();
+            entity.HasIndex(x => x.Nombre).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(50).IsRequired();
             entity.Property(x => x.Descripcion).HasMaxLength(250);
@@ -106,7 +111,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("academias");
 
-            entity.HasIndex(x => x.Nombre).IsUnique();
+            entity.HasIndex(x => x.Nombre).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(150).IsRequired();
             entity.Property(x => x.Descripcion).HasMaxLength(300);
@@ -118,9 +123,8 @@ public class AppDbContext : DbContext
 
             entity.HasKey(x => new { x.AcademiaId, x.UsuarioId });
 
-            entity.Property(x => x.RolEnAcademia)
-                .HasConversion<string>()
-                .HasMaxLength(50);
+            entity.Property(x => x.Rol)
+                .HasConversion<int>();
 
             entity.HasOne(x => x.Academia)
                 .WithMany(x => x.AcademiaUsuarios)
@@ -140,7 +144,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("carreras");
 
-            entity.HasIndex(x => x.Clave).IsUnique();
+            entity.HasIndex(x => x.Clave).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Clave).HasMaxLength(50).IsRequired();
@@ -151,7 +155,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("ciclos_escolares");
 
-            entity.HasIndex(x => x.Nombre).IsUnique();
+            entity.HasIndex(x => x.Nombre).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(50).IsRequired();
         });
@@ -160,7 +164,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("periodos");
 
-            entity.HasIndex(x => new { x.CicloEscolarId, x.Nombre }).IsUnique();
+            entity.HasIndex(x => new { x.CicloEscolarId, x.Nombre }).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(100).IsRequired();
 
@@ -174,7 +178,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("grupos");
 
-            entity.HasIndex(x => new { x.PeriodoId, x.Nombre }).IsUnique();
+            entity.HasIndex(x => new { x.PeriodoId, x.Nombre }).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(50).IsRequired();
 
@@ -187,13 +191,14 @@ public class AppDbContext : DbContext
                 .WithMany(x => x.Grupos)
                 .HasForeignKey(x => x.PeriodoId)
                 .OnDelete(DeleteBehavior.Restrict);
+
         });
 
         modelBuilder.Entity<Asignatura>(entity =>
         {
             entity.ToTable("asignaturas");
 
-            entity.HasIndex(x => x.Clave).IsUnique();
+            entity.HasIndex(x => x.Clave).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.Property(x => x.Nombre).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Clave).HasMaxLength(50).IsRequired();
@@ -232,7 +237,7 @@ public class AppDbContext : DbContext
                 x.GrupoId,
                 x.AsignaturaId,
                 x.DocenteId
-            }).IsUnique();
+            }).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.HasOne(x => x.Periodo)
                 .WithMany()
@@ -335,6 +340,17 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.UltimaModificacionPorId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<PlaneacionTemplate>(entity =>
+        {
+            entity.ToTable("plantillas_planeacion");
+            entity.HasIndex(x => x.Activa).HasFilter("[Activa] = 1").IsUnique();
+            entity.HasIndex(x => x.Version).IsUnique();
+            entity.HasOne(x => x.Documento)
+                .WithMany()
+                .HasForeignKey(x => x.DocumentoId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 
     private static void ConfigurePlaneaciones(ModelBuilder modelBuilder)
@@ -346,11 +362,10 @@ public class AppDbContext : DbContext
             entity.HasIndex(x => new { x.PeriodoId, x.AsignaturaId }).IsUnique();
             entity.HasIndex(x => x.Estado);
 
-            entity.Property(x => x.Titulo).HasMaxLength(250).IsRequired();
+
 
             entity.Property(x => x.Estado)
-                .HasConversion<string>()
-                .HasMaxLength(50);
+                .HasConversion<int>();
 
             entity.HasOne(x => x.Periodo)
                 .WithMany()
@@ -367,10 +382,6 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.AcademiaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(x => x.ProgramaAsignatura)
-                .WithMany()
-                .HasForeignKey(x => x.ProgramaAsignaturaId)
-                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(x => x.Revisor)
                 .WithMany()
@@ -381,41 +392,50 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.UltimaModificacionPorId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // 1:1 relationship with PlaneacionCaratula
+            entity.HasOne(x => x.Caratula)
+                .WithOne(x => x.PlaneacionDidactica)
+                .HasForeignKey<PlaneacionCaratula>(x => x.PlaneacionDidacticaId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<PlaneacionDocente>(entity =>
+        modelBuilder.Entity<PlaneacionCaratula>(entity =>
         {
-            entity.ToTable("planeacion_docentes");
+            entity.ToTable("planeacion_caratulas");
 
-            entity.HasKey(x => new { x.PlaneacionDidacticaId, x.DocenteId });
+            entity.HasIndex(x => x.PlaneacionDidacticaId).IsUnique();
+
+            entity.Property(x => x.ProgramaEducativo).HasMaxLength(200);
+            entity.Property(x => x.NombreAsignatura).HasMaxLength(200);
+            entity.Property(x => x.Docentes).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.PeriodoEscolar).HasMaxLength(100);
+            entity.Property(x => x.Grupos).HasMaxLength(500);
+            entity.Property(x => x.PropositoAsignatura).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.CompetenciaAsignatura).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.TipoCompetencia).HasMaxLength(100);
+            entity.Property(x => x.Modalidad).HasMaxLength(100);
+            entity.Property(x => x.Creditos).HasPrecision(5, 2);
 
             entity.HasOne(x => x.PlaneacionDidactica)
-                .WithMany(x => x.PlaneacionDocentes)
-                .HasForeignKey(x => x.PlaneacionDidacticaId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .WithOne(x => x.Caratula)
+                .HasForeignKey<PlaneacionCaratula>(x => x.PlaneacionDidacticaId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(x => x.Docente)
+            entity.HasOne(x => x.ProgramaAsignatura)
                 .WithMany()
-                .HasForeignKey(x => x.DocenteId)
+                .HasForeignKey(x => x.ProgramaAsignaturaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.UltimaModificacionPor)
+                .WithMany()
+                .HasForeignKey(x => x.UltimaModificacionPorId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<PlaneacionGrupo>(entity =>
-        {
-            entity.ToTable("planeacion_grupos");
 
-            entity.HasKey(x => new { x.PlaneacionDidacticaId, x.GrupoId });
 
-            entity.HasOne(x => x.PlaneacionDidactica)
-                .WithMany(x => x.PlaneacionGrupos)
-                .HasForeignKey(x => x.PlaneacionDidacticaId)
-                .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(x => x.Grupo)
-                .WithMany(x => x.PlaneacionGrupos)
-                .HasForeignKey(x => x.GrupoId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
 
         modelBuilder.Entity<PlaneacionUnidad>(entity =>
         {
@@ -423,9 +443,10 @@ public class AppDbContext : DbContext
 
             entity.HasIndex(x => new { x.PlaneacionDidacticaId, x.Orden }).IsUnique();
 
-            entity.Property(x => x.Numero).HasMaxLength(20).IsRequired();
-            entity.Property(x => x.Nombre).HasMaxLength(250).IsRequired();
-            entity.Property(x => x.ResultadoAprendizaje).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.NumeroUnidad).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.NombreUnidad).HasMaxLength(250).IsRequired();
+            entity.Property(x => x.PropositoEsperado).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.PorcentajeUnidad).HasPrecision(5, 2);
 
             entity.HasOne(x => x.PlaneacionDidactica)
                 .WithMany(x => x.Unidades)
@@ -438,23 +459,94 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<PlaneacionActividad>(entity =>
+        modelBuilder.Entity<PlaneacionTema>(entity =>
         {
-            entity.ToTable("planeacion_actividades");
+            entity.ToTable("planeacion_temas");
 
             entity.HasIndex(x => new { x.PlaneacionUnidadId, x.Orden });
 
-            entity.Property(x => x.TipoActividad).HasMaxLength(50).IsRequired();
-            entity.Property(x => x.Descripcion).HasColumnType("nvarchar(max)");
-            entity.Property(x => x.EstrategiaEnsenanza).HasColumnType("nvarchar(max)");
-            entity.Property(x => x.EstrategiaAprendizaje).HasColumnType("nvarchar(max)");
-            entity.Property(x => x.Evidencia).HasColumnType("nvarchar(max)");
-            entity.Property(x => x.InstrumentoEvaluacion).HasMaxLength(200);
-            entity.Property(x => x.PorcentajeEvaluacion).HasPrecision(5, 2);
+            entity.Property(x => x.Tema).HasMaxLength(250).IsRequired();
+            entity.Property(x => x.SaberConceptual).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.SaberHacer).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.SaberSer).HasColumnType("nvarchar(max)");
 
             entity.HasOne(x => x.PlaneacionUnidad)
-                .WithMany(x => x.Actividades)
+                .WithMany(x => x.Temas)
                 .HasForeignKey(x => x.PlaneacionUnidadId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.UltimaModificacionPor)
+                .WithMany()
+                .HasForeignKey(x => x.UltimaModificacionPorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PlaneacionEvaluacion>(entity =>
+        {
+            entity.ToTable("planeacion_evaluaciones");
+
+            entity.HasIndex(x => new { x.PlaneacionUnidadId, x.Orden });
+
+            entity.Property(x => x.PeriodoSemanas).HasMaxLength(100);
+            entity.Property(x => x.ResultadoAprendizaje).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.EvidenciaAprendizaje).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.Fase).HasConversion<int>();
+            entity.Property(x => x.TipoEvaluacion).HasConversion<int?>();
+            entity.Property(x => x.AgenteEvaluador).HasConversion<int>();
+            entity.Property(x => x.Ponderacion).HasPrecision(5, 2);
+            entity.Property(x => x.InstrumentoEvaluacion).HasColumnType("nvarchar(max)");
+
+            entity.HasOne(x => x.PlaneacionUnidad)
+                .WithMany(x => x.Evaluaciones)
+                .HasForeignKey(x => x.PlaneacionUnidadId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.UltimaModificacionPor)
+                .WithMany()
+                .HasForeignKey(x => x.UltimaModificacionPorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PlaneacionSecuencia>(entity =>
+        {
+            entity.ToTable("planeacion_secuencias");
+
+            entity.HasIndex(x => new { x.PlaneacionUnidadId, x.Orden });
+
+            entity.Property(x => x.Fase).HasConversion<int>();
+            entity.Property(x => x.Estrategia);
+            entity.Property(x => x.ActividadDocente).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.ActividadEstudiante).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.EvidenciaAprendizaje).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.MediosMateriales).HasColumnType("nvarchar(max)");
+
+            entity.HasOne(x => x.PlaneacionUnidad)
+                .WithMany(x => x.Secuencias)
+                .HasForeignKey(x => x.PlaneacionUnidadId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.UltimaModificacionPor)
+                .WithMany()
+                .HasForeignKey(x => x.UltimaModificacionPorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PlaneacionReferencia>(entity =>
+        {
+            entity.ToTable("planeacion_referencias");
+
+            entity.HasIndex(x => new { x.PlaneacionDidacticaId, x.Orden });
+
+            entity.Property(x => x.ReferenciaAPA).HasColumnType("nvarchar(max)").IsRequired();
+
+            entity.HasOne(x => x.PlaneacionDidactica)
+                .WithMany(x => x.Referencias)
+                .HasForeignKey(x => x.PlaneacionDidacticaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.UltimaModificacionPor)
+                .WithMany()
+                .HasForeignKey(x => x.UltimaModificacionPorId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -466,7 +558,7 @@ public class AppDbContext : DbContext
             entity.Property(x => x.Estado).HasMaxLength(50).IsRequired();
 
             entity.HasOne(x => x.PlaneacionDidactica)
-                .WithMany()
+                .WithMany(x => x.Observaciones)
                 .HasForeignKey(x => x.PlaneacionDidacticaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -491,6 +583,7 @@ public class AppDbContext : DbContext
             entity.HasIndex(x => x.PlaneacionDidacticaId).IsUnique();
 
             entity.Property(x => x.Titulo).HasMaxLength(250).IsRequired();
+            entity.HasIndex(x => new { x.PlaneacionDidacticaId, x.Titulo }).IsUnique().HasFilter("[DeletedAt] IS NULL");
 
             entity.HasOne(x => x.PlaneacionDidactica)
                 .WithMany(x => x.Chats)
@@ -535,6 +628,25 @@ public class AppDbContext : DbContext
             entity.HasOne(x => x.Usuario)
                 .WithMany()
                 .HasForeignKey(x => x.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.Ignore(e => e.IsExpired);
+
+            entity.Property(e => e.TokenHash)
+                .IsRequired()
+                .HasMaxLength(450);
+
+            entity.HasIndex(e => e.TokenHash)
+                .IsUnique();
+
+            entity.Property(e => e.Expires).IsRequired();
+            entity.Property(e => e.Created).IsRequired();
+
+            entity.HasOne(e => e.Usuario)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(e => e.UsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

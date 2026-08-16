@@ -21,7 +21,18 @@ namespace Plandi.Dto.Utils
                 return builder.ToString();
             }
         }
+
         
+
+        public static string GenerateCode()
+        {
+            return Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        }
+
+        public static string HashToken(string token) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+
+
+
         /*
         public static List<PairSettingsDto> DeserializeSettings(string xml)
         {

@@ -6,6 +6,9 @@ namespace Plandi.Library.Models
 {
     public class Carrera : BaseEntity
     {
+        public long? CreatedBy { get; set; }
+        public long? UpdatedBy { get; set; }
+
         public string Nombre { get; set; } = string.Empty;
 
         public string Clave { get; set; } = string.Empty;

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Plandi.Dto.Enums;
+using RolAcademia = Plandi.Dto.Enums.Rol;
 
 
 namespace Plandi.Library.Models
@@ -14,7 +14,7 @@ namespace Plandi.Library.Models
         public long UsuarioId { get; set; }
         public Usuario Usuario { get; set; } = null!;
 
-        public RolAcademia RolEnAcademia { get; set; }
+        public RolAcademia Rol { get; set; }
 
         public bool Activo { get; set; } = true;
 
