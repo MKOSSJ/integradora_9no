@@ -62,16 +62,11 @@ export class RecoverPassword {
       })
       .subscribe({
 
-        next: (response: any) => {
+        next: () => {
 
           this.loading = false;
 
           this.success = true;
-
-          console.log(
-            'Recuperación solicitada:',
-            response
-          );
         },
 
         error: (error) => {

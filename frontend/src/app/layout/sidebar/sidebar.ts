@@ -56,9 +56,7 @@ export class Sidebar {
 
   user = computed(() => this.authService.currentUser());
 
-  role = computed<UserRole>(() => {
-    return this.user()?.role ?? 'DOCENTE';
-  });
+  role = computed<UserRole | null>(() => this.user()?.role ?? null);
 
   roleLabel = computed(() => {
     const currentRole = this.role();
@@ -71,7 +69,11 @@ export class Sidebar {
       return 'Revisor';
     }
 
-    return 'Docente';
+    if (currentRole === 'DOCENTE') {
+      return 'Docente';
+    }
+
+    return '';
   });
 
   private readonly allSections: SidebarSection[] = [
@@ -137,8 +139,8 @@ export class Sidebar {
           icon: LucideBookOpen,
         },
         {
-          label: 'Ciclos y Periodos',
-          route: '/periodos',
+          label: 'Ciclos Escolares',
+          route: '/ciclos',
           icon: LucideCalendarDays,
         },
         {
@@ -184,9 +186,11 @@ export class Sidebar {
   ];
 
   sections = computed(() => {
-    const currentRole = this.role();
+    const currentRoles = this.user()?.roles ?? [];
 
-    return this.allSections.filter((section) => section.roles.includes(currentRole));
+    return this.allSections.filter((section) =>
+      section.roles.some((role) => currentRoles.includes(role)),
+    );
   });
 
   toggleSidebar(): void {

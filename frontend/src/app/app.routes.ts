@@ -32,6 +32,11 @@ export const routes: Routes = [
       import('./features/auth/new-password/new-password').then((m) => m.NewPassword),
   },
   {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./features/auth/new-password/new-password').then((m) => m.NewPassword),
+  },
+  {
     path: '',
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     canActivate: [authGuard],
@@ -104,9 +109,9 @@ export const routes: Routes = [
           import('./features/admin/pages/asignaturas/asignaturas').then((m) => m.Asignaturas),
       },
       {
-        path: 'periodos',
+        path: 'ciclos',
         loadComponent: () =>
-          import('./features/admin/pages/periodos/periodos').then((m) => m.Periodos),
+          import('./features/admin/pages/ciclos/ciclos').then((m) => m.Ciclos),
       },
       {
         path: 'importacion-academica',

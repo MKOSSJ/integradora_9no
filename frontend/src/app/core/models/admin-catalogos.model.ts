@@ -24,16 +24,16 @@ export interface UsuarioAdmin {
 }
 
 export interface Carrera {
-  id: number;
+  id: string;
   publicId: string;
   nombre: string;
   clave: string;
-  nivel?: string;
+  nivel: string;
   estado: EntityStatus;
 }
 
 export interface CicloEscolar {
-  id: number;
+  id: string;
   publicId: string;
   nombre: string;
   fechaInicio: string;
@@ -63,13 +63,13 @@ export interface Academia {
 }
 
 export interface Asignatura {
-  id: number;
+  id: string;
   publicId: string;
-  academiaId?: number;
-  academiaNombre?: string;
+  academiaPublicId: string;
+  academiaNombre: string;
   nombre: string;
   clave: string;
-  cuatrimestre: string;
+  cuatrimestre: number;
   horasTotales: number;
   horasSemana: number;
   creditos: number;

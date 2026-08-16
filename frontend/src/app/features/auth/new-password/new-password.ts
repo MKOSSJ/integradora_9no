@@ -219,12 +219,7 @@ export class NewPassword {
       })
       .subscribe({
 
-        next: (response: any) => {
-
-          console.log(
-            'Contraseña actualizada:',
-            response
-          );
+        next: () => {
 
           this.loading.set(false);
 

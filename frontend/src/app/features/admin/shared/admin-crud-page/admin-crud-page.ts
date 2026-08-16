@@ -1,5 +1,6 @@
 import { NgClass, DatePipe } from '@angular/common';
-import { Component, Input, OnInit, computed, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, Input, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -11,7 +12,8 @@ import {
   LucideTrash2,
   LucideX,
   LucideSave,
-  LucideAlertTriangle
+  LucideAlertTriangle,
+  LucideCircleCheckBig
 } from '@lucide/angular';
 
 import { AdminCrudConfig, AdminField } from './admin-crud.types';
@@ -23,7 +25,7 @@ import { AdminCrudConfig, AdminField } from './admin-crud.types';
   templateUrl: './admin-crud-page.html',
   styleUrl: './admin-crud-page.css'
 })
-export class AdminCrudPage implements OnInit {
+export class AdminCrudPage implements OnInit, OnDestroy {
   @Input({ required: true }) config!: AdminCrudConfig;
 
   search = signal('');
@@ -32,6 +34,10 @@ export class AdminCrudPage implements OnInit {
   deleteTarget = signal<Record<string, any> | null>(null);
   form = signal<Record<string, any>>({});
   items = signal<Record<string, any>[]>([]);
+  statusNotice = signal<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   plusIcon = LucidePlus;
   searchIcon = LucideSearch;
@@ -41,10 +47,31 @@ export class AdminCrudPage implements OnInit {
   closeIcon = LucideX;
   saveIcon = LucideSave;
   warningIcon = LucideAlertTriangle;
+  successIcon = LucideCircleCheckBig;
+
+  private noticeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
-    this.items.set(this.config.initialItems.map(item => ({ ...item })));
     this.form.set(this.createEmptyForm());
+
+    if (this.config.dataSource) {
+      this.config.dataSource.load().subscribe({
+        next: items => this.items.set(items.map(item => ({ ...item }))),
+        error: error => this.handleRequestError(
+          error,
+          'No fue posible cargar los registros.'
+        )
+      });
+      return;
+    }
+
+    this.items.set(this.config.initialItems.map(item => ({ ...item })));
+  }
+
+  ngOnDestroy(): void {
+    if (this.noticeTimeout) {
+      clearTimeout(this.noticeTimeout);
+    }
   }
 
   filteredItems = computed(() => {
@@ -85,28 +112,25 @@ export class AdminCrudPage implements OnInit {
   isFormValid = computed(() => {
     const form = this.form();
 
-    return this.config.fields
-      .filter(field => field.required)
-      .every(field => {
-        const value = form[field.key];
-
-        if (Array.isArray(value)) return value.length > 0;
-
-        return String(value ?? '').trim() !== '';
-      });
+    return this.config.fields.every(field =>
+      this.isFieldValid(field, form[field.key])
+    );
   });
 
   openCreateModal(): void {
+    this.clearStatusNotice();
     this.form.set(this.createEmptyForm());
     this.modalMode.set('create');
   }
 
   openEditModal(item: Record<string, any>): void {
+    this.clearStatusNotice();
     this.form.set({ ...item });
     this.modalMode.set('edit');
   }
 
   closeModal(): void {
+    this.clearStatusNotice();
     this.modalMode.set(null);
     this.form.set(this.createEmptyForm());
   }
@@ -136,12 +160,54 @@ export class AdminCrudPage implements OnInit {
     return this.valueAsArray(this.form()[field.key]).includes(value);
   }
 
+  preventInvalidNumberInput(event: KeyboardEvent, field: AdminField): void {
+    if (field.type !== 'number') return;
+
+    const invalidKeys = ['e', 'E', '+'];
+
+    if ((field.min ?? Number.NEGATIVE_INFINITY) >= 0) {
+      invalidKeys.push('-');
+    }
+
+    if (field.step === 1) {
+      invalidKeys.push('.', ',');
+    }
+
+    if (invalidKeys.includes(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  closeStatusNotice(): void {
+    this.clearStatusNotice();
+  }
+
   saveItem(): void {
     if (!this.isFormValid()) return;
 
     const form = this.form();
+    const dataSource = this.config.dataSource;
 
     if (this.modalMode() === 'create') {
+      if (dataSource) {
+        try {
+          dataSource.create({ ...form }).subscribe({
+            next: newItem => {
+              this.items.update(current => [{ ...newItem }, ...current]);
+              this.closeModal();
+              this.showSuccessNotice('create');
+            },
+            error: error => this.handleRequestError(
+              error,
+              'No fue posible guardar los cambios.'
+            )
+          });
+        } catch (error) {
+          this.handleRequestError(error, 'No fue posible guardar los cambios.');
+        }
+        return;
+      }
+
       const newItem = {
         ...form,
         id: this.nextId(),
@@ -154,6 +220,29 @@ export class AdminCrudPage implements OnInit {
     }
 
     if (this.modalMode() === 'edit') {
+      if (dataSource) {
+        try {
+          dataSource.update({ ...form }).subscribe({
+            next: updatedItem => {
+              this.items.update(current =>
+                current.map(item =>
+                  item['id'] === form['id'] ? { ...updatedItem } : item
+                )
+              );
+              this.closeModal();
+              this.showSuccessNotice('update');
+            },
+            error: error => this.handleRequestError(
+              error,
+              'No fue posible guardar los cambios.'
+            )
+          });
+        } catch (error) {
+          this.handleRequestError(error, 'No fue posible guardar los cambios.');
+        }
+        return;
+      }
+
       this.items.update(current =>
         current.map(item => item['id'] === form['id'] ? { ...form } : item)
       );
@@ -163,10 +252,12 @@ export class AdminCrudPage implements OnInit {
   }
 
   openDeleteModal(item: Record<string, any>): void {
+    this.clearStatusNotice();
     this.deleteTarget.set(item);
   }
 
   closeDeleteModal(): void {
+    this.clearStatusNotice();
     this.deleteTarget.set(null);
   }
 
@@ -175,14 +266,29 @@ export class AdminCrudPage implements OnInit {
 
     if (!target) return;
 
-    this.items.update(current =>
-      current.map(item =>
-        item['id'] === target['id']
-          ? { ...item, estado: 'inactivo' }
-          : item
-      )
-    );
+    if (this.config.dataSource) {
+      try {
+        this.config.dataSource.delete(target).subscribe({
+          next: () => {
+            this.markItemInactive(target);
+            this.closeDeleteModal();
+            this.showSuccessNotice('delete');
+          },
+          error: error => this.handleRequestError(
+            error,
+            'No fue posible dar de baja el registro.'
+          )
+        });
+      } catch (error) {
+        this.handleRequestError(
+          error,
+          'No fue posible dar de baja el registro.'
+        );
+      }
+      return;
+    }
 
+    this.markItemInactive(target);
     this.closeDeleteModal();
   }
 
@@ -215,6 +321,22 @@ export class AdminCrudPage implements OnInit {
     return 'border-slate-200 bg-white text-slate-900';
   }
 
+  getStatusModalIconClasses(type: 'success' | 'error'): string {
+    if (type === 'success') {
+      return 'bg-green-100 text-green-600';
+    }
+
+    return 'bg-red-100 text-red-600';
+  }
+
+  getStatusModalButtonClasses(type: 'success' | 'error'): string {
+    if (type === 'success') {
+      return 'bg-teal-500 hover:bg-teal-600';
+    }
+
+    return 'bg-red-600 hover:bg-red-700';
+  }
+
   private nextId(): number {
     const ids = this.items().map(item => Number(item['id']));
     return ids.length === 0 ? 1 : Math.max(...ids) + 1;
@@ -238,5 +360,135 @@ export class AdminCrudPage implements OnInit {
     }
 
     return form;
+  }
+
+  private markItemInactive(target: Record<string, any>): void {
+    this.items.update(current =>
+      current.map(item =>
+        item['id'] === target['id']
+          ? { ...item, estado: 'inactivo' }
+          : item
+      )
+    );
+  }
+
+  private isFieldValid(field: AdminField, value: unknown): boolean {
+    const isEmpty =
+      value === null ||
+      value === undefined ||
+      (typeof value === 'string' && value.trim() === '') ||
+      (Array.isArray(value) && value.length === 0);
+
+    if (isEmpty) {
+      return !field.required;
+    }
+
+    if (field.maxLength !== undefined && typeof value === 'string') {
+      if (value.length > field.maxLength) return false;
+    }
+
+    if (field.type !== 'number') return true;
+
+    const numberValue = Number(value);
+
+    if (!Number.isFinite(numberValue)) return false;
+    if (field.min !== undefined && numberValue < field.min) return false;
+    if (field.max !== undefined && numberValue > field.max) return false;
+
+    if (field.step !== undefined) {
+      const stepBase = field.min ?? 0;
+      const steps = (numberValue - stepBase) / field.step;
+
+      if (Math.abs(steps - Math.round(steps)) > 1e-9) return false;
+    }
+
+    return true;
+  }
+
+  private showSuccessNotice(operation: 'create' | 'update' | 'delete'): void {
+    const message = this.config.successMessages?.[operation];
+
+    if (!message) return;
+
+    this.showStatusNotice(message, 'success');
+  }
+
+  private handleRequestError(error: unknown, fallbackMessage: string): void {
+    this.showStatusNotice(
+      this.extractErrorMessage(error) ?? fallbackMessage,
+      'error'
+    );
+  }
+
+  private extractErrorMessage(error: unknown): string | null {
+    if (error instanceof HttpErrorResponse) {
+      return this.extractMessageFromPayload(error.error);
+    }
+
+    if (error instanceof Error && error.message.trim()) {
+      return error.message.trim();
+    }
+
+    return this.extractMessageFromPayload(error);
+  }
+
+  private extractMessageFromPayload(payload: unknown): string | null {
+    if (typeof payload === 'string' && payload.trim()) {
+      return payload.trim();
+    }
+
+    if (!payload || typeof payload !== 'object') return null;
+
+    const response = payload as Record<string, unknown>;
+    const errors = this.extractValidationErrors(response['errors']);
+
+    if (errors) return errors;
+
+    const message = response['message'];
+    return typeof message === 'string' && message.trim()
+      ? message.trim()
+      : null;
+  }
+
+  private extractValidationErrors(errors: unknown): string | null {
+    if (Array.isArray(errors)) {
+      const messages = errors.filter(
+        (item): item is string => typeof item === 'string' && !!item.trim()
+      );
+
+      return messages.length > 0 ? messages.join(' ') : null;
+    }
+
+    if (!errors || typeof errors !== 'object') return null;
+
+    const messages = Object.values(errors)
+      .flatMap(value => Array.isArray(value) ? value : [value])
+      .filter(
+        (item): item is string => typeof item === 'string' && !!item.trim()
+      );
+
+    return messages.length > 0 ? messages.join(' ') : null;
+  }
+
+  private showStatusNotice(
+    message: string,
+    type: 'success' | 'error'
+  ): void {
+    this.clearStatusNotice();
+    this.statusNotice.set({ message, type });
+
+    this.noticeTimeout = setTimeout(() => {
+      this.statusNotice.set(null);
+      this.noticeTimeout = null;
+    }, 3500);
+  }
+
+  private clearStatusNotice(): void {
+    if (this.noticeTimeout) {
+      clearTimeout(this.noticeTimeout);
+      this.noticeTimeout = null;
+    }
+
+    this.statusNotice.set(null);
   }
 }

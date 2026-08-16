@@ -12,7 +12,6 @@ import {
 } from '@lucide/angular';
 
 import { AuthService } from '../../../core/services/auth.service';
-import { LoginRequestDto } from '../../../core/dto/auth/login-request.dto';
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -36,11 +35,13 @@ export class Login implements OnInit {
   errorMessage = signal('');
 
   ngOnInit(): void {
-    if (this.authService.isLoggedIn()) {
-      this.router.navigateByUrl('/dashboard', {
-        replaceUrl: true,
-      });
-    }
+    this.authService.ensureValidSession().subscribe((isValid) => {
+      if (isValid) {
+        this.router.navigateByUrl('/dashboard', {
+          replaceUrl: true,
+        });
+      }
+    });
   }
 
  login(): void {
@@ -75,11 +76,9 @@ export class Login implements OnInit {
       }
 
       if (response.requiresTwoFactor) {
-        this.router.navigateByUrl(
-          '/auth/verificar-codigo',
-          {
-            replaceUrl: true
-          }
+        this.authService.logout();
+        this.errorMessage.set(
+          'La verificación en dos pasos no está disponible en el backend actual.'
         );
 
         return;
@@ -104,6 +103,7 @@ export class Login implements OnInit {
 
       this.errorMessage.set(
         error?.error?.message ||
+        error?.message ||
         'No fue posible conectar con el servidor.'
       );
     }

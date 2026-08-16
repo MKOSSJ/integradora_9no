@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+
 export type AdminFieldType =
   | 'text'
   | 'email'
@@ -19,6 +21,10 @@ export interface AdminField {
   type: AdminFieldType;
   placeholder?: string;
   required?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+  maxLength?: number;
   options?: AdminOption[];
   span?: 'full' | 'half';
 }
@@ -47,4 +53,19 @@ export interface AdminCrudConfig {
   initialItems: Record<string, any>[];
   counters: AdminCounter[];
   searchKeys: string[];
+  dataSource?: AdminCrudDataSource;
+  successMessages?: {
+    create: string;
+    update: string;
+    delete: string;
+  };
+}
+
+export type AdminCrudItem = AdminCrudConfig['initialItems'][number];
+
+export interface AdminCrudDataSource {
+  load(): Observable<AdminCrudItem[]>;
+  create(item: AdminCrudItem): Observable<AdminCrudItem>;
+  update(item: AdminCrudItem): Observable<AdminCrudItem>;
+  delete(item: AdminCrudItem): Observable<boolean>;
 }

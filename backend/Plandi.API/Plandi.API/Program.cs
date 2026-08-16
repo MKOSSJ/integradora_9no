@@ -58,6 +58,25 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddControllers();
 
+/* CORS*/
+var allowedOrigins = builder.Configuration
+    .GetSection("AllowedOrigins")
+    .Get<List<string>>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        if (allowedOrigins != null)
+        {
+            policy
+                .WithOrigins(allowedOrigins.ToArray())
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+    });
+});
+
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAutorizacionService, AutorizacionService>();
@@ -134,6 +153,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowSpecificOrigin");
 app.Use(async (httpContext, next) =>
 {
     try
