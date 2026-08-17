@@ -16,7 +16,7 @@ import {
   LucideCircleCheckBig
 } from '@lucide/angular';
 
-import { AdminCrudConfig, AdminField } from './admin-crud.types';
+import { AdminCrudConfig, AdminField, AdminOption } from './admin-crud.types';
 
 @Component({
   selector: 'app-admin-crud-page',
@@ -119,12 +119,18 @@ export class AdminCrudPage implements OnInit, OnDestroy {
 
   openCreateModal(): void {
     this.clearStatusNotice();
+
+    if (this.blockUnsupportedAction('create')) return;
+
     this.form.set(this.createEmptyForm());
     this.modalMode.set('create');
   }
 
   openEditModal(item: Record<string, any>): void {
     this.clearStatusNotice();
+
+    if (this.blockUnsupportedAction('edit')) return;
+
     this.form.set({ ...item });
     this.modalMode.set('edit');
   }
@@ -136,6 +142,8 @@ export class AdminCrudPage implements OnInit, OnDestroy {
   }
 
   updateField(field: AdminField, value: any): void {
+    if (this.isFieldReadonly(field)) return;
+
     this.form.update(current => ({
       ...current,
       [field.key]: value
@@ -143,6 +151,8 @@ export class AdminCrudPage implements OnInit, OnDestroy {
   }
 
   toggleMultiValue(field: AdminField, value: string | number): void {
+    if (this.isFieldReadonly(field)) return;
+
     this.form.update(current => {
       const values = this.valueAsArray(current[field.key]);
       const exists = values.includes(value);
@@ -158,6 +168,14 @@ export class AdminCrudPage implements OnInit, OnDestroy {
 
   hasMultiValue(field: AdminField, value: string | number): boolean {
     return this.valueAsArray(this.form()[field.key]).includes(value);
+  }
+
+  getFieldOptions(field: AdminField): AdminOption[] {
+    return field.optionsFor?.(this.form()) ?? field.options ?? [];
+  }
+
+  isFieldReadonly(field: AdminField): boolean {
+    return field.readonlyWhen?.(this.form()) ?? false;
   }
 
   preventInvalidNumberInput(event: KeyboardEvent, field: AdminField): void {
@@ -253,6 +271,9 @@ export class AdminCrudPage implements OnInit, OnDestroy {
 
   openDeleteModal(item: Record<string, any>): void {
     this.clearStatusNotice();
+
+    if (this.blockUnsupportedAction('delete')) return;
+
     this.deleteTarget.set(item);
   }
 
@@ -387,6 +408,11 @@ export class AdminCrudPage implements OnInit, OnDestroy {
       if (value.length > field.maxLength) return false;
     }
 
+    if (field.type === 'email') {
+      return typeof value === 'string' &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+    }
+
     if (field.type !== 'number') return true;
 
     const numberValue = Number(value);
@@ -490,5 +516,18 @@ export class AdminCrudPage implements OnInit, OnDestroy {
     }
 
     this.statusNotice.set(null);
+  }
+
+  private blockUnsupportedAction(
+    action: 'create' | 'edit' | 'delete'
+  ): boolean {
+    const message = this.config.blockedActionsMessage ??
+      (action === 'create' ? this.config.blockedCreateMessage : undefined) ??
+      (action === 'delete' ? this.config.blockedDeleteMessage : undefined);
+
+    if (!message) return false;
+
+    this.showStatusNotice(message, 'error');
+    return true;
   }
 }

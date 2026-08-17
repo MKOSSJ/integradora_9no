@@ -38,7 +38,7 @@
           </p>
 
           <h2 class="mt-4 text-4xl font-black">
-            {{ counterValues()[counter.valueKey] || 0 }}
+            {{ counter.unavailable ? '—' : (counterValues()[counter.valueKey] || 0) }}
           </h2>
         </article>
       }
@@ -102,7 +102,7 @@
           </thead>
 
           <tbody class="divide-y divide-slate-100">
-            @for (item of filteredItems(); track item['id']) {
+            @for (item of filteredItems(); track item['publicId'] ?? item['id'] ?? $index) {
               <tr class="transition hover:bg-slate-50">
                 @for (column of config.columns; track column.key) {
                   <td class="px-6 py-5">
@@ -203,10 +203,11 @@
                 [ngModel]="form()[field.key]"
                 (ngModelChange)="updateField(field, $event)"
                 [required]="field.required ?? false"
+                [disabled]="isFieldReadonly(field)"
                 class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-900 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100"
               >
                 <option value="">Selecciona una opción</option>
-                @for (option of field.options || []; track option.value) {
+                @for (option of getFieldOptions(field); track option.value) {
                   <option [value]="option.value">
                     {{ option.label }}
                   </option>
@@ -214,9 +215,10 @@
               </select>
             } @else if (field.type === 'multiselect') {
               <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                @for (option of field.options || []; track option.value) {
+                @for (option of getFieldOptions(field); track option.value) {
                   <button
                     type="button"
+                    [disabled]="isFieldReadonly(field)"
                     class="rounded-2xl border px-4 py-3 text-left text-sm font-black transition"
                     [ngClass]="hasMultiValue(field, option.value)
                       ? 'border-teal-300 bg-teal-50 text-teal-700'
@@ -234,6 +236,7 @@
                 (ngModelChange)="updateField(field, $event)"
                 [placeholder]="field.placeholder || ''"
                 [required]="field.required ?? false"
+                [disabled]="isFieldReadonly(field)"
                 [attr.maxlength]="field.maxLength ?? null"
                 class="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100"
               ></textarea>
@@ -245,6 +248,7 @@
                 (keydown)="preventInvalidNumberInput($event, field)"
                 [placeholder]="field.placeholder || ''"
                 [required]="field.required ?? false"
+                [disabled]="isFieldReadonly(field)"
                 [attr.min]="field.min ?? null"
                 [attr.max]="field.max ?? null"
                 [attr.step]="field.step ?? null"

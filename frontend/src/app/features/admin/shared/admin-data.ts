@@ -21,7 +21,7 @@ export const ACADEMIAS = [
 ];
 
 export const USUARIOS = [
-  { id: 1, publicId: 'usuario-admin', nombre: 'Administrador', apellidoPaterno: 'Sistema', apellidoMaterno: '', email: 'admin@uth.edu.mx', telefono: '7710000000', roles: ['ADMIN'], academiaNombre: '', rolEnAcademia: '', estado: 'activo', ultimoAcceso: '2026-07-11' },
+  { id: 1, publicId: 'usuario-admin', nombre: 'Administrador', apellidoPaterno: 'Sistema', apellidoMaterno: '', email: 'admin@uth.edu.mx', telefono: '7710000000', roles: ['DIRECTIVO'], academiaNombre: '', rolEnAcademia: '', estado: 'activo', ultimoAcceso: '2026-07-11' },
   { id: 2, publicId: 'usuario-carlos', nombre: 'Carlos', apellidoPaterno: 'Pérez', apellidoMaterno: 'López', email: 'carlos.perez@uth.edu.mx', telefono: '7711234567', roles: ['DOCENTE'], academiaNombre: 'Academia de Desarrollo de Software', rolEnAcademia: 'Docente', estado: 'activo', ultimoAcceso: '2026-07-10' },
   { id: 3, publicId: 'usuario-maria', nombre: 'María', apellidoPaterno: 'González', apellidoMaterno: 'Ruiz', email: 'maria.gonzalez@uth.edu.mx', telefono: '7714567890', roles: ['DOCENTE', 'REVISOR'], academiaNombre: 'Academia de Bases de Datos', rolEnAcademia: 'Revisor', estado: 'activo', ultimoAcceso: '2026-07-09' },
   { id: 4, publicId: 'usuario-directivo', nombre: 'Laura', apellidoPaterno: 'Sánchez', apellidoMaterno: 'Mora', email: 'laura.sanchez@uth.edu.mx', telefono: '7719876543', roles: ['DIRECTIVO'], academiaNombre: '', rolEnAcademia: '', estado: 'activo', ultimoAcceso: '2026-07-08' }
@@ -50,7 +50,6 @@ export const STATUS_OPTIONS = [
 ];
 
 export const ROLE_OPTIONS = [
-  { label: 'Administrador', value: 'ADMIN' },
   { label: 'Docente', value: 'DOCENTE' },
   { label: 'Revisor', value: 'REVISOR' },
   { label: 'Directivo', value: 'DIRECTIVO' }

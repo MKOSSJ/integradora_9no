@@ -1,9 +1,13 @@
 export type PlaneacionStatus =
   | 'aprobado'
   | 'borrador'
+  | 'en-proceso'
   | 'revision'
   | 'pendiente'
-  | 'correcciones';
+  | 'correcciones'
+  | 'rechazada'
+  | 'finalizada'
+  | 'reabierta';
 
 export type PlaneacionTab =
   | 'vista-previa'
@@ -17,11 +21,13 @@ export type FormSection =
   | 'referencias';
 
 export type TipoCompetencia =
+  | ''
   | 'Base'
   | 'Transversal'
   | 'Específica';
 
 export type ModalidadAsignatura =
+  | ''
   | 'Escolarizada'
   | 'Mixta'
   | 'Dual'
@@ -38,6 +44,7 @@ export type AgenteEvaluacion =
   | 'Heteroevaluación';
 
 export type CategoriaInstrumento =
+  | ''
   | 'Conocimiento'
   | 'Producto'
   | 'Desempeño';
@@ -56,8 +63,8 @@ export interface PlaneacionTutorial {
   options: string[];
 }
 
-export interface PlaneacionListItem {
-  id: number;
+export interface PlaneacionListItem<TId extends string | number = number> {
+  id: TId;
   titulo: string;
   descripcion: string;
   actualizacion: string;
@@ -192,7 +199,8 @@ export interface PlaneacionFormulario {
   unidades: UnidadPlaneacion[];
 }
 
-export interface PlaneacionDetail extends PlaneacionListItem {
+export interface PlaneacionDetail<TId extends string | number = number>
+  extends PlaneacionListItem<TId> {
   autor: string;
   fechaCreacion: string;
   ultimaModificacion: string;
@@ -212,7 +220,8 @@ export type SeguimientoEstado =
   | 'en-tiempo'
   | 'por-vencer'
   | 'vencida'
-  | 'completada';
+  | 'completada'
+  | 'sin-fecha';
 
 export interface SeguimientoPlaneacion {
   id: number;
@@ -223,11 +232,11 @@ export interface SeguimientoPlaneacion {
   status: PlaneacionStatus;
 
   fechaCreacion: string;
-  fechaLimiteCaptura: string;
+  fechaLimiteCaptura?: string;
   fechaEnvioRevision?: string;
   fechaValidacion?: string;
   fechaAutorizacion?: string;
 
-  diasRestantes: number;
+  diasRestantes?: number;
   estadoSeguimiento: SeguimientoEstado;
 }

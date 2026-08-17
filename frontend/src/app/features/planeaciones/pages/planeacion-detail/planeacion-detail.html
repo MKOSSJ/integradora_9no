@@ -115,12 +115,21 @@
       class="block h-full"
       [planeacion]="item"
       [canEdit]="isEditable()"
+      [saving]="saving()"
+      [submitting]="submitting()"
       [formTutorial]="activeTab() === 'formulario' ? formTutorial() : null"
       (saveDraft)="saveDraft()"
       (submitForApproval)="submitForApproval()"
     />
   </aside>
 </main>
+  </div>
+} @else if (loadError()) {
+  <div class="flex h-full items-center justify-center bg-slate-50">
+    <div class="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <h2 class="text-xl font-black text-slate-900">No fue posible cargar la planeación</h2>
+      <p class="mt-2 text-sm text-slate-500">{{ loadError() }}</p>
+    </div>
   </div>
 } @else {
   <div class="flex h-full items-center justify-center bg-slate-50">

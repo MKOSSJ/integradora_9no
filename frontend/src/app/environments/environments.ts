@@ -1,12 +1,12 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://localhost:7215',
+  apiUrl: 'http://localhost:5198',
 
-  apiToken: 'CLAVE_SECRETA_ASI_MUY_SECRETA_QUE_CLAVE_TAN_SECRETA_CABRON_MIRA_2508142805',
+  apiToken: '',
 
   sessionDurationMinutes: 60,
 
-  databaseName: 'plandi',
+  databaseName: 'AppDatabase',
   databaseVersion: 1,
 
   notificationDuration: 3000,

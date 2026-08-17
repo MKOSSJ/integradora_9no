@@ -114,11 +114,16 @@ export const routes: Routes = [
           import('./features/admin/pages/ciclos/ciclos').then((m) => m.Ciclos),
       },
       {
-        path: 'importacion-academica',
+        path: 'importaciones',
         loadComponent: () =>
           import('./features/admin/pages/importacion-academias/importacion-academias').then(
             (m) => m.ImportacionAcademias,
           ),
+      },
+      {
+        path: 'importacion-academica',
+        redirectTo: 'importaciones',
+        pathMatch: 'full',
       },
 
       /* Carga Académica */
@@ -132,11 +137,16 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/grupos/grupos').then((m) => m.Grupos),
       },
       {
-        path: 'asignacion-academica',
+        path: 'asignacion-revisores',
         loadComponent: () =>
           import('./features/admin/pages/asignacion-academica/asignacion-academica').then(
             (m) => m.AsignacionAcademica,
           ),
+      },
+      {
+        path: 'asignacion-academica',
+        redirectTo: 'asignacion-revisores',
+        pathMatch: 'full',
       },
       {
         path: 'importar-profesores',

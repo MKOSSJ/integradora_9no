@@ -70,7 +70,7 @@ type UnidadKey =
   styleUrl: './planeacion-form.css'
 })
 export class PlaneacionForm {
-  @Input({ required: true }) planeacion!: PlaneacionDetail;
+  @Input({ required: true }) planeacion!: PlaneacionDetail<string | number>;
   @Output() tutorialChange = new EventEmitter<PlaneacionTutorial>();
 
   selectedUnitIndex = signal(0);
@@ -332,12 +332,16 @@ export class PlaneacionForm {
 
   evaluationOptions = [
     'Conceptual',
+    'Producto',
+    'Desempeño',
     'Ensayo',
     'Estudio de caso',
     'Análisis de desempeño',
     'Reporte académico',
     'Proyecto',
     'Práctica guiada',
+    'Exposición',
+    'Otro',
     'Práctica semiguiada',
     'Ejercicios',
     'Prueba'

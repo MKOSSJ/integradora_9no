@@ -1,6 +1,16 @@
 import { DatePipe, NgClass } from '@angular/common';
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  inject,
+  Input,
+  OnChanges,
+  Output,
+  signal,
+  SimpleChanges
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 
 import {
   LucideDynamicIcon,
@@ -18,13 +28,14 @@ import {
   PlaneacionStatus,
   PlaneacionTutorial
 } from '../../../../core/models/planeacion.model';
+import { PlaneacionesService } from '../../../../core/services/planeaciones.service';
 
 interface RevisionComment {
-  id: number;
+  id: string;
   autor: string;
-  rol: 'Docente' | 'Revisor';
+  rol: string;
   mensaje: string;
-  hora: string;
+  fecha: string;
 }
 
 @Component({
@@ -39,9 +50,13 @@ interface RevisionComment {
   templateUrl: './planeacion-info-panel.html',
   styleUrl: './planeacion-info-panel.css'
 })
-export class PlaneacionInfoPanel {
-  @Input({ required: true }) planeacion!: PlaneacionDetail;
+export class PlaneacionInfoPanel implements OnChanges {
+  private readonly planeacionesService = inject(PlaneacionesService);
+
+  @Input({ required: true }) planeacion!: PlaneacionDetail<string | number>;
   @Input() canEdit = true;
+  @Input() saving = false;
+  @Input() submitting = false;
   @Input() formTutorial: PlaneacionTutorial | null = null;
 
   @Output() saveDraft = new EventEmitter<void>();
@@ -56,39 +71,25 @@ export class PlaneacionInfoPanel {
   commentIcon = LucideMessageSquare;
 
   commentText = '';
+  commentsLoading = signal(false);
+  commentSaving = signal(false);
 
   feedbackMessage = signal('');
   feedbackType = signal<'success' | 'warning'>('success');
 
-  comments = signal<RevisionComment[]>([
-    {
-      id: 1,
-      autor: 'María González',
-      rol: 'Revisor',
-      mensaje: 'Revisar que las evidencias de cierre correspondan al resultado de aprendizaje.',
-      hora: '10:42'
-    },
-    {
-      id: 2,
-      autor: 'María González',
-      rol: 'Revisor',
-      mensaje: 'La estructura general de la secuencia es clara.',
-      hora: '10:50'
-    },
-    {
-      id: 3,
-      autor: 'Carlos Pérez',
-      rol: 'Docente',
-      mensaje: 'Actualizaré la evidencia de cierre y guardaré los cambios.',
-      hora: '11:05'
-    }
-  ]);
+  comments = signal<RevisionComment[]>([]);
 
   openSections = signal({
     info: true,
     guide: true,
     comments: true
   });
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['planeacion'] && this.planeacion?.id) {
+      this.loadComments();
+    }
+  }
 
   toggleSection(section: 'info' | 'guide' | 'comments'): void {
     this.openSections.update(current => ({
@@ -104,23 +105,24 @@ export class PlaneacionInfoPanel {
   addComment(): void {
     const text = this.commentText.trim();
 
-    if (!text) return;
+    if (!text || this.commentSaving()) return;
 
-    this.comments.update(current => [
-      {
-        id: Date.now(),
-        autor: this.planeacion.autor || 'Docente',
-        rol: 'Docente',
-        mensaje: text,
-        hora: new Date().toLocaleTimeString('es-MX', {
-          hour: '2-digit',
-          minute: '2-digit'
-        })
+    this.commentSaving.set(true);
+    this.planeacionesService.addComment(String(this.planeacion.id), text).pipe(
+      finalize(() => this.commentSaving.set(false))
+    ).subscribe({
+      next: comment => {
+        this.comments.update(current => [...current, {
+          id: comment.publicId,
+          autor: comment.usuario,
+          rol: comment.rolEnChat,
+          mensaje: comment.mensaje,
+          fecha: comment.fecha
+        }]);
+        this.commentText = '';
       },
-      ...current
-    ]);
-
-    this.commentText = '';
+      error: error => this.showFeedback(this.errorMessage(error), 'warning')
+    });
   }
 
   handleSaveDraft(): void {
@@ -129,8 +131,8 @@ export class PlaneacionInfoPanel {
       return;
     }
 
+    if (this.saving || this.submitting) return;
     this.saveDraft.emit();
-    this.showFeedback('Cambios guardados correctamente.', 'success');
   }
 
   handleSubmitForApproval(): void {
@@ -139,8 +141,8 @@ export class PlaneacionInfoPanel {
       return;
     }
 
+    if (this.saving || this.submitting) return;
     this.submitForApproval.emit();
-    this.showFeedback('Planeación enviada a revisión correctamente.', 'success');
   }
 
   showFeedback(message: string, type: 'success' | 'warning'): void {
@@ -155,9 +157,13 @@ export class PlaneacionInfoPanel {
   getStatusLabel(status: PlaneacionStatus): string {
     if (status === 'aprobado') return 'Aprobado';
     if (status === 'borrador') return 'Borrador';
+    if (status === 'en-proceso') return 'En proceso';
     if (status === 'revision') return 'En revisión';
     if (status === 'pendiente') return 'Pendiente';
-    return 'Correcciones';
+    if (status === 'correcciones') return 'Correcciones';
+    if (status === 'rechazada') return 'Rechazada';
+    if (status === 'finalizada') return 'Finalizada';
+    return 'Reabierta';
   }
 
   getStatusClasses(status: PlaneacionStatus): string {
@@ -171,6 +177,10 @@ export class PlaneacionInfoPanel {
 
     if (status === 'revision') {
       return 'bg-cyan-100 text-cyan-700 ring-cyan-200';
+    }
+
+    if (status === 'finalizada') {
+      return 'bg-green-100 text-green-700 ring-green-200';
     }
 
     if (status === 'pendiente') {
@@ -196,5 +206,40 @@ export class PlaneacionInfoPanel {
       'Agrega evidencias, instrumentos de evaluación y ponderaciones.',
       'Guarda tus cambios antes de enviar la planeación a revisión.'
     ];
+  }
+
+  private loadComments(): void {
+    this.commentsLoading.set(true);
+    this.planeacionesService.getComments(String(this.planeacion.id)).pipe(
+      finalize(() => this.commentsLoading.set(false))
+    ).subscribe({
+      next: response => this.comments.set(response.comentarios.map(comment => ({
+        id: comment.publicId,
+        autor: comment.usuario,
+        rol: comment.rolEnChat,
+        mensaje: comment.mensaje,
+        fecha: comment.fecha
+      }))),
+      error: error => this.showFeedback(this.errorMessage(error), 'warning')
+    });
+  }
+
+  private errorMessage(error: unknown): string {
+    if (error && typeof error === 'object') {
+      const payload = (error as { error?: unknown }).error;
+      if (payload && typeof payload === 'object') {
+        const response = payload as Record<string, unknown>;
+        const errors = response['errors'];
+        if (Array.isArray(errors)) {
+          const message = errors.filter(item => typeof item === 'string').join(' ');
+          if (message) return message;
+        }
+        const message = response['message'];
+        if (typeof message === 'string' && message.trim()) return message.trim();
+      }
+    }
+
+    if (error instanceof Error && error.message.trim()) return error.message.trim();
+    return 'No fue posible completar la operación.';
   }
 }

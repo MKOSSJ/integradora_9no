@@ -26,6 +26,8 @@ export interface AdminField {
   step?: number;
   maxLength?: number;
   options?: AdminOption[];
+  optionsFor?: (form: Record<string, any>) => AdminOption[];
+  readonlyWhen?: (form: Record<string, any>) => boolean;
   span?: 'full' | 'half';
 }
 
@@ -39,6 +41,7 @@ export interface AdminCounter {
   label: string;
   valueKey: string;
   tone?: 'slate' | 'green' | 'cyan' | 'amber' | 'purple' | 'red';
+  unavailable?: boolean;
 }
 
 export interface AdminCrudConfig {
@@ -59,6 +62,9 @@ export interface AdminCrudConfig {
     update: string;
     delete: string;
   };
+  blockedActionsMessage?: string;
+  blockedCreateMessage?: string;
+  blockedDeleteMessage?: string;
 }
 
 export type AdminCrudItem = AdminCrudConfig['initialItems'][number];

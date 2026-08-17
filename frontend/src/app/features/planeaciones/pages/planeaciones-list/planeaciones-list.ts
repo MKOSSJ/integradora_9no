@@ -39,7 +39,7 @@ export class PlaneacionesList {
   sortBy = signal<'recent' | 'title' | 'progress'>('recent');
   statusFilter = signal<'todos' | PlaneacionStatus>('todos');
 
-  planeaciones = signal<PlaneacionListItem[]>([]);
+  planeaciones = signal<PlaneacionListItem<string>[]>([]);
 
   plusIcon = LucidePlus;
   searchIcon = LucideSearch;
@@ -104,16 +104,23 @@ export class PlaneacionesList {
   };
 });
 
-  canEdit(item: PlaneacionListItem): boolean {
-    return item.status === 'borrador' || item.status === 'correcciones';
+  canEdit(item: PlaneacionListItem<string>): boolean {
+    return item.status === 'borrador' ||
+      item.status === 'en-proceso' ||
+      item.status === 'correcciones' ||
+      item.status === 'reabierta';
   }
 
   getStatusLabel(status: PlaneacionStatus): string {
     if (status === 'aprobado') return 'Aprobado';
     if (status === 'borrador') return 'Borrador';
+    if (status === 'en-proceso') return 'En proceso';
     if (status === 'revision') return 'En revisión';
     if (status === 'pendiente') return 'Pendiente';
-    return 'Correcciones';
+    if (status === 'correcciones') return 'Correcciones';
+    if (status === 'rechazada') return 'Rechazada';
+    if (status === 'finalizada') return 'Finalizada';
+    return 'Reabierta';
   }
 
   getStatusClasses(status: PlaneacionStatus): string {
@@ -129,18 +136,24 @@ export class PlaneacionesList {
       return 'bg-cyan-100 text-cyan-700 ring-cyan-200';
     }
 
+    if (status === 'finalizada') {
+      return 'bg-green-100 text-green-700 ring-green-200';
+    }
+
     if (status === 'pendiente') {
       return 'bg-amber-100 text-amber-700 ring-amber-200';
     }
 
     return 'bg-orange-100 text-orange-700 ring-orange-200';
   }
-  getBoardItems(group: 'edicion' | 'revision' | 'finalizadas'): PlaneacionListItem[] {
+  getBoardItems(
+    group: 'edicion' | 'revision' | 'finalizadas'
+  ): PlaneacionListItem<string>[] {
   const items = this.filteredPlaneaciones();
 
   if (group === 'edicion') {
     return items.filter(
-      item => item.status === 'borrador' || item.status === 'correcciones'
+      item => this.canEdit(item)
     );
   }
 
@@ -150,7 +163,18 @@ export class PlaneacionesList {
     );
   }
 
-  return items.filter(item => item.status === 'aprobado');
+  return items.filter(item =>
+    item.status === 'aprobado' ||
+    item.status === 'rechazada' ||
+    item.status === 'finalizada'
+  );
+}
+
+getStatusTone(status: PlaneacionStatus): PlaneacionStatus {
+  if (status === 'en-proceso' || status === 'reabierta') return 'borrador';
+  if (status === 'rechazada') return 'correcciones';
+  if (status === 'finalizada') return 'aprobado';
+  return status;
 }
 getStatusStripeClasses(status: PlaneacionStatus): string {
   if (status === 'aprobado') {

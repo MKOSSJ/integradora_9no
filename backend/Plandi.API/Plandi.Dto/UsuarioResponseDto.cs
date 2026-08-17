@@ -16,6 +16,10 @@ namespace Plandi.Dto
 
         public string? Email { get; set; }
 
+        public string? Telefono { get; set; }
+
+        public DateTime? UltimoAcceso { get; set; }
+
         public bool Activo { get; set; }
 
         public bool CredencialesCompletas { get; set; }

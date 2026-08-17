@@ -37,7 +37,7 @@ import { PlaneacionDetail } from '../../../../core/models/planeacion.model';
 export class PlaneacionProgramaView implements AfterViewInit, OnDestroy {
 
   @Input({ required: true })
-  planeacion!: PlaneacionDetail;
+  planeacion!: PlaneacionDetail<string | number>;
 
   @ViewChild('pdfContainer')
   pdfContainer!: ElementRef<HTMLDivElement>;

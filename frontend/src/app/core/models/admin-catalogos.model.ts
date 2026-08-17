@@ -1,16 +1,11 @@
-export type SystemRole = 'ADMIN' | 'DOCENTE' | 'REVISOR' ;
+export type SystemRole = 'DIRECTIVO' | 'DOCENTE' | 'REVISOR';
 export type RolAcademia = 'Docente' | 'Revisor';
 export type EntityStatus = 'activo' | 'inactivo';
-
-export interface UsuarioAcademia {
-  academiaId: number;
-  academiaNombre: string;
-  rolEnAcademia: RolAcademia;
-  activo: boolean;
-}
+export type DataSourceOrigin = 'backend' | 'local';
 
 export interface UsuarioAdmin {
-  id: number;
+  source: 'local';
+  id: string;
   publicId: string;
   nombre: string;
   apellidoPaterno: string;
@@ -18,9 +13,28 @@ export interface UsuarioAdmin {
   email: string;
   telefono?: string;
   roles: SystemRole[];
-  academias: UsuarioAcademia[];
+  academiaPublicId?: string;
+  academiaNombre?: string;
+  rolEnAcademia?: RolAcademia | '';
   estado: EntityStatus;
   ultimoAcceso?: string;
+}
+
+export interface UsuarioBackendListItem {
+  [key: string]: unknown;
+  source: 'backend';
+  id: string;
+  publicId: string;
+  nombre: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  email: string;
+  telefono: string;
+  ultimoAcceso: string;
+  roles: SystemRole[];
+  academiaNombre: string;
+  rolEnAcademia: string;
+  estado: string;
 }
 
 export interface Carrera {
@@ -42,9 +56,9 @@ export interface CicloEscolar {
 }
 
 export interface Periodo {
-  id: number;
+  id: string;
   publicId: string;
-  cicloEscolarId: number;
+  cicloEscolarPublicId: string;
   cicloEscolarNombre: string;
   nombre: string;
   fechaInicio: string;
@@ -53,7 +67,7 @@ export interface Periodo {
 }
 
 export interface Academia {
-  id: number;
+  id: string;
   publicId: string;
   nombre: string;
   descripcion?: string;
@@ -77,31 +91,34 @@ export interface Asignatura {
 }
 
 export interface Grupo {
-  id: number;
+  id: string;
   publicId: string;
   nombre: string;
-  cuatrimestre: string;
-  carreraId: number;
+  cuatrimestre: number;
+  carreraPublicId: string;
   carreraNombre: string;
-  periodoId: number;
+  periodoPublicId: string;
   periodoNombre: string;
   estado: EntityStatus;
 }
 
 export interface CargaAcademica {
-  id: number;
+  source: DataSourceOrigin;
+  id: string;
   publicId: string;
-  periodoId: number;
+  periodoPublicId: string;
   periodoNombre: string;
-  grupoId: number;
+  grupoPublicId: string;
   grupoNombre: string;
-  asignaturaId: number;
+  asignaturaPublicId: string;
   asignaturaNombre: string;
-  docenteId: number;
+  docentePublicId: string;
   docenteNombre: string;
-  revisorId?: number;
+  docenteRoles?: string[];
+  revisorPublicId?: string;
   revisorNombre?: string;
-  academiaId?: number;
+  revisorRoles?: string[];
+  academiaPublicId?: string;
   academiaNombre?: string;
   estado: EntityStatus;
 }

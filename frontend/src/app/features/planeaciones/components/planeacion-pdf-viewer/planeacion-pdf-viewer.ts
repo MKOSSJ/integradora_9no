@@ -34,7 +34,7 @@ import { PlaneacionDetail } from '../../../../core/models/planeacion.model';
 })
 export class PlaneacionPdfViewer implements AfterViewInit, OnDestroy {
   @Input({ required: true })
-  planeacion!: PlaneacionDetail;
+  planeacion!: PlaneacionDetail<string | number>;
 
   @Input()
   mode: 'preview' | 'programa' = 'preview';

@@ -186,10 +186,10 @@
             <button
               type="button"
               class="mt-3 inline-flex h-10 items-center justify-center rounded-2xl bg-slate-900 px-4 text-sm font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-              [disabled]="!commentText.trim()"
+              [disabled]="!commentText.trim() || commentSaving()"
               (click)="addComment()"
             >
-              Agregar comentario
+              {{ commentSaving() ? 'Guardando...' : 'Agregar comentario' }}
             </button>
 
             <div class="mt-4 max-h-[260px] space-y-3 overflow-y-auto pr-1">
@@ -212,7 +212,7 @@
                     </div>
 
                     <span class="shrink-0 text-[11px] font-bold text-slate-400">
-                      {{ comment.hora }}
+                      {{ comment.fecha | date:'dd/MM/yyyy HH:mm' }}
                     </span>
                   </div>
 
@@ -250,21 +250,21 @@
         <button
           type="button"
           class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-teal-500 text-sm font-black text-white transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:bg-slate-300"
-          [disabled]="!canEdit"
+          [disabled]="!canEdit || saving || submitting"
           (click)="handleSaveDraft()"
         >
           <svg [lucideIcon]="saveIcon" class="h-5 w-5"></svg>
-          Guardar cambios
+          {{ saving ? 'Guardando...' : 'Guardar cambios' }}
         </button>
 
         <button
           type="button"
           class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
-          [disabled]="!canEdit"
+          [disabled]="!canEdit || saving || submitting"
           (click)="handleSubmitForApproval()"
         >
           <svg [lucideIcon]="sendIcon" class="h-5 w-5"></svg>
-          Enviar a revisión
+          {{ submitting ? 'Enviando...' : 'Enviar a revisión' }}
         </button>
       </div>
     </div>

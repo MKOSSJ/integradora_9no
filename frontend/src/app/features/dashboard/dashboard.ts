@@ -207,15 +207,15 @@ export class Dashboard {
           icon: LucideUsers
         },
         {
-          title: 'Asignación académica',
-          description: 'Relaciona docentes, grupos y asignaturas.',
-          route: '/asignacion-academica',
+          title: 'Asignación de revisores',
+          description: 'Asigna revisores a las planeaciones generadas.',
+          route: '/asignacion-revisores',
           icon: LucideClipboardCheck
         },
         {
-          title: 'Importar profesores',
-          description: 'Carga profesores mediante archivo.',
-          route: '/importar-profesores',
+          title: 'Importaciones',
+          description: 'Importa programas y genera planeaciones.',
+          route: '/importaciones',
           icon: LucideUploadCloud
         }
       ];

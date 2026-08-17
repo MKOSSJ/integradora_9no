@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { ImportacionesLocalService } from '../../../../core/services/importaciones-local.service';
 import { AdminImportPage } from '../../shared/admin-import-page/admin-import-page';
 import { AdminImportConfig } from '../../shared/admin-import-page/admin-import.types';
 
@@ -10,6 +11,8 @@ import { AdminImportConfig } from '../../shared/admin-import-page/admin-import.t
   styleUrl: './importar-profesores.css'
 })
 export class ImportarProfesores {
+  private readonly importacionesLocalService = inject(ImportacionesLocalService);
+
   config: AdminImportConfig = {
     title: 'Importar Profesores',
     subtitle: 'Carga usuarios docentes/revisores desde CSV o Excel con roles del sistema y rol dentro de academia.',
@@ -27,10 +30,7 @@ export class ImportarProfesores {
       { key: 'academia', label: 'Academia' },
       { key: 'rolAcademia', label: 'Rol academia' }
     ],
-    initialPreview: [
-      { id: 1, nombre: 'Carlos', apellidoPaterno: 'Pérez', apellidoMaterno: 'López', email: 'carlos.perez@uth.edu.mx', telefono: '7711234567', roles: 'DOCENTE', academia: 'Academia de Desarrollo de Software', rolAcademia: 'Docente', estado: 'validado', observacion: 'Registro válido' },
-      { id: 2, nombre: 'María', apellidoPaterno: 'González', apellidoMaterno: 'Ruiz', email: 'maria.gonzalez@uth.edu.mx', telefono: '7714567890', roles: 'DOCENTE,REVISOR', academia: 'Academia de Bases de Datos', rolAcademia: 'Revisor', estado: 'validado', observacion: 'Registro válido' },
-      { id: 3, nombre: 'Juan', apellidoPaterno: 'Martínez', apellidoMaterno: '', email: '', telefono: '7719999999', roles: 'DOCENTE', academia: 'Academia de Redes', rolAcademia: 'Docente', estado: 'error', observacion: 'Falta correo electrónico' }
-    ]
+    dataSource: this.importacionesLocalService.profesoresDataSource,
+    successMessage: 'Profesores importados correctamente.'
   };
 }

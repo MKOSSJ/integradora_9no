@@ -12,7 +12,6 @@ import {
   LucideGraduationCap,
   LucideLayers3,
   LucideClipboardList,
-  LucideUserPlus,
   LucideSchool,
   LucideBookOpen,
   LucideCalendarDays,
@@ -80,7 +79,7 @@ export class Sidebar {
     {
       title: 'Planeaciones',
       icon: LucideFileText,
-      roles: ['DOCENTE', 'REVISOR', 'DIRECTIVO'],
+      roles: ['DOCENTE', 'REVISOR'],
       items: [
         {
           label: 'Dashboard',
@@ -139,28 +138,10 @@ export class Sidebar {
           icon: LucideBookOpen,
         },
         {
-          label: 'Ciclos Escolares',
+          label: 'Ciclos y Periodos',
           route: '/ciclos',
           icon: LucideCalendarDays,
         },
-        {
-          label: 'Importación de Academias',
-          route: '/importacion-academica',
-          icon: LucideUpload,
-        },
-        {
-          label: 'Seguimiento de Planeaciones',
-          route: '/seguimiento-planeaciones',
-          icon: LucideCalendarDays,
-        },
-      ],
-    },
-
-    {
-      title: 'Carga Académica',
-      icon: LucideGraduationCap,
-      roles: ['DIRECTIVO'],
-      items: [
         {
           label: 'Academias',
           route: '/academias',
@@ -172,14 +153,14 @@ export class Sidebar {
           icon: LucideLayers3,
         },
         {
-          label: 'Asignación Académica',
-          route: '/asignacion-academica',
-          icon: LucideClipboardList,
+          label: 'Importaciones',
+          route: '/importaciones',
+          icon: LucideUpload,
         },
         {
-          label: 'Importar Profesores',
-          route: '/importar-profesores',
-          icon: LucideUserPlus,
+          label: 'Asignación de Revisores',
+          route: '/asignacion-revisores',
+          icon: LucideClipboardList,
         },
       ],
     },

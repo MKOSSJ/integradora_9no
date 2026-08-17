@@ -1,6 +1,14 @@
 import { NgClass } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ViewChild
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import {
   LucideDynamicIcon,
@@ -43,9 +51,14 @@ export class PlaneacionDetailPage implements OnInit {
   private route = inject(ActivatedRoute);
   private planeacionesService = inject(PlaneacionesService);
 
-  planeacion = signal<PlaneacionDetail | null>(null);
+  planeacion = signal<PlaneacionDetail<string> | null>(null);
   activeTab = signal<PlaneacionTab>('vista-previa');
   formTutorial = signal<PlaneacionTutorial | null>(null);
+  loadError = signal('');
+  saving = signal(false);
+  submitting = signal(false);
+
+  @ViewChild(PlaneacionInfoPanel) private infoPanel?: PlaneacionInfoPanel;
 
   backIcon = LucideArrowLeft;
   previewIcon = LucideFileText;
@@ -55,16 +68,23 @@ export class PlaneacionDetailPage implements OnInit {
   isEditable = computed(() => {
     const status = this.planeacion()?.status;
 
-    return status === 'borrador' || status === 'correcciones';
+    return status === 'borrador' ||
+      status === 'en-proceso' ||
+      status === 'correcciones' ||
+      status === 'reabierta';
   });
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const publicId = this.route.snapshot.paramMap.get('id')?.trim() ?? '';
 
-    this.planeacionesService.getPlaneacionById(id).subscribe(data => {
-      if (data) {
-        this.planeacion.set(data);
-      }
+    if (!publicId) {
+      this.loadError.set('La planeación solicitada no tiene un identificador válido.');
+      return;
+    }
+
+    this.planeacionesService.getPlaneacionById(publicId).subscribe({
+      next: data => this.planeacion.set(data),
+      error: error => this.loadError.set(this.errorMessage(error))
     });
   }
 
@@ -85,7 +105,24 @@ export class PlaneacionDetailPage implements OnInit {
 
     if (!current || !this.isEditable()) return;
 
-    this.planeacionesService.saveDraft(current.id).subscribe();
+    if (this.saving()) return;
+
+    this.saving.set(true);
+    this.planeacionesService.saveDraft(current).pipe(
+      finalize(() => this.saving.set(false))
+    ).subscribe({
+      next: updated => {
+        this.planeacion.set(updated);
+        this.infoPanel?.showFeedback(
+          'Planeación guardada correctamente.',
+          'success'
+        );
+      },
+      error: error => this.infoPanel?.showFeedback(
+        this.errorMessage(error),
+        'warning'
+      )
+    });
   }
 
   submitForApproval(): void {
@@ -93,22 +130,37 @@ export class PlaneacionDetailPage implements OnInit {
 
     if (!current || !this.isEditable()) return;
 
-    this.planeacionesService.submitForApproval(current.id).subscribe(() => {
-      this.planeacion.set({
-        ...current,
-        status: 'pendiente'
-      });
+    if (this.submitting()) return;
 
-      this.activeTab.set('vista-previa');
+    this.submitting.set(true);
+    this.planeacionesService.submitForApproval(String(current.id)).pipe(
+      finalize(() => this.submitting.set(false))
+    ).subscribe({
+      next: status => {
+        this.planeacion.set({ ...current, status });
+        this.activeTab.set('vista-previa');
+        this.infoPanel?.showFeedback(
+          'Planeación enviada a revisión correctamente.',
+          'success'
+        );
+      },
+      error: error => this.infoPanel?.showFeedback(
+        this.errorMessage(error),
+        'warning'
+      )
     });
   }
 
   getStatusLabel(status: PlaneacionStatus): string {
     if (status === 'aprobado') return 'Aprobado';
     if (status === 'borrador') return 'Borrador';
+    if (status === 'en-proceso') return 'En proceso';
     if (status === 'revision') return 'En revisión';
     if (status === 'pendiente') return 'Pendiente';
-    return 'Correcciones';
+    if (status === 'correcciones') return 'Correcciones';
+    if (status === 'rechazada') return 'Rechazada';
+    if (status === 'finalizada') return 'Finalizada';
+    return 'Reabierta';
   }
 
   getStatusClasses(status: PlaneacionStatus): string {
@@ -124,10 +176,36 @@ export class PlaneacionDetailPage implements OnInit {
       return 'bg-cyan-100 text-cyan-700 ring-cyan-200';
     }
 
+    if (status === 'finalizada') {
+      return 'bg-green-100 text-green-700 ring-green-200';
+    }
+
     if (status === 'pendiente') {
       return 'bg-amber-100 text-amber-700 ring-amber-200';
     }
 
     return 'bg-orange-100 text-orange-700 ring-orange-200';
+  }
+
+  private errorMessage(error: unknown): string {
+    if (error && typeof error === 'object') {
+      const payload = (error as { error?: unknown }).error;
+      if (payload && typeof payload === 'object') {
+        const response = payload as Record<string, unknown>;
+        const errors = response['errors'];
+        if (Array.isArray(errors)) {
+          const message = errors.filter(item => typeof item === 'string').join(' ');
+          if (message) return message;
+        }
+        const message = response['message'];
+        if (typeof message === 'string' && message.trim()) return message.trim();
+      }
+    }
+
+    if (error instanceof Error && error.message.trim()) {
+      return error.message.trim();
+    }
+
+    return 'No fue posible completar la operación.';
   }
 }

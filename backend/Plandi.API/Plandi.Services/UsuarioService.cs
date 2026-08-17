@@ -30,6 +30,8 @@ namespace Plandi.Services
                     ApellidoPaterno = u.ApellidoPaterno,
                     ApellidoMaterno = u.ApellidoMaterno,
                     Email = u.Email,
+                    Telefono = u.Telefono,
+                    UltimoAcceso = u.UltimoAcceso,
                     Activo = u.Activo && u.DeletedAt == null,
                     CredencialesCompletas = u.Email != null && u.PasswordHash != null
                 })

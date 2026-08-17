@@ -90,6 +90,7 @@ export class SeguimientoPlaneaciones implements OnInit {
     if (status === 'completada') return 'Completada';
     if (status === 'vencida') return 'Vencida';
     if (status === 'por-vencer') return 'Por vencer';
+    if (status === 'sin-fecha') return 'Sin fecha límite';
     return 'En tiempo';
   }
 
@@ -106,12 +107,20 @@ export class SeguimientoPlaneaciones implements OnInit {
       return 'bg-orange-100 text-orange-700 ring-orange-200';
     }
 
+    if (status === 'sin-fecha') {
+      return 'bg-slate-100 text-slate-600 ring-slate-200';
+    }
+
     return 'bg-cyan-100 text-cyan-700 ring-cyan-200';
   }
 
   getDaysText(item: SeguimientoPlaneacion): string {
     if (item.estadoSeguimiento === 'completada') {
       return 'Finalizada';
+    }
+
+    if (item.diasRestantes === undefined) {
+      return 'Sin fecha límite';
     }
 
     if (item.diasRestantes < 0) {
