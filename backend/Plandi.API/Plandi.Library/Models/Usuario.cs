@@ -22,6 +22,7 @@ namespace Plandi.Library.Models
 
         public bool TwoFactorEnabled { get; set; } = false;
         public string? TwoFactorSecretKey { get; set; }   
+        public DateTime? TwoFactorCodeExpires { get; set; }
 
         public string? PasswordResetToken { get; set; }
         public DateTime? PasswordResetTokenExpires { get; set; }

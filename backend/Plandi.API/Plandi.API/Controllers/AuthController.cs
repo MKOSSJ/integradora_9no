@@ -13,12 +13,14 @@ namespace Plandi.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly ITwoFactorService _twoFactorService;
         private readonly ILogger<AuthController> _logger;
         private readonly PasswordRecoveryRateLimiter _passwordRecoveryRateLimiter;
 
-        public AuthController(IAuthService authService, ILogger<AuthController> logger, PasswordRecoveryRateLimiter passwordRecoveryRateLimiter)
+        public AuthController(IAuthService authService, ITwoFactorService twoFactorService, ILogger<AuthController> logger, PasswordRecoveryRateLimiter passwordRecoveryRateLimiter)
         {
             _authService = authService;
+            _twoFactorService = twoFactorService;
             _logger = logger;
             _passwordRecoveryRateLimiter = passwordRecoveryRateLimiter;
         }
@@ -104,6 +106,47 @@ namespace Plandi.API.Controllers
                 });
             }
         }
+
+
+        [HttpPost("two-factor-verify")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(RequestTokenResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> VerifyTwoFactorCode([FromBody] TwoFactorDto twoFactorDto, [FromServices] ITwoFactorService twoFactorService)
+        {
+            if (twoFactorDto == null)
+            {
+                return BadRequest(new { message = "Datos de verificación no proporcionados." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await twoFactorService.VerifyTwoFactorCodeAsync(twoFactorDto);
+                if (!result.Success)
+                {
+                    return Unauthorized(result);
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while verifying two-factor code.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new LoginResponseDto
+                {
+                    Success = false,
+                    Message = "Ocurrió un error interno en el servidor."
+                });
+            }
+        }
+
 
         [HttpPost("refresh-token")]
         [AllowAnonymous]

@@ -111,6 +111,22 @@ namespace Plandi.Services
             usuario.LockoutEnd = null;
             await _dBContext.SaveChangesAsync();
 
+            if(usuario.TwoFactorEnabled)
+            {
+                var twoFactorCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+                usuario.TwoFactorSecretKey = twoFactorCode;
+                usuario.TwoFactorCodeExpires = DateTime.UtcNow.AddMinutes(5);
+                await _dBContext.SaveChangesAsync();
+                await _emailService.SendTwoFactorCodeEmailAsync(usuario, twoFactorCode);
+                return new LoginResponseDto
+                {
+                    Success = true,
+                    Message = "Se requiere autenticación de dos factores.",
+                    RequiresTwoFactor = true,
+                    Roles = usuario.UsuarioRoles.Select(ur => ur.Rol.Nombre).Distinct().OrderBy(rol => rol).ToList()
+                };
+            }
+
             var (token, expiresAt) = await _tokenService.GenerateAccessToken(usuario);
             var (refreshToken, tokenHash, refreshTokenExpiresAt) = await _tokenService.GenerateRefreshToken();
 
@@ -132,7 +148,6 @@ namespace Plandi.Services
                 AccessToken = token,
                 AccessTokenExpiresAt = expiresAt,
                 RefreshToken = refreshToken,
-                RequiresTwoFactor = usuario.TwoFactorEnabled,
                 Roles = usuario.UsuarioRoles.Select(ur => ur.Rol.Nombre).Distinct().OrderBy(rol => rol).ToList()
             };
         }
