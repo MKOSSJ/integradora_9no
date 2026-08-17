@@ -18,6 +18,8 @@ namespace Plandi.Dto.Catalogos
 
         [Required]
         public DateTime FechaFin { get; set; }
+
+        public DateTime? FechaLimiteEntregaPlaneaciones { get; set; }
     }
 
     public class PeriodoResponseDto
@@ -31,6 +33,8 @@ namespace Plandi.Dto.Catalogos
         public DateTime FechaInicio { get; set; }
 
         public DateTime FechaFin { get; set; }
+
+        public DateTime? FechaLimiteEntregaPlaneaciones { get; set; }
 
         public bool Activo { get; set; }
 

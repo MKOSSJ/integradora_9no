@@ -50,6 +50,7 @@ namespace Plandi.Services
                 Nombre = request.Nombre,
                 FechaInicio = request.FechaInicio,
                 FechaFin = request.FechaFin,
+                FechaLimiteEntregaPlaneaciones = request.FechaLimiteEntregaPlaneaciones,
                 CreatedBy = actorId
             };
             periodo.Estado = _lifecycle.ObtenerEstadoEfectivo(periodo);
@@ -76,6 +77,7 @@ namespace Plandi.Services
             periodo.Nombre = request.Nombre;
             periodo.FechaInicio = request.FechaInicio;
             periodo.FechaFin = request.FechaFin;
+            periodo.FechaLimiteEntregaPlaneaciones = request.FechaLimiteEntregaPlaneaciones;
             periodo.Estado = _lifecycle.ObtenerEstadoEfectivo(periodo);
             if (periodo.Estado == EstadoPeriodo.Cerrado) periodo.FechaCierre ??= DateTime.UtcNow;
             periodo.UpdatedAt = DateTime.UtcNow;
@@ -149,6 +151,11 @@ namespace Plandi.Services
             {
                 throw new AppException("La fecha de fin debe ser posterior a la fecha de inicio.");
             }
+            if (request.FechaLimiteEntregaPlaneaciones.HasValue &&
+                (request.FechaLimiteEntregaPlaneaciones.Value.Date < request.FechaInicio.Date || request.FechaLimiteEntregaPlaneaciones.Value.Date > request.FechaFin.Date))
+            {
+                throw new AppException("La fecha límite de entrega de planeaciones debe estar dentro del periodo escolar.");
+            }
         }
 
         private PeriodoResponseDto ToDto(Periodo periodo)
@@ -161,6 +168,7 @@ namespace Plandi.Services
                 Nombre = periodo.Nombre,
                 FechaInicio = periodo.FechaInicio,
                 FechaFin = periodo.FechaFin,
+                FechaLimiteEntregaPlaneaciones = periodo.FechaLimiteEntregaPlaneaciones,
                 Activo = periodo.Activo,
                 Estado = periodo.Estado,
                 EstadoEfectivo = estadoEfectivo,

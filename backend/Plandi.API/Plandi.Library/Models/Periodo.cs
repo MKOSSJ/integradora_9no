@@ -19,6 +19,8 @@ namespace Plandi.Library.Models
 
         public DateTime FechaFin { get; set; }
 
+        public DateTime? FechaLimiteEntregaPlaneaciones { get; set; }
+
         public EstadoPeriodo Estado { get; set; } = EstadoPeriodo.Activo;
 
         public DateTime? FechaCierre { get; set; }
