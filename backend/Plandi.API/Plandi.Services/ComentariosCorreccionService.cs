@@ -29,7 +29,7 @@ public sealed class ComentariosCorreccionService(AppDbContext context, IPeriodoL
         var usuario = await BuscarUsuarioConRolesAsync(usuarioId, cancellationToken);
         if (TieneRol(usuario, RolAutorizacion.Director))
             throw new AppException("El Director solo puede consultar los comentarios de corrección.");
-        if (planeacion.Estado is not (EstadoPlaneacion.EnRevision or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.Reabierta))
+        if (planeacion.Estado is not (EstadoPlaneacion.Borrador or EstadoPlaneacion.EnProceso or EstadoPlaneacion.EnRevision or EstadoPlaneacion.CorreccionSolicitada or EstadoPlaneacion.Reabierta))
             throw new AppException("Solo pueden agregarse comentarios durante revisión, corrección solicitada o reapertura.");
 
         var rolEnChat = await ExigirParticipanteAsync(planeacion, usuario, cancellationToken);
