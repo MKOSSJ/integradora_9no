@@ -1,0 +1,146 @@
+@if (planeacion(); as item) {
+  <div class="flex h-full min-h-0 flex-col bg-slate-50">
+    <header class="shrink-0 border-b border-slate-200 bg-white">
+      <div class="flex items-center justify-between gap-4 px-7 py-4">
+        <div class="flex min-w-0 items-center gap-4">
+          <a
+            routerLink="/planeaciones"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <svg [lucideIcon]="backIcon" class="h-5 w-5"></svg>
+          </a>
+
+          <div class="min-w-0">
+            <h1 class="truncate text-xl font-black text-slate-900">
+              {{ item.titulo }}
+            </h1>
+
+            <p class="text-sm font-medium text-slate-500">
+              Secuencia didáctica
+            </p>
+          </div>
+        </div>
+
+        <span
+          class="inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-extrabold ring-1"
+          [ngClass]="getStatusClasses(item.status)"
+        >
+          {{ getStatusLabel(item.status) }}
+        </span>
+      </div>
+
+      <nav class="flex gap-2 overflow-x-auto px-7">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-extrabold transition"
+          [ngClass]="activeTab() === 'vista-previa'
+            ? 'border-teal-500 text-teal-600'
+            : 'border-transparent text-slate-500 hover:text-slate-900'"
+          (click)="setTab('vista-previa')"
+        >
+          <svg [lucideIcon]="previewIcon" class="h-5 w-5"></svg>
+          Vista previa
+        </button>
+
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-extrabold transition"
+          [ngClass]="activeTab() === 'programa'
+            ? 'border-teal-500 text-teal-600'
+            : 'border-transparent text-slate-500 hover:text-slate-900'"
+          (click)="setTab('programa')"
+        >
+          <svg [lucideIcon]="programaIcon" class="h-5 w-5"></svg>
+          Programa
+        </button>
+
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-extrabold transition"
+          [ngClass]="
+            !isEditable()
+              ? 'cursor-not-allowed border-transparent text-slate-300'
+              : activeTab() === 'formulario'
+                ? 'border-teal-500 text-teal-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+          "
+          [disabled]="!isEditable()"
+          (click)="setTab('formulario')"
+        >
+          <svg [lucideIcon]="formIcon" class="h-5 w-5"></svg>
+
+          @if (isEditable()) {
+            Formulario de secuencia
+          } @else {
+            Formulario bloqueado
+          }
+        </button>
+      </nav>
+    </header>
+
+   <main class="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_320px] gap-4 overflow-y-auto bg-slate-50 p-4 max-xl:grid-cols-1">
+  <section class="min-h-[760px] overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm">
+    @if (activeTab() === 'vista-previa') {
+      <app-planeacion-pdf-viewer [planeacion]="item" mode="preview" />
+    }
+
+    @if (activeTab() === 'programa') {
+      <app-planeacion-programa-view [planeacion]="item" />
+    }
+
+    @if (activeTab() === 'formulario' && isEditable()) {
+      <app-planeacion-form
+        [planeacion]="item"
+        (tutorialChange)="updateFormTutorial($event)"
+      />
+    }
+
+    @if (activeTab() === 'formulario' && !isEditable()) {
+      <div class="flex min-h-[760px] items-center justify-center bg-slate-50 p-8">
+        <div class="max-w-md rounded-[28px] border border-amber-200 bg-amber-50 p-8 text-center">
+          <h2 class="text-xl font-black text-amber-800">
+            Formulario bloqueado
+          </h2>
+
+          <p class="mt-3 text-sm font-semibold leading-relaxed text-amber-700">
+            Esta planeación no se puede editar porque no está en estado borrador o correcciones.
+          </p>
+        </div>
+      </div>
+    }
+  </section>
+
+  <aside class="sticky top-4 block h-[calc(100vh-130px)] self-start max-xl:static max-xl:h-auto">
+    <app-planeacion-info-panel
+      class="block h-full"
+      [planeacion]="item"
+      [canEdit]="isEditable()"
+      [saving]="saving()"
+      [submitting]="submitting()"
+      [formTutorial]="activeTab() === 'formulario' ? formTutorial() : null"
+      (saveDraft)="saveDraft()"
+      (submitForApproval)="submitForApproval()"
+    />
+  </aside>
+</main>
+  </div>
+} @else if (loadError()) {
+  <div class="flex h-full items-center justify-center bg-slate-50">
+    <div class="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <h2 class="text-xl font-black text-slate-900">No fue posible cargar la planeación</h2>
+      <p class="mt-2 text-sm text-slate-500">{{ loadError() }}</p>
+    </div>
+  </div>
+} @else {
+  <div class="flex h-full items-center justify-center bg-slate-50">
+    <div class="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <h2 class="text-xl font-black text-slate-900">
+        Cargando planeación...
+      </h2>
+
+      <p class="mt-2 text-sm text-slate-500">
+        Espera un momento.
+      </p>
+    </div>
+  </div>
+}
