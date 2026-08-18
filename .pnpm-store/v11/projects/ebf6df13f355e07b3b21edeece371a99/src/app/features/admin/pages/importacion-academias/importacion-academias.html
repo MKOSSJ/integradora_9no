@@ -1,0 +1,90 @@
+<div class="min-h-full bg-slate-50 p-7">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <section class="relative overflow-hidden rounded-[36px] bg-gradient-to-br from-slate-950 via-teal-800 to-cyan-500 px-8 py-8 text-white shadow-2xl shadow-cyan-100">
+      <div class="relative flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-extrabold text-white/95 backdrop-blur">
+            Administración
+          </div>
+          <h1 class="mt-6 text-4xl font-black tracking-tight sm:text-5xl">Importaciones</h1>
+          <p class="mt-4 max-w-2xl text-base leading-8 text-white/85">Importa programas de asignatura, carga académica institucional y genera planeaciones con la API real.</p>
+        </div>
+        <button type="button" class="inline-flex w-fit items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-teal-700 shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500" [disabled]="generating()" (click)="generatePlaneaciones()">
+          <svg [lucideIcon]="generateIcon" class="h-5 w-5" [class.animate-spin]="generating()"></svg>
+          {{ generating() ? 'Generando...' : 'Generar planeaciones' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="rounded-[28px] border border-slate-200 bg-white p-3 shadow-sm">
+      <div class="grid gap-3 sm:grid-cols-2">
+        <button type="button" class="rounded-2xl px-5 py-3 text-sm font-black transition" [ngClass]="activeTab() === 'programas' ? 'bg-teal-500 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'" (click)="activeTab.set('programas')">Programa de asignatura</button>
+        <button type="button" class="rounded-2xl px-5 py-3 text-sm font-black transition" [ngClass]="activeTab() === 'academias' ? 'bg-teal-500 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'" (click)="activeTab.set('academias')">Carga académica</button>
+      </div>
+    </section>
+
+    @if (activeTab() === 'programas') {
+      <app-admin-import-page [config]="programConfig"></app-admin-import-page>
+    } @else {
+      <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+        <label class="block">
+          <span class="mb-2 block text-sm font-black text-slate-700">Periodo</span>
+          <select class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-900 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100" [value]="selectedPeriodoPublicId()" (change)="selectPeriodo($event)">
+            <option value="">Selecciona un periodo</option>
+            @for (option of periodoOptions(); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+      </section>
+      <app-admin-import-page [config]="cargaAcademicaConfig"></app-admin-import-page>
+    }
+  </div>
+</div>
+
+@if (generationResult(); as result) {
+  <div class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+    <section class="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[32px] bg-white shadow-2xl">
+      <div class="p-6 text-center">
+        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-green-100 text-green-600">
+          <svg [lucideIcon]="checkIcon" class="h-8 w-8"></svg>
+        </div>
+        <h2 class="mt-5 text-2xl font-black text-slate-900">Generación finalizada</h2>
+        <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-black uppercase text-slate-400">Programas</p><p class="mt-2 text-3xl font-black text-slate-900">{{ result.totalProgramas }}</p></div>
+          <div class="rounded-2xl bg-green-50 p-4"><p class="text-xs font-black uppercase text-green-600">Creadas</p><p class="mt-2 text-3xl font-black text-green-600">{{ result.planeacionesCreadas }}</p></div>
+          <div class="rounded-2xl bg-cyan-50 p-4"><p class="text-xs font-black uppercase text-cyan-600">Existentes</p><p class="mt-2 text-3xl font-black text-cyan-600">{{ result.yaExistentes }}</p></div>
+          <div class="rounded-2xl bg-amber-50 p-4"><p class="text-xs font-black uppercase text-amber-600">Omitidas</p><p class="mt-2 text-3xl font-black text-amber-600">{{ result.omitidas }}</p></div>
+        </div>
+      </div>
+      @if (result.planeaciones.length > 0) {
+        <div class="overflow-x-auto border-t border-slate-100">
+          <table class="min-w-[760px] w-full text-left">
+            <thead><tr class="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-400"><th class="px-6 py-4 font-black">Asignatura</th><th class="px-6 py-4 font-black">Docente</th><th class="px-6 py-4 font-black">Estado</th><th class="px-6 py-4 font-black">Resultado</th></tr></thead>
+            <tbody class="divide-y divide-slate-100">
+              @for (planeacion of result.planeaciones; track planeacion.planeacionPublicId ?? planeacion.programaAsignaturaPublicId) {
+                <tr><td class="px-6 py-5 text-sm font-bold text-slate-600">{{ planeacion.asignatura }}</td><td class="px-6 py-5 text-sm font-bold text-slate-600">{{ planeacion.docentes || '—' }}</td><td class="px-6 py-5 text-sm font-bold text-slate-600">{{ planeacion.estado || '—' }}</td><td class="px-6 py-5 text-sm font-semibold text-slate-500">{{ planeacion.resultado }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      <footer class="flex justify-end border-t border-slate-100 px-6 py-5">
+        <button type="button" class="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-500 px-5 text-sm font-black text-white transition hover:bg-teal-600" (click)="closeGenerationResult()">Aceptar</button>
+      </footer>
+    </section>
+  </div>
+}
+
+@if (generationError(); as message) {
+  <div class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+    <section class="w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
+      <div class="p-6 text-center">
+        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-red-100 text-red-600"><svg [lucideIcon]="warningIcon" class="h-8 w-8"></svg></div>
+        <h2 class="mt-5 text-2xl font-black text-slate-900">Error</h2>
+        <p class="mt-3 text-sm font-semibold leading-relaxed text-slate-500">{{ message }}</p>
+      </div>
+      <footer class="flex justify-end border-t border-slate-100 px-6 py-5"><button type="button" class="inline-flex h-12 items-center justify-center rounded-2xl bg-red-600 px-5 text-sm font-black text-white transition hover:bg-red-700" (click)="closeGenerationError()">Aceptar</button></footer>
+    </section>
+  </div>
+}
