@@ -34,5 +34,7 @@ namespace Plandi.Library.Models
         public ICollection<AcademiaUsuario> AcademiaUsuarios { get; set; } = new List<AcademiaUsuario>();
 
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+        public ICollection<UserDeviceToken> UserDeviceTokens { get; set; } = new List<UserDeviceToken>();
     }
 }

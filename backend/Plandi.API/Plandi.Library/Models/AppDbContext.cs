@@ -46,6 +46,7 @@ public class AppDbContext : DbContext
     public DbSet<ChatParticipante> ChatParticipantes => Set<ChatParticipante>();
     public DbSet<ChatMensaje> ChatMensajes => Set<ChatMensaje>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<UserDeviceToken> UserDeviceTokens => Set<UserDeviceToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -664,6 +665,26 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.Usuario)
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(e => e.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<UserDeviceToken>(entity =>
+        {
+            entity.ToTable("user_device_tokens");
+
+            entity.HasIndex(e => e.DeviceToken)
+                .IsUnique();
+
+            entity.Property(e => e.DeviceToken)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            entity.Property(e => e.DeviceType)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.UserDeviceTokens)
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

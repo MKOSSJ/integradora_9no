@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
 using Plandi.Dto.Enums;
@@ -63,9 +64,19 @@ public sealed class EdicionPlaneacionService(AppDbContext context, IAutorizacion
     }
 }
 
-public sealed class AsignacionRevisorPlaneacionService(AppDbContext context, IAutorizacionService autorizacion, IPeriodoLifecycleService lifecycle) : IAsignacionRevisorPlaneacionService
+public sealed class AsignacionRevisorPlaneacionService(
+    AppDbContext context,
+    IAutorizacionService autorizacion,
+    IPeriodoLifecycleService lifecycle,
+    IFirebaseNotificacionService? firebaseNotificaciones = null,
+    ILogger<AsignacionRevisorPlaneacionService>? logger = null) : IAsignacionRevisorPlaneacionService
 {
-    public AsignacionRevisorPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : this(context, autorizacion, PeriodoLifecycleService.ForContext(context)) { }
+    public AsignacionRevisorPlaneacionService(AppDbContext context, IAutorizacionService autorizacion)
+        : this(context, autorizacion, PeriodoLifecycleService.ForContext(context), null, null) { }
+
+    public AsignacionRevisorPlaneacionService(AppDbContext context, IAutorizacionService autorizacion, IPeriodoLifecycleService lifecycle)
+        : this(context, autorizacion, lifecycle, null, null) { }
+
     public async Task<PlaneacionResumenDto> AsignarAsync(Guid planeacionPublicId, Guid revisorPublicId, long usuarioAutorizadoId, CancellationToken cancellationToken = default)
     {
         var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);
@@ -86,7 +97,37 @@ public sealed class AsignacionRevisorPlaneacionService(AppDbContext context, IAu
         planeacion.FechaUltimaModificacion = DateTime.UtcNow;
         planeacion.UpdatedAt = DateTime.UtcNow;
         await context.SaveChangesAsync(cancellationToken);
+
+        await NotificarRevisorAsignadoAsync(revisor.Id, planeacion, cancellationToken);
+
         return PlaneacionFlujoSupport.Resumen(planeacion);
+    }
+
+    private async Task NotificarRevisorAsignadoAsync(long revisorId, PlaneacionDidactica planeacion, CancellationToken cancellationToken)
+    {
+        if (firebaseNotificaciones is null)
+            return;
+
+        try
+        {
+            var asignatura = PlaneacionFlujoSupport.ObtenerNombreAsignatura(planeacion);
+
+            var titulo = "Nueva planeación asignada para revisión";
+            var mensaje = $"Se te ha asignado como revisor de la planeación didáctica de {asignatura}.";
+
+            var datos = new Dictionary<string, string>
+            {
+                ["tipo"] = "ASIGNACION_REVISOR",
+                ["planeacionPublicId"] = planeacion.PublicId.ToString(),
+                ["asignatura"] = asignatura
+            };
+
+            await firebaseNotificaciones.SendNotificationAsync(revisorId, titulo, mensaje, datos, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex, "No se pudo enviar la notificación push de asignación de revisor para el usuario {RevisorId}.", revisorId);
+        }
     }
 }
 
@@ -114,9 +155,16 @@ public sealed class PlaneacionesRevisorService(AppDbContext context, IAutorizaci
     }
 }
 
-public sealed class EstadoPlaneacionService(AppDbContext context, IAutorizacionService autorizacion, IPeriodoLifecycleService lifecycle) : IEstadoPlaneacionService
+public sealed class EstadoPlaneacionService(
+    AppDbContext context,
+    IAutorizacionService autorizacion,
+    IPeriodoLifecycleService lifecycle,
+    IFirebaseNotificacionService? firebaseNotificaciones = null,
+    ILogger<EstadoPlaneacionService>? logger = null) : IEstadoPlaneacionService
 {
-    public EstadoPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : this(context, autorizacion, PeriodoLifecycleService.ForContext(context)) { }
+    public EstadoPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : this(context, autorizacion, PeriodoLifecycleService.ForContext(context), null, null) { }
+    public EstadoPlaneacionService(AppDbContext context, IAutorizacionService autorizacion, IPeriodoLifecycleService lifecycle) : this(context, autorizacion, lifecycle, null, null) { }
+
     public async Task<PlaneacionResumenDto> EnviarARevisionAsync(Guid planeacionPublicId, long docenteId, CancellationToken cancellationToken = default)
     {
         await autorizacion.ExigirRolAsync(docenteId, RolAutorizacion.Docente, cancellationToken);
@@ -127,7 +175,12 @@ public sealed class EstadoPlaneacionService(AppDbContext context, IAutorizacionS
             throw new AppException("La planeación no está disponible para enviarse a revisión.");
         if (!planeacion.RevisorId.HasValue)
             throw new AppException("Debe asignarse un revisor antes de enviar la planeación a revisión.");
-        return await CambiarAsync(planeacion, docenteId, EstadoPlaneacion.EnRevision, cancellationToken);
+
+        var resumen = await CambiarAsync(planeacion, docenteId, EstadoPlaneacion.EnRevision, cancellationToken);
+
+        await NotificarPlaneacionEnviadaARevisionAsync(planeacion.RevisorId.Value, planeacion, cancellationToken);
+
+        return resumen;
     }
 
     public async Task<PlaneacionResumenDto> ResolverRevisionAsync(Guid planeacionPublicId, long revisorId, EstadoPlaneacion estado, CancellationToken cancellationToken = default)
@@ -141,14 +194,19 @@ public sealed class EstadoPlaneacionService(AppDbContext context, IAutorizacionS
         {
             if (planeacion.Estado != EstadoPlaneacion.Aprobada)
                 throw new AppException("Solo una planeación aprobada puede reabrirse.");
-            return await CambiarAsync(planeacion, revisorId, estado, cancellationToken);
+            var resumenReabierta = await CambiarAsync(planeacion, revisorId, estado, cancellationToken);
+            await NotificarResolucionRevisionAsync(planeacion, estado, cancellationToken);
+            return resumenReabierta;
         }
 
         if (estado is not (EstadoPlaneacion.Aprobada or EstadoPlaneacion.Rechazada or EstadoPlaneacion.CorreccionSolicitada))
             throw new AppException("El revisor solo puede aprobar, rechazar, solicitar correcciones o reabrir una planeación.");
         if (planeacion.Estado != EstadoPlaneacion.EnRevision)
             throw new AppException("Solo se pueden resolver planeaciones que están en revisión.");
-        return await CambiarAsync(planeacion, revisorId, estado, cancellationToken);
+
+        var resumen = await CambiarAsync(planeacion, revisorId, estado, cancellationToken);
+        await NotificarResolucionRevisionAsync(planeacion, estado, cancellationToken);
+        return resumen;
     }
 
     private async Task<PlaneacionResumenDto> CambiarAsync(PlaneacionDidactica planeacion, long usuarioId, EstadoPlaneacion estado, CancellationToken cancellationToken)
@@ -160,10 +218,101 @@ public sealed class EstadoPlaneacionService(AppDbContext context, IAutorizacionS
         await context.SaveChangesAsync(cancellationToken);
         return PlaneacionFlujoSupport.Resumen(planeacion);
     }
+
+    private async Task NotificarPlaneacionEnviadaARevisionAsync(long revisorId, PlaneacionDidactica planeacion, CancellationToken cancellationToken)
+    {
+        if (firebaseNotificaciones is null)
+            return;
+
+        try
+        {
+            var asignatura = PlaneacionFlujoSupport.ObtenerNombreAsignatura(planeacion);
+            var titulo = "Planeación enviada a revisión";
+            var mensaje = $"La planeación didáctica de {asignatura} ha sido enviada para revisión.";
+
+            var datos = new Dictionary<string, string>
+            {
+                ["tipo"] = "PLANEACION_ENVIADA_REVISION",
+                ["planeacionPublicId"] = planeacion.PublicId.ToString(),
+                ["asignatura"] = asignatura,
+                ["estado"] = EstadoPlaneacion.EnRevision.ToString()
+            };
+
+            await firebaseNotificaciones.SendNotificationAsync(revisorId, titulo, mensaje, datos, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex, "No se pudo enviar la notificación push de envío a revisión para el revisor {RevisorId}.", revisorId);
+        }
+    }
+
+    private async Task NotificarResolucionRevisionAsync(PlaneacionDidactica planeacion, EstadoPlaneacion estado, CancellationToken cancellationToken)
+    {
+        if (firebaseNotificaciones is null)
+            return;
+
+        try
+        {
+            var docentesIds = await context.CargasAcademicas
+                .Where(c => c.Activo && c.DeletedAt == null && c.PeriodoId == planeacion.PeriodoId && c.AsignaturaId == planeacion.AsignaturaId)
+                .Select(c => c.DocenteId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            if (docentesIds.Count == 0)
+                return;
+
+            var asignatura = PlaneacionFlujoSupport.ObtenerNombreAsignatura(planeacion);
+
+            var (titulo, mensaje, tipo) = estado switch
+            {
+                EstadoPlaneacion.Aprobada => (
+                    "Planeación aprobada",
+                    $"La planeación didáctica de {asignatura} ha sido aprobada.",
+                    "PLANEACION_APROBADA"),
+                EstadoPlaneacion.Rechazada => (
+                    "Planeación rechazada",
+                    $"La planeación didáctica de {asignatura} ha sido rechazada.",
+                    "PLANEACION_RECHAZADA"),
+                EstadoPlaneacion.CorreccionSolicitada => (
+                    "Correcciones solicitadas en planeación",
+                    $"Se han solicitado correcciones para la planeación didáctica de {asignatura}.",
+                    "PLANEACION_CORRECCION_SOLICITADA"),
+                EstadoPlaneacion.Reabierta => (
+                    "Planeación reabierta",
+                    $"La planeación didáctica de {asignatura} ha sido reabierta para edición.",
+                    "PLANEACION_REABIERTA"),
+                _ => (
+                    $"Actualización de planeación: {estado}",
+                    $"La planeación didáctica de {asignatura} cambió al estado {estado}.",
+                    "PLANEACION_CAMBIO_ESTADO")
+            };
+
+            var datos = new Dictionary<string, string>
+            {
+                ["tipo"] = tipo,
+                ["planeacionPublicId"] = planeacion.PublicId.ToString(),
+                ["asignatura"] = asignatura,
+                ["estado"] = estado.ToString()
+            };
+
+            await firebaseNotificaciones.SendNotificationToUsersAsync(docentesIds, titulo, mensaje, datos, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex, "No se pudo enviar la notificación push de resolución de revisión ({Estado}) para la planeación {PlaneacionId}.", estado, planeacion.PublicId);
+        }
+    }
 }
 
 internal static class PlaneacionFlujoSupport
 {
+    internal static string ObtenerNombreAsignatura(PlaneacionDidactica planeacion) =>
+        !string.IsNullOrWhiteSpace(planeacion.Asignatura?.Nombre)
+            ? planeacion.Asignatura.Nombre
+            : (!string.IsNullOrWhiteSpace(planeacion.Caratula?.NombreAsignatura)
+                ? planeacion.Caratula.NombreAsignatura
+                : "Asignatura");
     internal static IQueryable<PlaneacionDidactica> QueryDetalle(AppDbContext context) => context.PlaneacionesDidacticas
         .Include(p => p.Periodo)
         .Include(p => p.Asignatura)

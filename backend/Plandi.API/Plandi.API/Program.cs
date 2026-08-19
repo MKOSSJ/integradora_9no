@@ -1,3 +1,5 @@
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +18,23 @@ using Plandi.API.Security;
 using Plandi.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Inicialización de Firebase Admin SDK
+var firebaseCredsPath = builder.Configuration["Firebase:CredentialsPath"] 
+    ?? Path.Combine(builder.Environment.ContentRootPath, "integradora-f8c90-firebase-adminsdk-fbsvc-ae90c194d0.json");
+
+if (!File.Exists(firebaseCredsPath))
+{
+    firebaseCredsPath = Path.Combine(AppContext.BaseDirectory, "integradora-f8c90-firebase-adminsdk-fbsvc-ae90c194d0.json");
+}
+
+if (File.Exists(firebaseCredsPath) && FirebaseApp.DefaultInstance == null)
+{
+    FirebaseApp.Create(new AppOptions
+    {
+        Credential = GoogleCredential.FromFile(firebaseCredsPath)
+    });
+}
 
 var jwtKey = Environment.GetEnvironmentVariable("JWT_SIGNING_KEY") ?? builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.StartsWith("CAMBIAR_", StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
@@ -75,10 +94,17 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
-        if (allowedOrigins != null)
+        if (allowedOrigins != null && allowedOrigins.Count > 0)
         {
             policy
                 .WithOrigins(allowedOrigins.ToArray())
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+        else
+        {
+            policy
+                .AllowAnyOrigin()
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         }
@@ -130,6 +156,7 @@ builder.Services.AddScoped<IAsignacionRevisorPlaneacionService, AsignacionReviso
 builder.Services.AddScoped<IPlaneacionesRevisorService, PlaneacionesRevisorService>();
 builder.Services.AddScoped<IEstadoPlaneacionService, EstadoPlaneacionService>();
 builder.Services.AddScoped<IComentariosCorreccionService, ComentariosCorreccionService>();
+builder.Services.AddScoped<IFirebaseNotificacionService, FirebaseNotificacionService>();
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<PlaneacionesProfile>());
 
 builder.Services.AddEndpointsApiExplorer();
@@ -166,7 +193,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors("AllowSpecificOrigin");
 app.Use(async (httpContext, next) =>
 {

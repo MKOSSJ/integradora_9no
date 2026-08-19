@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Plandi.Dto.Catalogos;
 using Plandi.Dto.Common;
 using Plandi.Dto.Enums;
@@ -7,9 +8,14 @@ using Plandi.Services.Interfaces;
 
 namespace Plandi.Services;
 
-public sealed class ComentariosCorreccionService(AppDbContext context, IPeriodoLifecycleService lifecycle) : IComentariosCorreccionService
+public sealed class ComentariosCorreccionService(
+    AppDbContext context,
+    IPeriodoLifecycleService lifecycle,
+    IFirebaseNotificacionService? firebaseNotificaciones = null,
+    ILogger<ComentariosCorreccionService>? logger = null) : IComentariosCorreccionService
 {
-    public ComentariosCorreccionService(AppDbContext context) : this(context, PeriodoLifecycleService.ForContext(context)) { }
+    public ComentariosCorreccionService(AppDbContext context) : this(context, PeriodoLifecycleService.ForContext(context), null, null) { }
+    public ComentariosCorreccionService(AppDbContext context, IPeriodoLifecycleService lifecycle) : this(context, lifecycle, null, null) { }
     private const string TituloChat = "Comentarios de corrección";
 
     public async Task<ComentarioCorreccionDto> CrearAsync(
@@ -65,6 +71,8 @@ public sealed class ComentariosCorreccionService(AppDbContext context, IPeriodoL
         chat.Mensajes.Add(mensaje);
         await context.SaveChangesAsync(cancellationToken);
 
+        await NotificarNuevoComentarioAsync(planeacion, usuario, rolEnChat, mensaje.PublicId, cancellationToken);
+
         return ADto(mensaje, rolEnChat);
     }
 
@@ -102,10 +110,75 @@ public sealed class ComentariosCorreccionService(AppDbContext context, IPeriodoL
         };
     }
 
+    private async Task NotificarNuevoComentarioAsync(
+        PlaneacionDidactica planeacion,
+        Usuario usuarioEmisor,
+        string rolEnChat,
+        Guid comentarioPublicId,
+        CancellationToken cancellationToken)
+    {
+        if (firebaseNotificaciones is null)
+            return;
+
+        try
+        {
+            var nombreEmisor = string.Join(" ", new[] { usuarioEmisor.Nombre, usuarioEmisor.ApellidoPaterno, usuarioEmisor.ApellidoMaterno }
+                .Where(valor => !string.IsNullOrWhiteSpace(valor)));
+            if (string.IsNullOrWhiteSpace(nombreEmisor))
+                nombreEmisor = "Un usuario";
+
+            var asignatura = !string.IsNullOrWhiteSpace(planeacion.Asignatura?.Nombre)
+                ? planeacion.Asignatura.Nombre
+                : (!string.IsNullOrWhiteSpace(planeacion.Caratula?.NombreAsignatura)
+                    ? planeacion.Caratula.NombreAsignatura
+                    : "Asignatura");
+
+            var titulo = "Nuevo comentario en planeación";
+            var mensaje = $"{nombreEmisor} ({rolEnChat}) agregó un comentario en la planeación de {asignatura}.";
+
+            var datos = new Dictionary<string, string>
+            {
+                ["tipo"] = "NUEVO_COMENTARIO_CORRECCION",
+                ["planeacionPublicId"] = planeacion.PublicId.ToString(),
+                ["asignatura"] = asignatura,
+                ["comentarioPublicId"] = comentarioPublicId.ToString(),
+                ["rolEmisor"] = rolEnChat
+            };
+
+            if (rolEnChat == "Docente")
+            {
+                if (planeacion.RevisorId.HasValue && planeacion.RevisorId.Value != usuarioEmisor.Id)
+                {
+                    await firebaseNotificaciones.SendNotificationAsync(planeacion.RevisorId.Value, titulo, mensaje, datos, cancellationToken);
+                }
+            }
+            else if (rolEnChat == "Revisor")
+            {
+                var docentesIds = await context.CargasAcademicas
+                    .Where(c => c.Activo && c.DeletedAt == null && c.PeriodoId == planeacion.PeriodoId && c.AsignaturaId == planeacion.AsignaturaId && c.DocenteId != usuarioEmisor.Id)
+                    .Select(c => c.DocenteId)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+
+                if (docentesIds.Count > 0)
+                {
+                    await firebaseNotificaciones.SendNotificationToUsersAsync(docentesIds, titulo, mensaje, datos, cancellationToken);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex, "No se pudo enviar la notificación push de nuevo comentario para la planeación {PlaneacionId}.", planeacion.PublicId);
+        }
+    }
+
     private async Task<PlaneacionDidactica> BuscarPlaneacionAsync(Guid publicId, CancellationToken cancellationToken) =>
-        await context.PlaneacionesDidacticas.FirstOrDefaultAsync(
-            p => p.PublicId == publicId && p.Activo && p.DeletedAt == null,
-            cancellationToken)
+        await context.PlaneacionesDidacticas
+            .Include(p => p.Asignatura)
+            .Include(p => p.Caratula)
+            .FirstOrDefaultAsync(
+                p => p.PublicId == publicId && p.Activo && p.DeletedAt == null,
+                cancellationToken)
         ?? throw new AppException("La planeación solicitada no existe.");
 
     private async Task<Usuario> BuscarUsuarioConRolesAsync(long usuarioId, CancellationToken cancellationToken) =>
