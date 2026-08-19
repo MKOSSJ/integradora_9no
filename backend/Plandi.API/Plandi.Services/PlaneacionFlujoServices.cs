@@ -66,6 +66,17 @@ public sealed class EdicionPlaneacionService(AppDbContext context, IAutorizacion
 public sealed class AsignacionRevisorPlaneacionService(AppDbContext context, IAutorizacionService autorizacion, IPeriodoLifecycleService lifecycle) : IAsignacionRevisorPlaneacionService
 {
     public AsignacionRevisorPlaneacionService(AppDbContext context, IAutorizacionService autorizacion) : this(context, autorizacion, PeriodoLifecycleService.ForContext(context)) { }
+
+    public async Task<IReadOnlyList<PlaneacionResumenDto>> ObtenerAsync(long usuarioAutorizadoId, CancellationToken cancellationToken = default)
+    {
+        await autorizacion.ExigirRolAsync(usuarioAutorizadoId, RolAutorizacion.Director, cancellationToken);
+        var planeaciones = await PlaneacionFlujoSupport.QueryDetalle(context)
+            .Where(p => p.Activo && p.DeletedAt == null)
+            .OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt)
+            .ToListAsync(cancellationToken);
+        return planeaciones.Select(PlaneacionFlujoSupport.Resumen).ToList();
+    }
+
     public async Task<PlaneacionResumenDto> AsignarAsync(Guid planeacionPublicId, Guid revisorPublicId, long usuarioAutorizadoId, CancellationToken cancellationToken = default)
     {
         var planeacion = await PlaneacionFlujoSupport.BuscarDetalleAsync(context, planeacionPublicId, cancellationToken);

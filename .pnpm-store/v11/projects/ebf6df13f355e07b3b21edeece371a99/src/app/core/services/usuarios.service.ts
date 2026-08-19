@@ -172,6 +172,24 @@ export class UsuariosService {
     return request;
   }
 
+  ensureReviewerRole(usuarioPublicId: string): Observable<{ added: boolean }> {
+    return this.fetchUserRoles(usuarioPublicId).pipe(
+      switchMap(currentRoles => {
+        if (currentRoles.roles.some(role => role.nombre === 'Revisor')) {
+          this.syncUserRoles(usuarioPublicId, currentRoles);
+          return of({ added: false });
+        }
+
+        return this.assignRole(usuarioPublicId, 'REVISOR').pipe(
+          map(updatedRoles => {
+            this.syncUserRoles(usuarioPublicId, updatedRoles);
+            return { added: true };
+          })
+        );
+      })
+    );
+  }
+
   private loadAllUsers(): Observable<UsuarioListResponseDto[]> {
     const pageSize = 100;
     const requestPage = (page: number) => this.http
@@ -231,7 +249,7 @@ export class UsuariosService {
       }),
       academiaNombre: 'Sin información',
       rolEnAcademia: 'Sin información',
-      estado: 'Sin información'
+      estado: user.activo ? 'activo' : 'inactivo'
     };
   }
 
@@ -304,6 +322,14 @@ export class UsuariosService {
       shareReplay({ bufferSize: 1, refCount: false })
     ));
     return updated;
+  }
+
+  private syncUserRoles(
+    publicId: string,
+    response: UsuarioRolesResponseDto
+  ): void {
+    const current = this.backendUsers.get(publicId);
+    if (current) this.updateUserRoles(current, response);
   }
 
   private requireCatalogRole(role: SystemRole): RolUsuarioResponseDto {

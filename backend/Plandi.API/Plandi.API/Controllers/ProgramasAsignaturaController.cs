@@ -12,6 +12,11 @@ namespace Plandi.API.Controllers;
 [Route("api/programas-asignatura")]
 public class ProgramasAsignaturaController(IProgramaAsignaturaImportService importacionService, IWebHostEnvironment environment, IAutorizacionService autorizacion, IPlaneacionDocumentosService documentos) : ControllerBase
 {
+    [Authorize(Roles = "Director")]
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<ProgramaAsignaturaResumenDto>>>> Obtener(CancellationToken cancellationToken) =>
+        Ok(ApiResponse<IReadOnlyList<ProgramaAsignaturaResumenDto>>.Ok(await importacionService.ObtenerAsync(cancellationToken)));
+
     [Authorize]
     [HttpGet("{publicId:guid}/archivo")]
     public async Task<IActionResult> VisualizarArchivo(Guid publicId, CancellationToken cancellationToken)

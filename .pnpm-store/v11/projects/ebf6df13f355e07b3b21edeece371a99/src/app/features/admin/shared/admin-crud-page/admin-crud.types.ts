@@ -8,6 +8,7 @@ export type AdminFieldType =
   | 'date'
   | 'textarea'
   | 'select'
+  | 'reviewer-select'
   | 'multiselect';
 
 export interface AdminOption {
@@ -37,6 +38,12 @@ export interface AdminColumn {
   kind?: 'text' | 'status' | 'chips' | 'date';
 }
 
+export interface AdminRowDetails {
+  itemsKey: string;
+  columns: AdminColumn[];
+  emptyMessage: string;
+}
+
 export interface AdminCounter {
   label: string;
   valueKey: string;
@@ -52,11 +59,14 @@ export interface AdminCrudConfig {
   searchPlaceholder: string;
   entityLabel: string;
   columns: AdminColumn[];
+  rowDetails?: AdminRowDetails;
   fields: AdminField[];
   initialItems: Record<string, any>[];
   counters: AdminCounter[];
   searchKeys: string[];
   dataSource?: AdminCrudDataSource;
+  showHeader?: boolean;
+  showCreateAction?: boolean;
   successMessages?: {
     create: string;
     update: string;

@@ -30,6 +30,7 @@
       </div>
 
       <nav class="flex gap-2 overflow-x-auto px-7">
+        @if (!isDirector()) {
         <button
           type="button"
           class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-extrabold transition"
@@ -41,6 +42,7 @@
           <svg [lucideIcon]="previewIcon" class="h-5 w-5"></svg>
           Vista previa
         </button>
+        }
 
         <button
           type="button"
@@ -81,7 +83,7 @@
    <main class="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_320px] gap-4 overflow-y-auto bg-slate-50 p-4 max-xl:grid-cols-1">
   <section class="min-h-[760px] overflow-visible rounded-[28px] border border-slate-200 bg-white shadow-sm">
     @if (activeTab() === 'vista-previa') {
-      <app-planeacion-pdf-viewer [planeacion]="item" mode="preview" />
+      <app-planeacion-pdf-viewer [planeacion]="item" [refreshKey]="pdfRefreshKey()" mode="preview" />
     }
 
     @if (activeTab() === 'programa') {

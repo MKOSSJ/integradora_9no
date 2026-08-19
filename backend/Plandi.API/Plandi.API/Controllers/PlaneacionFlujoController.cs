@@ -37,6 +37,11 @@ public sealed class PlaneacionFlujoController(
     public async Task<ActionResult<ApiResponse<PlaneacionResumenDto>>> AsignarRevisor(Guid publicId, [FromBody] AsignarRevisorPlaneacionDto solicitud, CancellationToken cancellationToken) =>
         Ok(ApiResponse<PlaneacionResumenDto>.Ok(await asignacionRevisor.AsignarAsync(publicId, solicitud.RevisorPublicId, UsuarioId, cancellationToken), "Revisor asignado."));
 
+    [Authorize(Roles = "Director")]
+    [HttpGet("asignaciones-revisor")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<PlaneacionResumenDto>>>> AsignacionesRevisor(CancellationToken cancellationToken) =>
+        Ok(ApiResponse<IReadOnlyList<PlaneacionResumenDto>>.Ok(await asignacionRevisor.ObtenerAsync(UsuarioId, cancellationToken)));
+
     [HttpGet("revisiones")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<PlaneacionResumenDto>>>> MisRevisiones(CancellationToken cancellationToken) =>
         Ok(ApiResponse<IReadOnlyList<PlaneacionResumenDto>>.Ok(await revisiones.ObtenerAsync(UsuarioId, cancellationToken)));

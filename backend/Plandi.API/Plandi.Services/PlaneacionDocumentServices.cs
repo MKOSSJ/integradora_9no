@@ -92,6 +92,11 @@ public sealed class PlaneacionDocumentosService(AppDbContext context, IAutorizac
     public async Task<ArchivoContenido> ObtenerProgramaAsync(Guid programaPublicId, long usuarioId, CancellationToken cancellationToken = default)
     {
         var program = await context.ProgramasAsignatura.Include(x => x.Documento).SingleOrDefaultAsync(x => x.PublicId == programaPublicId && x.Activo && x.DeletedAt == null, cancellationToken) ?? throw new NotFoundException("El programa de asignatura no existe.");
+        if (await autorizacion.HasRoleAsync(usuarioId, RolAutorizacion.Director, cancellationToken))
+        {
+            if (!File.Exists(program.Documento.RutaStorage)) throw new AppException("El archivo del programa no se encuentra disponible.");
+            return new ArchivoContenido(await File.ReadAllBytesAsync(program.Documento.RutaStorage, cancellationToken), "application/pdf", PlaneacionTemplateService.NombreSeguro(program.Documento.NombreOriginal, ".pdf"));
+        }
         var planeacion = await context.PlaneacionesDidacticas.Include(x => x.Caratula).FirstOrDefaultAsync(x => x.Caratula!.ProgramaAsignaturaId == program.Id && x.Activo && x.DeletedAt == null, cancellationToken) ?? throw new UnauthorizedAccessException("No tiene una planeación asociada a este programa.");
         await AutorizarAsync(planeacion, usuarioId, cancellationToken);
         if (!File.Exists(program.Documento.RutaStorage)) throw new AppException("El archivo del programa no se encuentra disponible.");

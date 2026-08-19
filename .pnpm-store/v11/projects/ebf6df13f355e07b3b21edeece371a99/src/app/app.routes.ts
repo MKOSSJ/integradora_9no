@@ -144,6 +144,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'programas-asignatura',
+        loadComponent: () =>
+          import('./features/admin/pages/programas-asignatura/programas-asignatura').then(
+            (m) => m.ProgramasAsignatura,
+          ),
+      },
+      {
         path: 'asignacion-academica',
         redirectTo: 'asignacion-revisores',
         pathMatch: 'full',
