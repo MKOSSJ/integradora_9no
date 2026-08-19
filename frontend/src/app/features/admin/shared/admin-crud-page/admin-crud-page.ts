@@ -13,7 +13,9 @@ import {
   LucideX,
   LucideSave,
   LucideAlertTriangle,
-  LucideCircleCheckBig
+  LucideCircleCheckBig,
+  LucideEye,
+  LucideChevronDown
 } from '@lucide/angular';
 
 import { AdminCrudConfig, AdminField, AdminOption } from './admin-crud.types';
@@ -38,6 +40,8 @@ export class AdminCrudPage implements OnInit, OnDestroy {
     message: string;
     type: 'success' | 'error';
   } | null>(null);
+  expandedItemId = signal<string | null>(null);
+  openDropdownField = signal<string | null>(null);
 
   plusIcon = LucidePlus;
   searchIcon = LucideSearch;
@@ -48,6 +52,8 @@ export class AdminCrudPage implements OnInit, OnDestroy {
   saveIcon = LucideSave;
   warningIcon = LucideAlertTriangle;
   successIcon = LucideCircleCheckBig;
+  viewIcon = LucideEye;
+  chevronDownIcon = LucideChevronDown;
 
   private noticeTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -135,10 +141,48 @@ export class AdminCrudPage implements OnInit, OnDestroy {
     this.modalMode.set('edit');
   }
 
+  toggleRowDetails(item: Record<string, any>): void {
+    const itemId = String(item['publicId'] ?? item['id'] ?? '');
+    if (!itemId) return;
+
+    this.expandedItemId.update(current => current === itemId ? null : itemId);
+  }
+
+  isRowExpanded(item: Record<string, any>): boolean {
+    return this.expandedItemId() === String(item['publicId'] ?? item['id'] ?? '');
+  }
+
+  detailItems(item: Record<string, any>, key: string): Record<string, any>[] {
+    const value = item[key];
+    return Array.isArray(value) ? value : [];
+  }
+
   closeModal(): void {
     this.clearStatusNotice();
     this.modalMode.set(null);
+    this.openDropdownField.set(null);
     this.form.set(this.createEmptyForm());
+  }
+
+  toggleDropdown(field: AdminField): void {
+    if (this.isFieldReadonly(field)) return;
+
+    this.openDropdownField.update(current => current === field.key ? null : field.key);
+  }
+
+  isDropdownOpen(field: AdminField): boolean {
+    return this.openDropdownField() === field.key;
+  }
+
+  selectDropdownOption(field: AdminField, value: string | number): void {
+    this.updateField(field, value);
+    this.openDropdownField.set(null);
+  }
+
+  selectedOptionLabel(field: AdminField): string {
+    const value = this.form()[field.key];
+    return this.getFieldOptions(field).find(option => option.value === value)?.label
+      ?? 'Selecciona una opción';
   }
 
   updateField(field: AdminField, value: any): void {

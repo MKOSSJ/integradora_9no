@@ -16,9 +16,11 @@ public sealed class PlaneacionDocumentosController(IAutorizacionService autoriza
         Ok(ApiResponse<PlaneacionDetalleConArchivosDto>.Ok(await documentos.ObtenerDetalleAsync(publicId, UsuarioId, cancellationToken)));
 
     [HttpGet("{publicId:guid}/pdf")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> VisualizarPdf(Guid publicId, CancellationToken cancellationToken) => await ArchivoPdfAsync(publicId, false, cancellationToken);
 
     [HttpGet("{publicId:guid}/pdf/descarga")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> DescargarPdf(Guid publicId, CancellationToken cancellationToken) => await ArchivoPdfAsync(publicId, true, cancellationToken);
 
     private async Task<IActionResult> ArchivoPdfAsync(Guid publicId, bool descargar, CancellationToken cancellationToken)

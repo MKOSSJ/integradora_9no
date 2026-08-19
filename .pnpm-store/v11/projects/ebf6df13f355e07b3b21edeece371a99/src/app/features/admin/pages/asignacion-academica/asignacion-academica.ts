@@ -51,7 +51,7 @@ export class AsignacionAcademica {
         readonlyWhen: () => true
       },
       {
-        key: 'revisorPublicId', label: 'Revisor', type: 'select',
+        key: 'revisorPublicId', label: 'Revisor', type: 'reviewer-select',
         required: true, options: this.planeacionesService.reviewerOptions,
         span: 'full'
       }

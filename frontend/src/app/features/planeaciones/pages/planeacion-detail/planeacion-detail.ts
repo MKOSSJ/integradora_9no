@@ -8,7 +8,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, map, switchMap } from 'rxjs';
 
 import {
   LucideDynamicIcon,
@@ -19,6 +19,7 @@ import {
 } from '@lucide/angular';
 
 import { PlaneacionesService } from '../../../../core/services/planeaciones.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 import {
   PlaneacionDetail,
@@ -50,6 +51,7 @@ import { PlaneacionForm } from '../../components/planeacion-form/planeacion-form
 export class PlaneacionDetailPage implements OnInit {
   private route = inject(ActivatedRoute);
   private planeacionesService = inject(PlaneacionesService);
+  private authService = inject(AuthService);
 
   planeacion = signal<PlaneacionDetail<string> | null>(null);
   activeTab = signal<PlaneacionTab>('vista-previa');
@@ -57,6 +59,7 @@ export class PlaneacionDetailPage implements OnInit {
   loadError = signal('');
   saving = signal(false);
   submitting = signal(false);
+  pdfRefreshKey = signal(0);
 
   @ViewChild(PlaneacionInfoPanel) private infoPanel?: PlaneacionInfoPanel;
 
@@ -66,6 +69,7 @@ export class PlaneacionDetailPage implements OnInit {
   formIcon = LucidePenLine;
 
   isEditable = computed(() => {
+    if (this.isDirector()) return false;
     const status = this.planeacion()?.status;
 
     return status === 'borrador' ||
@@ -73,6 +77,7 @@ export class PlaneacionDetailPage implements OnInit {
       status === 'correcciones' ||
       status === 'reabierta';
   });
+  isDirector = computed(() => this.authService.currentUser()?.roles.includes('DIRECTIVO') ?? false);
 
   ngOnInit(): void {
     const publicId = this.route.snapshot.paramMap.get('id')?.trim() ?? '';
@@ -82,7 +87,11 @@ export class PlaneacionDetailPage implements OnInit {
       return;
     }
 
-    this.planeacionesService.getPlaneacionById(publicId).subscribe({
+    const request = this.isDirector()
+      ? this.planeacionesService.getPlaneacionAdministrativaById(publicId)
+      : this.planeacionesService.getPlaneacionById(publicId);
+
+    request.subscribe({
       next: data => this.planeacion.set(data),
       error: error => this.loadError.set(this.errorMessage(error))
     });
@@ -113,6 +122,7 @@ export class PlaneacionDetailPage implements OnInit {
     ).subscribe({
       next: updated => {
         this.planeacion.set(updated);
+        this.pdfRefreshKey.update(value => value + 1);
         this.infoPanel?.showFeedback(
           'Planeación guardada correctamente.',
           'success'
@@ -133,11 +143,19 @@ export class PlaneacionDetailPage implements OnInit {
     if (this.submitting()) return;
 
     this.submitting.set(true);
-    this.planeacionesService.submitForApproval(String(current.id)).pipe(
+    this.planeacionesService.saveDraft(current).pipe(
+      switchMap(updated => {
+        this.planeacion.set(updated);
+        this.pdfRefreshKey.update(value => value + 1);
+        return this.planeacionesService.submitForApproval(String(updated.id)).pipe(
+          map(status => ({ updated, status }))
+        );
+      }),
       finalize(() => this.submitting.set(false))
     ).subscribe({
-      next: status => {
-        this.planeacion.set({ ...current, status });
+      next: ({ updated, status }) => {
+        this.planeacion.set({ ...updated, status });
+        this.pdfRefreshKey.update(value => value + 1);
         this.activeTab.set('vista-previa');
         this.infoPanel?.showFeedback(
           'Planeación enviada a revisión correctamente.',

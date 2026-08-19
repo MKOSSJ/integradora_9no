@@ -5,10 +5,13 @@ import {
   ElementRef,
   inject,
   Input,
+  OnChanges,
   OnDestroy,
+  SimpleChanges,
   ViewChild,
   signal,
 } from '@angular/core';
+import { Subscription } from 'rxjs';
 
 import {
   LucideDynamicIcon,
@@ -34,10 +37,13 @@ import { PlaneacionesService } from '../../../../core/services/planeaciones.serv
   templateUrl: './planeacion-pdf-viewer.html',
   styleUrl: './planeacion-pdf-viewer.css',
 })
-export class PlaneacionPdfViewer implements AfterViewInit, OnDestroy {
+export class PlaneacionPdfViewer implements AfterViewInit, OnChanges, OnDestroy {
   private readonly planeacionesService = inject(PlaneacionesService);
   @Input({ required: true })
   planeacion!: PlaneacionDetail<string | number>;
+
+  @Input()
+  refreshKey = 0;
 
   @Input()
   mode: 'preview' | 'programa' = 'preview';
@@ -60,12 +66,16 @@ export class PlaneacionPdfViewer implements AfterViewInit, OnDestroy {
 
   private pdfDocument: any = null;
   private renderTask: any = null;
+  private pdfRequest?: Subscription;
   private destroyed = false;
+  private viewReady = false;
+  private loadVersion = 0;
 
   private pdfUrl: string | null = null;
 
   async ngAfterViewInit(): Promise<void> {
     this.destroyed = false;
+    this.viewReady = true;
 
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => resolve());
@@ -78,8 +88,17 @@ export class PlaneacionPdfViewer implements AfterViewInit, OnDestroy {
     await this.loadPdf();
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!this.viewReady || (!changes['planeacion'] && !changes['refreshKey'])) return;
+    void this.loadPdf();
+  }
+
   ngOnDestroy(): void {
     this.destroyed = true;
+    this.viewReady = false;
+    this.loadVersion++;
+    this.pdfRequest?.unsubscribe();
+    this.pdfRequest = undefined;
 
     if (this.renderTask) {
       try {
@@ -177,22 +196,40 @@ export class PlaneacionPdfViewer implements AfterViewInit, OnDestroy {
       return;
     }
 
+    const version = ++this.loadVersion;
+    this.pdfRequest?.unsubscribe();
+    this.pdfRequest = undefined;
+
+    if (this.renderTask) {
+      try {
+        this.renderTask.cancel();
+      } catch {
+        // The render may have finished between the guard and cancellation.
+      }
+      this.renderTask = null;
+    }
+    this.pdfDocument = null;
+    this.releasePdfUrl();
+    this.pdfContainer?.nativeElement.replaceChildren();
+
     try {
       this.loading.set(true);
       this.error.set('');
 
       const blob = await new Promise<Blob>((resolve, reject) => {
-        this.planeacionesService.getPlaneacionPdf(String(this.planeacion.id)).subscribe({
+        this.pdfRequest = this.planeacionesService.getPlaneacionPdf(String(this.planeacion.id)).subscribe({
           next: resolve,
           error: reject
         });
       });
 
-      this.releasePdfUrl();
+      if (this.destroyed || version !== this.loadVersion) return;
+
+      this.pdfRequest = undefined;
       this.pdfUrl = URL.createObjectURL(blob);
       this.pdfDocument = await pdfjsLib.getDocument({ url: this.pdfUrl }).promise;
 
-      if (this.destroyed) {
+      if (this.destroyed || version !== this.loadVersion) {
         return;
       }
 

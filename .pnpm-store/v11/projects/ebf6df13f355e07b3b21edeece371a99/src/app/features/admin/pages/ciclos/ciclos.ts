@@ -1,5 +1,6 @@
 import { NgClass } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ViewChild } from '@angular/core';
+import { LucideDynamicIcon, LucidePlus } from '@lucide/angular';
 import { CiclosService } from '../../../../core/services/ciclos.service';
 import { PeriodosService } from '../../../../core/services/periodos.service';
 import { AdminCrudPage } from '../../shared/admin-crud-page/admin-crud-page';
@@ -10,7 +11,7 @@ type CiclosTab = 'ciclos' | 'periodos';
 @Component({
   selector: 'app-ciclos',
   standalone: true,
-  imports: [NgClass, AdminCrudPage],
+  imports: [NgClass, AdminCrudPage, LucideDynamicIcon],
   templateUrl: './ciclos.html',
   styleUrl: './ciclos.css'
 })
@@ -19,6 +20,9 @@ export class Ciclos {
   private readonly periodosService = inject(PeriodosService);
 
   activeTab = signal<CiclosTab>('ciclos');
+  createIcon = LucidePlus;
+  @ViewChild('ciclosCrud') private ciclosCrud?: AdminCrudPage;
+  @ViewChild('periodosCrud') private periodosCrud?: AdminCrudPage;
 
   config: AdminCrudConfig = {
     title: 'Ciclos Escolares',
@@ -29,6 +33,8 @@ export class Ciclos {
     entityLabel: 'ciclos escolares',
     initialItems: [],
     dataSource: this.ciclosService,
+    showHeader: false,
+    showCreateAction: false,
     successMessages: {
       create: 'Ciclo escolar creado correctamente.',
       update: 'Ciclo escolar actualizado correctamente.',
@@ -49,6 +55,8 @@ export class Ciclos {
     entityLabel: 'periodos',
     initialItems: [],
     dataSource: this.periodosService,
+    showHeader: false,
+    showCreateAction: false,
     successMessages: {
       create: 'Periodo creado correctamente.',
       update: 'Periodo actualizado correctamente.',
@@ -62,5 +70,9 @@ export class Ciclos {
 
   setTab(tab: CiclosTab): void {
     this.activeTab.set(tab);
+  }
+
+  openActiveCreateModal(): void {
+    (this.activeTab() === 'ciclos' ? this.ciclosCrud : this.periodosCrud)?.openCreateModal();
   }
 }

@@ -12,10 +12,12 @@ import {
 } from '../dto/planeaciones/planeacion-flujo.dto';
 import { PlaneacionStatus } from '../models/planeacion.model';
 import { RevisionDetail, RevisionItem } from '../models/validacion.model';
+import { PlaneacionesService } from './planeaciones.service';
 
 @Injectable({ providedIn: 'root' })
 export class ValidacionService {
   private readonly http = inject(HttpClient);
+  private readonly planeacionesService = inject(PlaneacionesService);
   private readonly flowEndpoint = `${environment.apiUrl}/api/planeaciones-flujo`;
   private readonly commentsEndpoint = `${environment.apiUrl}/api/planeaciones`;
   private readonly summaries = new Map<string, PlaneacionResumenDto>();
@@ -84,75 +86,22 @@ export class ValidacionService {
 
   private toDetail(dto: PlaneacionEdicionDto, comments: ComentariosCorreccionDto): RevisionDetail {
     const summary = this.summaries.get(dto.publicId);
-    const caratula = dto.caratula;
-    const title = caratula.nombreAsignatura?.trim() || summary?.asignatura || '';
-    const status = this.toStatus(dto.estado);
+    const detail = this.planeacionesService.toDetail(dto);
+    const status = detail.status;
     const updatedAt = summary?.ultimaModificacion ?? '';
 
     return {
-      id: dto.publicId,
-      titulo: title,
-      descripcion: [caratula.periodoEscolar, caratula.grupos, caratula.docentes]
-        .filter((value): value is string => !!value?.trim())
-        .join(' · '),
+      ...detail,
       actualizacion: updatedAt,
-      progreso: status === 'aprobado' ? 100 : 0,
-      status,
-      reviewStatus: status,
-      autor: caratula.docentes ?? '',
-      enviadoPor: caratula.docentes ?? '',
-      carrera: caratula.programaEducativo ?? '',
-      grupo: caratula.grupos ?? '',
-      fechaCreacion: '',
       ultimaModificacion: updatedAt,
+      progreso: status === 'aprobado' ? 100 : 0,
+      reviewStatus: status,
       fechaEnvio: updatedAt,
       fechaEnvioRevision: updatedAt,
-      pdfPages: 0,
-      comentariosRevision: comments.comentarios.map(comment => `${comment.usuario}: ${comment.mensaje}`),
-      programa: {
-        nombre: title,
-        clave: '',
-        programaEducativo: caratula.programaEducativo ?? '',
-        cuatrimestre: caratula.cuatrimestre?.toString() ?? '',
-        creditos: caratula.creditos ?? 0,
-        horasTotales: caratula.horasTotales ?? 0,
-        horasSaber: caratula.horasSaber ?? 0,
-        horasSaberHacer: caratula.horasSaberHacer ?? 0,
-        horasSemana: caratula.horasSemana ?? 0,
-        proposito: caratula.propositoAsignatura ?? '',
-        competencia: caratula.competenciaAsignatura ?? '',
-        tipoCompetencia: this.tipoCompetencia(caratula.tipoCompetencia),
-        modalidad: this.modalidad(caratula.modalidad),
-        referenciasBase: []
-      },
-      formulario: {
-        titulo: title,
-        periodoId: null,
-        asignaturaId: null,
-        academiaId: null,
-        programaAsignaturaId: null,
-        revisorId: null,
-        docenteIds: [],
-        grupoIds: [],
-        caratula: {
-          programaEducativo: caratula.programaEducativo ?? '',
-          docentes: caratula.docentes ?? '',
-          cuatrimestre: caratula.cuatrimestre?.toString() ?? '',
-          periodoEscolar: caratula.periodoEscolar ?? '',
-          asignatura: title,
-          grupos: caratula.grupos ?? '',
-          propositoAsignatura: caratula.propositoAsignatura ?? '',
-          competenciaContribuye: caratula.competenciaAsignatura ?? '',
-          tipoCompetencia: this.tipoCompetencia(caratula.tipoCompetencia),
-          creditos: caratula.creditos ?? 0,
-          modalidad: this.modalidad(caratula.modalidad),
-          horasSaber: caratula.horasSaber ?? 0,
-          horasSaberHacer: caratula.horasSaberHacer ?? 0,
-          horasTotales: caratula.horasTotales ?? 0,
-          horasSemana: caratula.horasSemana ?? 0
-        },
-        unidades: []
-      }
+      enviadoPor: detail.autor,
+      carrera: detail.programa.programaEducativo,
+      grupo: detail.formulario.caratula.grupos,
+      comentariosRevision: comments.comentarios.map(comment => `${comment.usuario}: ${comment.mensaje}`)
     };
   }
 

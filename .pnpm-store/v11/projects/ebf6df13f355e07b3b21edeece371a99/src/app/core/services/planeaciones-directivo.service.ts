@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   catchError,
   forkJoin,
@@ -7,7 +7,6 @@ import {
   Observable,
   of,
   switchMap,
-  tap,
   throwError
 } from 'rxjs';
 
@@ -41,8 +40,6 @@ export class PlaneacionesDirectivoService {
     `${environment.apiUrl}/api/planeaciones-flujo`;
   private readonly planeacionesEndpoint =
     `${environment.apiUrl}/api/planeaciones`;
-  private readonly sessionPlaneaciones =
-    signal<PlaneacionAsignacionRevisor[]>([]);
   private readonly userNames = new Map<string, string>();
 
   readonly reviewerOptions: ReviewerOption[] = [];
@@ -53,18 +50,22 @@ export class PlaneacionesDirectivoService {
     >(this.generationEndpoint, {}).pipe(
       map(response => this.unwrap(response)),
       switchMap(result => this.enrichGeneration(result)),
-      tap(result => this.rememberGeneration(result.planeaciones))
+      switchMap(result => this.load().pipe(map(() => result)))
     );
   }
 
   load(): Observable<PlaneacionAsignacionRevisor[]> {
     return forkJoin({
       users: this.usuariosService.load(),
-      planeaciones: of(this.sessionPlaneaciones())
+      planeaciones: this.http
+        .get<ApiResponseDto<PlaneacionResumenResponseDto[]>>(
+          `${this.flowEndpoint}/asignaciones-revisor`
+        )
+        .pipe(map(response => this.unwrap(response)))
     }).pipe(
       map(({ users, planeaciones }) => {
         this.setUserCatalog(users);
-        return planeaciones.map(item => ({ ...item }));
+        return planeaciones.map(item => this.toUiModel(item, ''));
       })
     );
   }
@@ -80,15 +81,6 @@ export class PlaneacionesDirectivoService {
   ): Observable<PlaneacionAsignacionRevisor> {
     const publicId = this.requiredString(item, 'publicId');
     const revisorPublicId = this.requiredString(item, 'revisorPublicId');
-    const current = this.sessionPlaneaciones().find(
-      planeacion => planeacion.publicId === publicId
-    );
-
-    if (!current) {
-      return throwError(() => new Error(
-        'La planeación ya no está disponible en esta sesión.'
-      ));
-    }
 
     if (!this.reviewerOptions.some(option => option.value === revisorPublicId)) {
       return throwError(() => new Error(
@@ -100,52 +92,31 @@ export class PlaneacionesDirectivoService {
       revisorPublicId
     };
 
-    return this.http.post<ApiResponseDto<PlaneacionResumenResponseDto>>(
-      `${this.flowEndpoint}/${publicId}/asignar-revisor`,
-      request
-    ).pipe(
+    return this.usuariosService.ensureReviewerRole(revisorPublicId).pipe(
+      switchMap(() => this.http.post<ApiResponseDto<PlaneacionResumenResponseDto>>(
+        `${this.flowEndpoint}/${publicId}/asignar-revisor`,
+        request
+      )),
       map(response => this.unwrap(response)),
-      map(response => this.toUiModel(response, current.resultadoGeneracion)),
-      tap(updated => this.sessionPlaneaciones.update(items =>
-        items.map(candidate =>
-          candidate.publicId === updated.publicId ? updated : candidate
-        )
-      ))
+      switchMap(response => {
+        const updated = this.toUiModel(response, '');
+        return this.load().pipe(
+          map(items => items.find(item => item.publicId === publicId) ?? updated)
+        );
+      })
     );
+  }
+
+  loadSeguimiento(): Observable<PlaneacionResumenResponseDto[]> {
+    return this.http.get<ApiResponseDto<PlaneacionResumenResponseDto[]>>(
+      `${this.flowEndpoint}/asignaciones-revisor`
+    ).pipe(map(response => this.unwrap(response)));
   }
 
   delete(): Observable<never> {
     return throwError(() => new Error(
       'El backend no expone una baja de planeación dentro de este flujo.'
     ));
-  }
-
-  private rememberGeneration(
-    details: GeneracionPlaneacionVisual[]
-  ): void {
-    const byPublicId = new Map(
-      this.sessionPlaneaciones().map(item => [item.publicId, item])
-    );
-
-    for (const detail of details) {
-      if (!detail.planeacionPublicId) continue;
-
-      const current = byPublicId.get(detail.planeacionPublicId);
-      byPublicId.set(detail.planeacionPublicId, {
-        id: detail.planeacionPublicId,
-        publicId: detail.planeacionPublicId,
-        asignatura: detail.asignatura,
-        docente: detail.docentes || current?.docente || '',
-        periodo: detail.periodo || current?.periodo || '',
-        grupos: detail.grupos || current?.grupos || '',
-        estado: detail.estado || current?.estado || '',
-        revisorPublicId: current?.revisorPublicId ?? '',
-        revisorNombre: current?.revisorNombre ?? 'Sin asignar',
-        resultadoGeneracion: detail.resultadoGeneracion
-      });
-    }
-
-    this.sessionPlaneaciones.set([...byPublicId.values()]);
   }
 
   private setUserCatalog(users: UsuarioBackendListItem[]): void {
@@ -161,14 +132,19 @@ export class PlaneacionesDirectivoService {
       this.reviewerOptions.length,
       ...users
         .filter(user =>
-          user.source === 'backend' && user.roles.includes('REVISOR')
+          user.source === 'backend' && user.estado === 'activo' &&
+          (user.roles.includes('REVISOR') || user.roles.includes('DOCENTE'))
         )
         .map(user => {
           const name = this.userNames.get(user.publicId) ?? '';
+          const roles = user.roles
+            .filter(role => role === 'DOCENTE' || role === 'REVISOR')
+            .map(role => role === 'DOCENTE' ? 'Docente' : 'Revisor')
+            .join(' / ');
 
           return {
             value: user.publicId,
-            label: name || user.email
+            label: [name || user.email, roles].filter(Boolean).join(' — ')
           };
         })
         .sort((left, right) => left.label.localeCompare(right.label))

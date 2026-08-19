@@ -2,10 +2,7 @@ import { Component, inject } from '@angular/core';
 import { UsuariosService } from '../../../../core/services/usuarios.service';
 import { AdminCrudPage } from '../../shared/admin-crud-page/admin-crud-page';
 import { AdminCrudConfig } from '../../shared/admin-crud-page/admin-crud.types';
-
-const NEUTRAL_OPTIONS = [
-  { label: 'Sin información', value: 'Sin información' }
-];
+import { STATUS_OPTIONS } from '../../shared/admin-data';
 
 @Component({
   selector: 'app-usuarios',
@@ -41,9 +38,7 @@ export class Usuarios {
       { key:'email', label:'Correo electrónico', type:'email', readonlyWhen:() => true },
       { key:'telefono', label:'Teléfono', type:'tel', readonlyWhen:() => true },
       { key:'roles', label:'Roles del sistema', type:'multiselect', span:'full', options:this.usuariosService.roleOptions },
-      { key:'academiaNombre', label:'Academia', type:'select', options:NEUTRAL_OPTIONS, readonlyWhen:() => true },
-      { key:'rolEnAcademia', label:'Rol dentro de academia', type:'select', options:NEUTRAL_OPTIONS, readonlyWhen:() => true },
-      { key:'estado', label:'Estado', type:'select', options:NEUTRAL_OPTIONS, readonlyWhen:() => true }
+      { key:'estado', label:'Estado', type:'select', options:STATUS_OPTIONS, readonlyWhen:() => true }
     ],
     counters: [{label:'Total',valueKey:'total'},{label:'Docentes',valueKey:'docentes',tone:'green'},{label:'Revisores',valueKey:'revisores',tone:'cyan'},{label:'Directivos',valueKey:'directivos',tone:'amber'}],
     searchKeys: ['nombre','apellidoPaterno','apellidoMaterno','email','telefono','academiaNombre']

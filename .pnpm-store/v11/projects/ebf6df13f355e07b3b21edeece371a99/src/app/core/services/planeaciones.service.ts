@@ -348,6 +348,18 @@ export class PlaneacionesService {
       );
   }
 
+  getPlaneacionAdministrativaById(publicId: string): Observable<PlaneacionDetail<string>> {
+    return this.http
+      .get<ApiResponseDto<{ planeacion: PlaneacionEdicionDto }>>(
+        `${environment.apiUrl}/api/planeaciones/${publicId}`
+      )
+      .pipe(
+        map(response => this.unwrap(response).planeacion),
+        tap(detail => this.detailDtos.set(detail.publicId, detail)),
+        map(detail => this.toDetail(detail))
+      );
+  }
+
   saveDraft(
     planeacion: PlaneacionDetail<string>
   ): Observable<PlaneacionDetail<string>> {
@@ -439,7 +451,7 @@ export class PlaneacionesService {
     };
   }
 
-  private toDetail(dto: PlaneacionEdicionDto): PlaneacionDetail<string> {
+  toDetail(dto: PlaneacionEdicionDto): PlaneacionDetail<string> {
     const summary = this.summaries.get(dto.publicId);
     const caratula = dto.caratula;
     const referencias = dto.referencias.map((item, index) =>

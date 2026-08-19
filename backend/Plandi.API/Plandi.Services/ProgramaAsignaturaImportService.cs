@@ -23,6 +23,30 @@ public sealed class ProgramaAsignaturaImportService(
     private const string PdfMimeType = "application/pdf";
     private static readonly TimeSpan ProcessingTimeout = TimeSpan.FromMinutes(2);
 
+    public async Task<IReadOnlyList<ProgramaAsignaturaResumenDto>> ObtenerAsync(CancellationToken cancellationToken = default)
+    {
+        var programas = await dbContext.ProgramasAsignatura
+            .AsNoTracking()
+            .Include(programa => programa.Documento)
+            .ThenInclude(documento => documento.SubidoPor)
+            .Where(programa => programa.Activo && programa.DeletedAt == null)
+            .OrderByDescending(programa => programa.Documento.FechaSubida)
+            .ToListAsync(cancellationToken);
+
+        return programas.Select(programa => new ProgramaAsignaturaResumenDto
+        {
+            PublicId = programa.PublicId,
+            Asignatura = programa.NombreAsignatura,
+            ClaveAsignatura = programa.ClaveAsignatura,
+            Carrera = programa.Carrera,
+            Cuatrimestre = programa.Cuatrimestre,
+            NombreArchivo = programa.Documento.NombreOriginal,
+            FechaSubida = programa.Documento.FechaSubida,
+            Estado = programa.Documento.Estado.ToString(),
+            SubidoPor = string.Join(" ", new[] { programa.Documento.SubidoPor.Nombre, programa.Documento.SubidoPor.ApellidoPaterno, programa.Documento.SubidoPor.ApellidoMaterno }.Where(valor => !string.IsNullOrWhiteSpace(valor)))
+        }).ToList();
+    }
+
     public async Task<string> ExtraerTextoAsync(Stream archivo, string nombreArchivo, CancellationToken cancellationToken = default)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

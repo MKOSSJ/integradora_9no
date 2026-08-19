@@ -1,49 +1,30 @@
-<div class="min-h-full bg-slate-50">
-  <header class="border-b border-slate-200 bg-white">
-    <div class="px-7 py-4">
-      <h1 class="text-xl font-black text-slate-900">
-        Ciclos y Periodos
-      </h1>
+<div class="min-h-full bg-slate-50 p-7">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <section class="relative overflow-hidden rounded-[36px] bg-gradient-to-br from-slate-950 via-teal-800 to-cyan-500 px-8 py-8 text-white shadow-2xl shadow-cyan-100">
+      <div class="relative flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-extrabold text-white/95 backdrop-blur">Administración</div>
+          <h1 class="mt-6 text-4xl font-black tracking-tight sm:text-5xl">Ciclos y Periodos</h1>
+          <p class="mt-4 max-w-2xl text-base leading-8 text-white/85">Administra los ciclos escolares y sus periodos académicos.</p>
+        </div>
+        <button type="button" class="inline-flex w-fit items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-teal-700 shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:bg-slate-50" (click)="openActiveCreateModal()">
+          <svg [lucideIcon]="createIcon" class="h-5 w-5"></svg>
+          {{ activeTab() === 'ciclos' ? 'Nuevo ciclo escolar' : 'Nuevo periodo' }}
+        </button>
+      </div>
+    </section>
 
-      <p class="text-sm font-medium text-slate-500">
-        Administra los ciclos escolares y sus periodos académicos.
-      </p>
-    </div>
+    <section class="rounded-[28px] border border-slate-200 bg-white p-3 shadow-sm">
+      <div class="grid gap-3 sm:grid-cols-2">
+        <button type="button" class="rounded-2xl px-5 py-3 text-sm font-black transition" [ngClass]="activeTab() === 'ciclos' ? 'bg-teal-500 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'" (click)="setTab('ciclos')">Ciclos escolares</button>
+        <button type="button" class="rounded-2xl px-5 py-3 text-sm font-black transition" [ngClass]="activeTab() === 'periodos' ? 'bg-teal-500 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'" (click)="setTab('periodos')">Periodos</button>
+      </div>
+    </section>
+  </div>
 
-    <nav class="flex gap-2 overflow-x-auto px-7">
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-extrabold transition"
-        [ngClass]="activeTab() === 'ciclos'
-          ? 'border-teal-500 text-teal-600'
-          : 'border-transparent text-slate-500 hover:text-slate-900'"
-        (click)="setTab('ciclos')"
-      >
-        Ciclos escolares
-      </button>
-
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-extrabold transition"
-        [ngClass]="activeTab() === 'periodos'
-          ? 'border-teal-500 text-teal-600'
-          : 'border-transparent text-slate-500 hover:text-slate-900'"
-        (click)="setTab('periodos')"
-      >
-        Periodos
-      </button>
-    </nav>
-  </header>
-
-  <app-admin-crud-page
-    class="block"
-    [class.hidden]="activeTab() !== 'ciclos'"
-    [config]="config"
-  />
-
-  <app-admin-crud-page
-    class="block"
-    [class.hidden]="activeTab() !== 'periodos'"
-    [config]="periodosConfig"
-  />
+  @if (activeTab() === 'ciclos') {
+    <app-admin-crud-page #ciclosCrud [config]="config" />
+  } @else {
+    <app-admin-crud-page #periodosCrud [config]="periodosConfig" />
+  }
 </div>

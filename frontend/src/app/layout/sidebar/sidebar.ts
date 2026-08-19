@@ -158,9 +158,19 @@ export class Sidebar {
           icon: LucideUpload,
         },
         {
+          label: 'Programas de asignatura',
+          route: '/programas-asignatura',
+          icon: LucideFileText,
+        },
+        {
           label: 'Asignación de Revisores',
           route: '/asignacion-revisores',
           icon: LucideClipboardList,
+        },
+        {
+          label: 'Seguimiento de planeaciones',
+          route: '/seguimiento-planeaciones',
+          icon: LucideChartBar,
         },
       ],
     },

@@ -16,6 +16,7 @@ public interface IEdicionPlaneacionService
 
 public interface IAsignacionRevisorPlaneacionService
 {
+    Task<IReadOnlyList<PlaneacionResumenDto>> ObtenerAsync(long usuarioAutorizadoId, CancellationToken cancellationToken = default);
     Task<PlaneacionResumenDto> AsignarAsync(Guid planeacionPublicId, Guid revisorPublicId, long usuarioAutorizadoId, CancellationToken cancellationToken = default);
 }
 

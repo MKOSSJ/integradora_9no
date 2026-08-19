@@ -13,6 +13,19 @@ public class ProgramaAsignaturaImportacionResultadoDto
     public List<string> Errores { get; set; } = [];
 }
 
+public sealed class ProgramaAsignaturaResumenDto
+{
+    public Guid PublicId { get; set; }
+    public string Asignatura { get; set; } = string.Empty;
+    public string? ClaveAsignatura { get; set; }
+    public string? Carrera { get; set; }
+    public int? Cuatrimestre { get; set; }
+    public string NombreArchivo { get; set; } = string.Empty;
+    public DateTime FechaSubida { get; set; }
+    public string Estado { get; set; } = string.Empty;
+    public string? SubidoPor { get; set; }
+}
+
 public class GeneracionPlaneacionesResultadoDto
 {
     public int TotalProgramas { get; set; }
